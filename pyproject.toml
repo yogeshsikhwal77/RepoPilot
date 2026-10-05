@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repopilot"
+version = "0.1.0"
+description = "A verified multi-agent coding assistant for large repositories"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.23.0",                                                                                
+    "pydantic>=2.0.0",
+    "langgraph>=0.0.20",
+    "langchain-core>=0.1.0",
+    "qdrant-client>=1.7.0",
+    "redis>=5.0.0",
+    "asyncpg>=0.29.0",
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.23.0",
+    "tree-sitter>=0.20.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "isort",
+    "mypy"
+]

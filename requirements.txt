@@ -1,0 +1,55 @@
+# ==========================================
+# Core API & Server (Vibhav's API Tasks)
+# ==========================================
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0  # For loading .env variables
+python-multipart>=0.0.6   # For API form data/file uploads
+
+# ==========================================
+# Orchestrator & LLM (Vibhav & Yogesh)
+# ==========================================
+langgraph>=0.0.20
+langchain-core>=0.1.0
+openai>=1.0.0             # Or anthropic/litellm depending on your llm/client.py choice
+tiktoken>=0.5.0           # For token budget counting in observability/cost.py
+
+# ==========================================
+# Indexing & Retrieval (Week 1 & 3 Tasks)
+# ==========================================
+qdrant-client>=1.7.0      # Yogesh: Vector database client for embedder.py
+tree-sitter>=0.20.0       # Vibhav: AST parsing for symbol_graph.py
+tree-sitter-python>=0.20.0 # Vibhav: Python grammar for tree-sitter
+rank-bm25>=0.2.2          # Yogesh: Sparse/lexical retrieval for bm25.py
+PyYAML>=6.0.1             # For reading configs/ (agents.yaml, budget.yaml, etc.)
+
+# ==========================================
+# Memory & Caching (State & Storage)
+# ==========================================
+redis>=5.0.0              # Queue and short-term memory backend
+asyncpg>=0.29.0           # PostgreSQL async driver for long-term memory
+
+# ==========================================
+# MCP & Tools
+# ==========================================
+mcp>=1.0.0                # Model Context Protocol standard Python SDK
+httpx>=0.25.0             # Async HTTP client for GitHub/Issues external API calls
+
+# ==========================================
+# Observability (Week 6)
+# ==========================================
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-instrumentation-fastapi>=0.40b0
+opentelemetry-exporter-otlp>=1.20.0 # For sending traces to Grafana
+
+# ==========================================
+# Testing & Eval (Dev Dependencies)
+# ==========================================
+pytest>=7.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0         # Yogesh: Used to generate the coverage.xml for coverage_map.py
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.5.0
