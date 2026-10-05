@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RepoPilot v3: architecture, frontend and deployment</title>
+<style>
+:root {
+  --bg: #ffffff; /* White */
+  --ink: #1e293b;
+  --mute: #64748b;
+  --line: #e2e8f0;
+  --soft: #f8fafc;
+  --accent: #2563eb; /* Blue */
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
+h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; font-weight: 700; line-height: 1.2; color: #2563eb; /* Blue */ }
+h1 { font-size: 2.2rem; margin: 0 0 10px; letter-spacing: -.01em; }
+h2 { font-size: 1.5rem; margin: 56px 0 8px; padding-top: 14px; border-top: 2px solid #dc2626; /* Red */ }
+h3 { font-size: 1.15rem; margin: 36px 0 6px; }
+p, li { max-width: 72ch; }
+.lead { color: var(--mute); font-size: 1.08rem; }
+.card { border: 1px solid var(--line); border-radius: 6px; padding: 12px; overflow-x: auto; background: var(--soft); }
+svg { display: block; width: 100%; min-width: 640px; height: auto; }
+svg text { font: 14px system-ui, sans-serif; }
+svg .s { font-size: 12px; }
+.b rect { fill: var(--f); stroke: var(--k); stroke-width: 1; }
+.b .h { fill: var(--t); font-weight: 600; }
+.b .s { fill: var(--u); }
+/* Purple */
+.p { --f: #f3e8ff; --k: #9333ea; --t: #581c87; --u: #7e22ce; }
+/* Green */
+.t { --f: #dcfce7; --k: #16a34a; --t: #14532d; --u: #15803d; }
+/* Orange */
+.g { --f: #ffedd5; --k: #ea580c; --t: #7c2d12; --u: #c2410c; }
+/* Blue (frontend) */
+.n { --f: #dbeafe; --k: #2563eb; --t: #1e3a8a; --u: #1d4ed8; }
+/* Red (deployment) */
+.r { --f: #fee2e2; --k: #dc2626; --t: #7f1d1d; --u: #b91c1c; }
+.a, .rail { stroke: var(--mute); stroke-width: 1.5; fill: none; }
+svg .lg { fill: var(--mute); }
+pre { margin: 0; padding: 18px; background: var(--soft); border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; font: 13px/1.55 ui-monospace, "JetBrains Mono", Menlo, monospace; }
+pre i { color: var(--mute); font-style: normal; }
+code { font: 13px ui-monospace, Menlo, monospace; background: var(--soft); padding: 1px 5px; border-radius: 3px; color: #dc2626; /* Red */ }
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: var(--soft); font-weight: 600; color: #2563eb; /* Blue */ }
+.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+.tw table { min-width: 560px; }
+</style>
+</head>
+<body>
+<main>
+<h1>RepoPilot v3</h1>
+<p class="lead">A verified multi-agent coding assistant for large repositories, now with a React frontend and a full deployment pipeline. The architecture picture and the folder tree come first; the written details for each are at the bottom.</p>
+
+<h2 id="arch">Architecture</h2>
+<div class="card">
+<svg id="d" viewBox="0 0 680 830" role="img" aria-label="RepoPilot v3 architecture flow with React frontend and deployment">
+<defs><marker id="m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+</svg>
+</div>
+
+<h2 id="tree">Folder structure</h2>
+<pre>repopilot/
+├── README.md
+├── pyproject.toml
+├── docker-compose.yml             <i># api, web, postgres, redis, qdrant</i>
+├── docker-compose.prod.yml        <i># production overrides</i>
+├── .env.example
+├── .github/workflows/             <i># ci.yml, eval.yml, deploy.yml</i>
+├── configs/
+│   ├── agents.yaml                <i># models, step limits per agent</i>
+│   ├── budget.yaml                <i># token, cost, loop caps</i>
+│   ├── mcp_servers.yaml           <i># servers and tool scopes</i>
+│   ├── retrieval.yaml             <i># chunking, top-k, hop limit</i>
+│   └── routing.yaml               <i># small/large model rules</i>
+├── src/repopilot/
+│   ├── api/                       <i># main.py, routes.py, schemas.py, sse.py, auth.py</i>
+│   ├── orchestrator/              <i># planner, graph, scheduler, state, budget</i>
+│   ├── agents/                    <i># base, retriever, navigator, coder, tester, reflector, verifier</i>
+│   ├── indexing/                  <i># parser, symbol_graph, coverage_map, embedder, bm25, incremental, linker</i>
+│   ├── retrieval/                 <i># hybrid, reranker, graph_expand, impact</i>
+│   ├── mcp/
+│   │   ├── client.py
+│   │   └── servers/               <i># github, fs, lsp, issues, sandbox</i>
+│   ├── memory/                    <i># short_term, long_term, staleness, policies</i>
+│   ├── verification/              <i># citation, executable_claims, entailment, diff_checker</i>
+│   ├── sandbox/                   <i># runner, test_detect</i>
+│   ├── security/                  <i># permissions, injection_guard, quarantine</i>
+│   ├── llm/
+│   │   ├── client.py
+│   │   ├── router.py
+│   │   └── prompts/               <i># planner, coder, reflector, verifier (.md)</i>
+│   └── observability/             <i># tracing.py, cost.py</i>
+├── web/                           <i># React frontend (Vite + TypeScript)</i>
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── .env.example
+│   └── src/
+│       ├── main.tsx
+│       ├── App.tsx
+│       ├── api/                   <i># client.ts, sse.ts, types.ts (mirrors schemas.py)</i>
+│       ├── pages/                 <i># Home, RunDetail, Repos, Memory, Eval, Settings</i>
+│       ├── components/            <i># ChatPanel, TaskGraphView, DiffViewer, TestReport, CitationList, CostMeter, ApprovalPrompt</i>
+│       ├── hooks/                 <i># useRunStream, useRepos</i>
+│       ├── store/                 <i># run state (Zustand)</i>
+│       └── styles/                <i># theme.css</i>
+├── deploy/
+│   ├── docker/                    <i># api.Dockerfile, worker.Dockerfile</i>
+│   ├── k8s/                       <i># Helm chart: api, web, worker, ingress, hpa, secrets</i>
+│   ├── terraform/                 <i># cloud network, cluster, database (optional)</i>
+│   └── monitoring/                <i># otel-collector.yaml, grafana dashboards, alerts</i>
+├── cli/repopilot.py
+├── extensions/vscode/
+├── eval/
+│   ├── datasets/                  <i># swebench_subset, custom_questions, injection_attacks (.jsonl)</i>
+│   ├── baselines/                 <i># plain_rag.py, single_call.py</i>
+│   ├── ablations/                 <i># no_graph, no_memory, no_verifier, no_coverage_map</i>
+│   ├── metrics.py
+│   ├── run_eval.py
+│   └── reports/
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   ├── e2e/                       <i># Playwright tests for the web app</i>
+│   └── fixtures/sample_repo/
+├── scripts/                       <i># index_repo.py, seed_memory.py, build_coverage.py</i>
+└── docs/                          <i># architecture.md, evaluation.md, deployment.md, failure_analysis.md, demo.gif</i></pre>
+
+<h2 id="details">Details</h2>
+
+<h3 id="d1">1. Architecture details</h3>
+<p>The system is seven layers. The React web app, CLI and VS Code extension (interfaces) call the API. The API starts the orchestrator, which drives specialist agents. Agents reach the outside world only through the MCP tool layer, and read evidence from the retrieval and index layer. Memory and security wrap everything. The deployment layer packages, ships and monitors all of it.</p>
+<p>One task runs through these states:</p>
+<ol>
+<li><b>Plan:</b> the Planner reads memory and builds a task graph of dependent sub-questions.</li>
+<li><b>Retrieve:</b> Retriever and Navigator run in parallel and produce evidence and the impact set (code plus the tests that cover it).</li>
+<li><b>Draft:</b> Coder writes the smallest diff, using only retrieved evidence and any reflection notes.</li>
+<li><b>Test:</b> Tester runs impacted tests first, then the full suite, in a no-network sandbox.</li>
+<li><b>Reflect:</b> on failure, Reflector writes a short note on why it failed and the flow returns to Draft, up to the loop cap in <code>budget.py</code>.</li>
+<li><b>Verify:</b> the Verifier runs executable checks (AST, graph query, sandbox run) first and falls back to an LLM judge. Unsupported claims are removed.</li>
+<li><b>Remember:</b> verified findings are stored in long-term memory with hashes of their source files.</li>
+<li><b>Respond:</b> return the diff, test report, cited claims and run cost. Each state change is also streamed to the web app as it happens.</li>
+</ol>
+<p>Design rules that hold across the system:</p>
+<ul>
+<li><b>Typed hand-offs.</b> Agents exchange only <code>Evidence</code>, <code>TaskNode</code>, <code>Claim</code>, <code>Patch</code>, <code>TestReport</code>, <code>Verdict</code> and <code>Answer</code> objects, so each agent can be tested alone.</li>
+<li><b>Untrusted text.</b> Repo files, issues and PR comments are quoted as data. A tool call built from untrusted text is blocked unless the Planner approved it.</li>
+<li><b>Least privilege.</b> Write tools stay off until the Verifier stage. The agent opens a draft PR and never merges.</li>
+<li><b>Cost control.</b> The router sends easy steps to a small model and escalates on low confidence. The budget caps tokens, dollars, tool calls and loops, and returns a partial answer instead of looping.</li>
+<li><b>Self-healing memory.</b> When a source file's hash changes, the memory entry is re-verified, downgraded or deleted.</li>
+<li><b>One contract for UI and API.</b> <code>web/src/api/types.ts</code> is generated from <code>schemas.py</code>, so the frontend and backend cannot drift apart.</li>
+</ul>
+
+<h3 id="d2">2. Folder structure details</h3>
+<div class="tw"><table>
+<tr><th>Folder</th><th>What lives there</th><th>Key files</th></tr>
+<tr><td><code>configs/</code></td><td>All tunable settings, so behavior changes without code changes</td><td><code>agents</code>, <code>budget</code>, <code>mcp_servers</code>, <code>retrieval</code>, <code>routing</code> (.yaml)</td></tr>
+<tr><td><code>api/</code></td><td>HTTP interface to start and watch runs, with login and a live event stream</td><td><code>main.py</code>, <code>routes.py</code>, <code>schemas.py</code>, <code>sse.py</code>, <code>auth.py</code></td></tr>
+<tr><td><code>orchestrator/</code></td><td>Plans the work and drives the agent loop</td><td><code>planner</code>, <code>graph</code> (LangGraph), <code>scheduler</code>, <code>state</code>, <code>budget</code></td></tr>
+<tr><td><code>agents/</code></td><td>Specialists with narrow jobs and fixed tool access</td><td><code>retriever</code>, <code>navigator</code>, <code>coder</code>, <code>tester</code>, <code>reflector</code>, <code>verifier</code></td></tr>
+<tr><td><code>indexing/</code></td><td>Turns a repo into searchable structure: chunks, symbol graph, test coverage map</td><td><code>parser</code>, <code>symbol_graph</code>, <code>coverage_map</code>, <code>embedder</code>, <code>bm25</code>, <code>incremental</code>, <code>linker</code></td></tr>
+<tr><td><code>retrieval/</code></td><td>Finds the right evidence, not just similar text</td><td><code>hybrid</code>, <code>reranker</code>, <code>graph_expand</code>, <code>impact</code></td></tr>
+<tr><td><code>mcp/</code></td><td>One client plus tool servers for GitHub, files, LSP, issues and the sandbox</td><td><code>client.py</code>, <code>servers/*</code></td></tr>
+<tr><td><code>memory/</code></td><td>Per-run scratchpad and long-term conventions, with staleness checks</td><td><code>short_term</code>, <code>long_term</code>, <code>staleness</code>, <code>policies</code></td></tr>
+<tr><td><code>verification/</code></td><td>Decides which claims and patches are allowed out</td><td><code>citation</code>, <code>executable_claims</code>, <code>entailment</code>, <code>diff_checker</code></td></tr>
+<tr><td><code>sandbox/</code></td><td>Docker runner with no network and resource limits; detects the test framework</td><td><code>runner</code>, <code>test_detect</code></td></tr>
+<tr><td><code>security/</code></td><td>Permissions, prompt-injection defense, quarantine of untrusted input</td><td><code>permissions</code>, <code>injection_guard</code>, <code>quarantine</code></td></tr>
+<tr><td><code>llm/</code></td><td>Model client, cost-aware router, prompt files</td><td><code>client</code>, <code>router</code>, <code>prompts/*.md</code></td></tr>
+<tr><td><code>observability/</code></td><td>OpenTelemetry traces and token and cost accounting</td><td><code>tracing</code>, <code>cost</code></td></tr>
+<tr><td><code>web/</code></td><td>React single-page app to submit tasks, watch runs live and review results</td><td><code>pages/</code>, <code>components/</code>, <code>hooks/useRunStream</code>, <code>api/</code></td></tr>
+<tr><td><code>deploy/</code></td><td>Everything needed to build, ship and watch the system in production</td><td><code>docker/</code>, <code>k8s/</code>, <code>terraform/</code>, <code>monitoring/</code></td></tr>
+<tr><td><code>.github/workflows/</code></td><td>Automatic checks and releases on every push</td><td><code>ci.yml</code>, <code>eval.yml</code>, <code>deploy.yml</code></td></tr>
+<tr><td><code>eval/</code></td><td>Datasets, baselines, ablations and metrics that prove each upgrade helps</td><td><code>run_eval.py</code>, <code>metrics.py</code>, <code>ablations/</code></td></tr>
+<tr><td><code>tests/</code></td><td>Unit, integration and end-to-end tests plus a small sample repo</td><td><code>unit/</code>, <code>integration/</code>, <code>e2e/</code>, <code>fixtures/</code></td></tr>
+<tr><td><code>scripts/</code></td><td>One-off setup commands</td><td><code>index_repo</code>, <code>seed_memory</code>, <code>build_coverage</code></td></tr>
+<tr><td><code>cli/</code>, <code>extensions/vscode/</code>, <code>docs/</code></td><td>Command-line tool, editor extension, written docs and demo</td><td><code>repopilot.py</code></td></tr>
+</table></div>
+
+<h3 id="d3">3. Frontend details (React)</h3>
+<p>The web app is a Vite + TypeScript single-page app. It talks to the API over REST for actions and Server-Sent Events (SSE) for live progress, so there is no polling.</p>
+<div class="tw"><table>
+<tr><th>Screen</th><th>What the user does</th><th>Main components</th></tr>
+<tr><td>Home</td><td>Type a bug, issue link or feature request and start a run</td><td><code>ChatPanel</code></td></tr>
+<tr><td>Run detail</td><td>Watch the plan, agents and tests update live; approve or reject the draft PR</td><td><code>TaskGraphView</code>, <code>DiffViewer</code>, <code>TestReport</code>, <code>CitationList</code>, <code>CostMeter</code>, <code>ApprovalPrompt</code></td></tr>
+<tr><td>Repos</td><td>Connect a repo, start indexing, see index status</td><td>repo list, index progress bar</td></tr>
+<tr><td>Memory</td><td>Browse stored conventions and delete stale ones</td><td>memory table with source hashes</td></tr>
+<tr><td>Eval</td><td>View resolve rate, regression rate, cost and ablation results</td><td>charts from <code>eval/reports/</code></td></tr>
+<tr><td>Settings</td><td>Choose models, budget caps and tool permissions</td><td>forms that write to <code>configs/</code> via the API</td></tr>
+</table></div>
+<ul>
+<li><b>Live stream.</b> <code>useRunStream</code> opens one SSE connection per run and updates the store as each state (Plan, Retrieve, Draft, Test, Reflect, Verify) finishes.</li>
+<li><b>Human approval.</b> Opening the draft PR needs a click on <code>ApprovalPrompt</code>. This keeps the "never merges on its own" rule visible to the user.</li>
+<li><b>Citations you can click.</b> Every claim in <code>CitationList</code> links to <code>repo@commit:lines</code>, shown in <code>DiffViewer</code>.</li>
+<li><b>Auth.</b> Login through GitHub OAuth; the API issues a short-lived token that the app keeps in memory, not in local storage.</li>
+<li><b>Styling.</b> The same white, blue, red, purple, green and orange theme as this page, defined once in <code>styles/theme.css</code>.</li>
+</ul>
+
+<h3 id="d4">4. Deployment details</h3>
+<div class="tw"><table>
+<tr><th>Piece</th><th>How it works</th></tr>
+<tr><td>Local</td><td><code>docker compose up</code> starts api, web, postgres, redis and qdrant with one command.</td></tr>
+<tr><td>Images</td><td>Three images: <code>api</code>, <code>worker</code> (runs the agent loop and sandbox) and <code>web</code> (React build served by nginx).</td></tr>
+<tr><td>CI</td><td><code>ci.yml</code> runs lint, unit, integration and Playwright tests. <code>eval.yml</code> runs a small eval set and fails the build if resolve rate drops.</td></tr>
+<tr><td>CD</td><td><code>deploy.yml</code> builds images, pushes them to a registry, then rolls out to staging. Production needs a manual approval.</td></tr>
+<tr><td>Runtime</td><td>Kubernetes with a Helm chart: api and web behind an ingress with TLS; workers scale with queue length (HPA on Redis depth).</td></tr>
+<tr><td>Sandbox safety</td><td>Sandbox containers run on a separate node pool with no network and strict CPU, memory and time limits.</td></tr>
+<tr><td>Secrets</td><td>API keys and the GitHub token live in a secret manager and are injected at runtime, never in images or <code>.env</code> files.</td></tr>
+<tr><td>Monitoring</td><td>OpenTelemetry collector sends traces to Grafana. Alerts fire on error rate, cost per run above the cap and queue backlog.</td></tr>
+</table></div>
+
+<h2 id="split">Work split for two people</h2>
+<p>Both people work on the same kinds of files and logic: each writes indexing code, a retrieval agent, an action agent, tool servers, memory, verification, security and evaluation. Nobody is stuck on only "infrastructure" or only "agents". The frontend and deployment work is split the same way.</p>
+<p><b>Shared in the first 2 days:</b> create the repo, <code>pyproject.toml</code>, <code>docker-compose.yml</code> and the empty folder skeleton (including <code>web/</code> and <code>deploy/</code>); write the data contracts together in <code>orchestrator/state.py</code>; add the sample repo in <code>tests/fixtures/</code>.</p>
+
+<h3 id="p2">Who owns what</h3>
+<p>What improved: every producer and its consumer sit with different people, so the contracts get tested from week 1; the agent count is balanced (A has the Retriever and Coder side, B the Navigator and Tester side, and the Verifier goes to B because B owns its checks); and each person owns the tests for their own files.</p>
+<div class="tw"><table>
+<tr><th>Folder</th><th>Vibhav </th><th>Yogesh</th></tr>
+<tr><td><code>indexing/</code></td><td><code>parser</code>, <code>symbol_graph</code>, <code>incremental</code></td><td><code>coverage_map</code>, <code>embedder</code>, <code>bm25</code>, <code>linker</code></td></tr>
+<tr><td><code>retrieval/</code></td><td><code>hybrid</code>, <code>graph_expand</code></td><td><code>reranker</code>, <code>impact</code></td></tr>
+<tr><td><code>agents/</code></td><td><code>base</code>, <code>retriever</code>, <code>coder</code>, <code>reflector</code></td><td><code>navigator</code>, <code>tester</code>, <code>verifier</code></td></tr>
+<tr><td><code>mcp/</code></td><td><code>client</code>, <code>github_server</code>, <code>issues_server</code></td><td><code>fs_server</code>, <code>lsp_server</code>, <code>sandbox_server</code></td></tr>
+<tr><td><code>memory/</code></td><td><code>short_term</code>, <code>policies</code></td><td><code>long_term</code>, <code>staleness</code></td></tr>
+<tr><td><code>orchestrator/</code></td><td><code>planner</code>, <code>budget</code></td><td><code>graph</code>, <code>scheduler</code></td></tr>
+<tr><td><code>verification/</code></td><td><code>citation</code>, <code>diff_checker</code></td><td><code>executable_claims</code>, <code>entailment</code></td></tr>
+<tr><td><code>security/</code></td><td><code>permissions</code>, <code>quarantine</code></td><td><code>injection_guard</code></td></tr>
+<tr><td><code>sandbox/</code></td><td><code>runner</code></td><td><code>test_detect</code></td></tr>
+<tr><td><code>llm/</code></td><td><code>client</code>, planner and coder prompts</td><td><code>router</code>, reflector and verifier prompts</td></tr>
+<tr><td><code>observability/</code>, <code>api/</code>, <code>cli/</code></td><td><code>tracing</code>, <code>api/</code> (<code>routes</code>, <code>schemas</code>, <code>auth</code>)</td><td><code>cost</code>, <code>cli/</code>, <code>api/sse.py</code></td></tr>
+<tr><td><code>web/</code></td><td>App shell, <code>api/</code>, <code>useRunStream</code>, <code>ChatPanel</code>, <code>TaskGraphView</code>, Home and Run detail pages</td><td><code>DiffViewer</code>, <code>TestReport</code>, <code>CitationList</code>, <code>CostMeter</code>, <code>ApprovalPrompt</code>, Repos, Memory, Eval and Settings pages</td></tr>
+<tr><td><code>deploy/</code>, <code>.github/</code></td><td><code>docker/</code>, <code>k8s/</code> Helm chart, <code>ci.yml</code>, <code>deploy.yml</code></td><td><code>monitoring/</code>, <code>terraform/</code>, <code>eval.yml</code>, <code>docker-compose.prod.yml</code></td></tr>
+<tr><td><code>tests/e2e/</code></td><td>Home and Run detail flows</td><td>Approval, Repos and Settings flows</td></tr>
+<tr><td><code>configs/</code></td><td><code>agents</code>, <code>budget</code>, <code>mcp_servers</code></td><td><code>retrieval</code>, <code>routing</code></td></tr>
+<tr><td><code>scripts/</code></td><td><code>index_repo</code>, <code>seed_memory</code></td><td><code>build_coverage</code></td></tr>
+<tr><td>Evaluation: metrics</td><td>Resolve rate, recall@k, citation precision</td><td>Regression rate, false-approval rate, attack success rate</td></tr>
+<tr><td>Evaluation: other</td><td>Baselines, datasets, <code>no_graph</code> and <code>no_memory</code> ablations</td><td><code>run_eval.py</code>, cost and latency, <code>no_verifier</code> and <code>no_coverage_map</code> ablations</td></tr>
+</table></div>
+
+<h3 id="wk">Week by week</h3>
+<p>Every week both people work on the same layer, so they can review each other's code and agree on the contracts. Frontend and deployment add a seventh week.</p>
+<div class="tw"><table>
+<tr><th>Week</th><th>Layer</th><th>Vibhav-j</th><th>Yogesh</th></tr>
+<tr><td>1</td><td>Index</td><td><code>parser</code>, <code>symbol_graph</code></td><td><code>embedder</code>, <code>bm25</code>, <code>coverage_map</code></td></tr>
+<tr><td>2</td><td>Tools</td><td><code>client</code>, <code>github_server</code>, <code>issues_server</code>, <code>runner</code>, llm <code>client</code></td><td><code>fs_server</code>, <code>lsp_server</code>, <code>sandbox_server</code>, <code>test_detect</code>, <code>router</code></td></tr>
+<tr><td>3</td><td>Retrieve and remember</td><td><code>hybrid</code>, <code>graph_expand</code>, <code>base</code>, Retriever, <code>short_term</code>, <code>policies</code></td><td><code>reranker</code>, <code>impact</code>, Navigator, <code>long_term</code>, <code>staleness</code></td></tr>
+<tr><td>4</td><td>Plan and act</td><td><code>planner</code>, <code>budget</code>, Coder, Reflector, <code>incremental</code></td><td><code>graph</code>, <code>scheduler</code>, Tester, <code>linker</code></td></tr>
+<tr><td>5</td><td>Verify and protect</td><td><code>citation</code>, <code>diff_checker</code>, <code>permissions</code>, <code>quarantine</code></td><td><code>executable_claims</code>, <code>entailment</code>, Verifier, <code>injection_guard</code></td></tr>
+<tr><td>6</td><td>Ship and prove</td><td><code>tracing</code>, <code>api/</code>, A's evals and ablations, README results table</td><td><code>cost</code>, <code>cli/</code>, B's evals and ablations, failure analysis, demo video</td></tr>
+<tr><td>7</td><td>Frontend and deploy</td><td><code>web/</code> shell, <code>useRunStream</code>, <code>ChatPanel</code>, <code>TaskGraphView</code>, Dockerfiles, Helm chart, <code>ci.yml</code>, <code>deploy.yml</code></td><td><code>DiffViewer</code>, <code>TestReport</code>, <code>ApprovalPrompt</code>, <code>api/sse.py</code>, <code>eval.yml</code>, monitoring, Playwright tests</td></tr>
+</table></div>
+<p>Rules: every file is reviewed by the other person; each person writes unit tests for their own files; connected files agree on the contracts in <code>state.py</code> and <code>types.ts</code> before coding; merge and run one end-to-end task every Friday.</p>
+</main>
+
+<script>
+const E=[['Where is the bug?','Retriever agent','GitHub and issues','read issue, blame','path, lines, commit'],['Who calls it?','Navigator agent','LSP server','definitions, references','call sites, imports'],['Tests covering it?','Navigator + impact','Coverage map','symbol to tests','impact set'],['Does the fix pass?','Coder + Tester','Sandbox','no network, limits','test report']];
+const B=(c,x,y,w,h,t,u)=>`<g class="b ${c}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8"/><text class="h" x="${x+w/2}" y="${y+h/2-(u?9:0)}" text-anchor="middle" dominant-baseline="central">${t}</text>${u?`<text class="s" x="${x+w/2}" y="${y+h/2+9}" text-anchor="middle" dominant-baseline="central">${u}</text>`:''}</g>`;
+const L=(a,b,c,d)=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" class="a" marker-end="url(#m)"/>`;
+let s=B('g',40,20,150,56,'User task','Bug, issue, feature')+L(192,48,248,48)+B('p',250,20,180,56,'Planner','Splits into task graph')+B('p',490,20,150,56,'Memory','Short + long-term')+L(490,48,432,48)
++`<line x1="565" y1="78" x2="565" y2="90" class="rail" stroke-dasharray="3 3"/><rect x="490" y="90" width="150" height="26" rx="4" fill="none" stroke="var(--mute)" stroke-dasharray="4 3"/><text class="s lg" x="565" y="103" text-anchor="middle" dominant-baseline="central">Stale entries dropped</text>`
++`<rect x="30" y="136" width="620" height="282" rx="12" fill="none" stroke="var(--mute)" stroke-width="1.2" stroke-dasharray="6 4"/>`+B('t',500,125,120,22,'MCP tool layer')
++`<path d="M340 78 L340 156 L44 156 L44 380" class="rail"/>`;
+E.forEach((r,i)=>{const y=176+i*60,c=y+24;s+=L(44,c,60,c)+B('p',62,y,190,48,r[0],r[1])+L(254,c,270,c)+B('t',272,y,170,48,r[2],r[3])+L(444,c,470,c)+B('g',472,y,150,48,'Evidence',r[4])+`<line x1="622" y1="${c}" x2="638" y2="${c}" class="rail"/>`});
+s+=`<path d="M638 200 L638 436 L340 436 L340 460" class="rail" marker-end="url(#m)"/>`+B('p',250,462,180,56,'Verifier','Executable checks first')+L(340,520,340,548)
++`<g class="b g"><rect x="160" y="550" width="360" height="96" rx="12"/><text class="h" x="340" y="572" text-anchor="middle" dominant-baseline="central">Cited final answer</text><text class="s" x="184" y="597" dominant-baseline="central">Minimal diff for a draft PR [1]</text><text class="s" x="184" y="616" dominant-baseline="central">Impacted tests pass, no regressions [2]</text><text class="s" x="184" y="635" dominant-baseline="central">Claims cited to repo@commit:lines [3]</text></g>`
++`<path d="M522 598 L664 598 L664 48 L642 48" class="rail" marker-end="url(#m)"/>`;
+[['p','Agents'],['t','Tools'],['g','Data']].forEach((l,i)=>{const y=572+i*20;s+=`<g class="b ${l[0]}"><rect x="40" y="${y}" width="10" height="10" rx="2"/></g><text class="s lg" x="58" y="${y+5}" dominant-baseline="central">${l[1]}</text>`});
+// Frontend row on top; the original diagram is shifted down 80px to make room
+s=`<g transform="translate(0,80)">${s}</g>`;
+s=B('n',40,6,600,56,'React web app (Vite + TypeScript)','Chat · task graph · diff viewer · citations · cost meter · approval')
++`<line x1="115" y1="64" x2="115" y2="96" class="a" marker-end="url(#m)"/><line x1="115" y1="64" x2="115" y2="96" class="a" marker-start="url(#m)" marker-end="none"/><text class="s lg" x="127" y="82" dominant-baseline="central">REST + live SSE stream (API)</text>`+s;
+// Deployment row at the bottom
+s+=`<text class="s lg" x="40" y="748" dominant-baseline="central">Deployment: how everything above is built, shipped and watched</text>`
++B('r',40,762,140,50,'Docker images','api · web · worker')+B('r',200,762,140,50,'CI/CD','test + eval gate')+B('r',360,762,140,50,'Kubernetes','Helm, HPA, ingress')+B('r',520,762,120,50,'Monitoring','OTel, Grafana')
++L(180,787,198,787)+L(340,787,358,787)+L(500,787,518,787);
+// Legend additions
+[['n','Frontend'],['r','Deploy']].forEach((l,i)=>{const y=712+i*20;s+=`<g class="b ${l[0]}"><rect x="40" y="${y}" width="10" height="10" rx="2"/></g><text class="s lg" x="58" y="${y+5}" dominant-baseline="central">${l[1]}</text>`});
+document.getElementById('d').insertAdjacentHTML('beforeend',s);
+</script>
+</body>
+</html>
