@@ -5,6 +5,10 @@ consumers can trade precision for recall.
 
 Nodes are module-qualified names (ParsedSymbol.qualname). Chunk.symbol stays local to its
 file, as defined in orchestrator/state.py.
+
+Bridge to coverage_map.py: symbol_id_of / qualname_of / to_symbol_ids convert between graph
+nodes and the "path::Class.method" ids used by CoverageMap, so impact.py can do
+    graph.neighbors(q, direction="in") -> to_symbol_ids() -> CoverageMap.tests_for()
 """
 from __future__ import annotations
 
@@ -14,6 +18,7 @@ from enum import Enum
 from typing import Iterable, Literal
 
 from repopilot.orchestrator.state import Chunk
+from repopilot.indexing.coverage_map import symbol_id
 from repopilot.indexing.parser import ImportRef, ParsedFile, ParsedSymbol
 
 Confidence = Literal["exact", "heuristic", "ambiguous"]
@@ -46,6 +51,11 @@ class SymbolGraph:
             symbol.qualname: symbol for parsed_file in files for symbol in parsed_file.symbols
         }
         self.modules: dict[str, ParsedFile] = {pf.module: pf for pf in files}
+        # coverage_map ids: "path::Class.method"
+        self._qual_to_id: dict[str, str] = {
+            q: symbol_id(s.chunk.path, s.chunk.symbol or "") for q, s in self.symbols.items()
+        }
+        self._id_to_qual: dict[str, str] = {i: q for q, i in self._qual_to_id.items()}
         self.include_heuristic, self.max_ambiguity = include_heuristic, max_ambiguity
         self.unresolved_calls = 0      # call refs resolving to nothing (builtins/external/dynamic)
         self.out_edges: dict[str, list[Edge]] = defaultdict(list)
@@ -256,6 +266,19 @@ class SymbolGraph:
                     queue.append(m)
         del dist[node]
         return dist
+
+    # ---------- bridge to coverage_map ids ("path::Class.method") ----------
+    def symbol_id_of(self, qualname: str) -> str | None:
+        """Coverage-map id for a graph node; None for modules and unknown names."""
+        return self._qual_to_id.get(qualname)
+
+    def qualname_of(self, sid: str) -> str | None:
+        """Graph node for a coverage-map id; None if unknown."""
+        return self._id_to_qual.get(sid)
+
+    def to_symbol_ids(self, qualnames: Iterable[str]) -> list[str]:
+        """Sorted, de-duplicated coverage-map ids. Module nodes are dropped."""
+        return sorted({i for q in qualnames if (i := self._qual_to_id.get(q))})
 
     def stats(self) -> dict:
         by = Counter((e.kind.value, e.confidence) for e in self._edges.values())

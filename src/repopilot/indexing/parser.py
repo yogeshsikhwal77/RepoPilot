@@ -168,7 +168,7 @@ def _module_name(relative_path: str, is_package: bool) -> str:
 def parse_file(path: Path, root: Path, commit: str) -> ParsedFile:
     if not commit:
         raise ValueError("commit must be provided when creating indexed chunks")
-    source = path.read_text(encoding="utf-8")
+    source = path.read_text(encoding="utf-8-sig")
     relative_path = path.relative_to(root).as_posix()
     is_package = path.name == "__init__.py"
     module = _module_name(relative_path, is_package)
