@@ -6,12 +6,12 @@
 <title>RepoPilot v4.1: architecture, folders and resume bullets</title>
 <style>
 :root {
-  --bg: #ffffff; /* White */
+  --bg: #ffffff;
   --ink: #1e293b;
   --mute: #64748b;
   --line: #e2e8f0;
   --soft: #f8fafc;
-  --accent: #2563eb; /* Blue */
+  --accent: #2563eb;
   box-sizing: border-box;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -20,9 +20,9 @@ html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif; }
 main { max-width: 860px; margin: 0 auto; padding: 40px 20px 80px; }
-h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; font-weight: 700; line-height: 1.2; color: #2563eb; /* Blue */ }
+h1, h2, h3 { font-family: Georgia, "Times New Roman", serif; font-weight: 700; line-height: 1.2; color: #2563eb; }
 h1 { font-size: 2.2rem; margin: 0 0 10px; letter-spacing: -.01em; }
-h2 { font-size: 1.5rem; margin: 56px 0 8px; padding-top: 14px; border-top: 2px solid #dc2626; /* Red */ }
+h2 { font-size: 1.5rem; margin: 56px 0 8px; padding-top: 14px; border-top: 2px solid #dc2626; }
 h3 { font-size: 1.15rem; margin: 36px 0 6px; }
 p, li { max-width: 72ch; }
 .lead { color: var(--mute); font-size: 1.08rem; }
@@ -34,25 +34,20 @@ svg .s { font-size: 12px; }
 .b rect { fill: var(--f); stroke: var(--k); stroke-width: 1; }
 .b .h { fill: var(--t); font-weight: 600; }
 .b .s { fill: var(--u); }
-/* Purple */
 .p { --f: #f3e8ff; --k: #9333ea; --t: #581c87; --u: #7e22ce; }
-/* Green */
 .t { --f: #dcfce7; --k: #16a34a; --t: #14532d; --u: #15803d; }
-/* Orange */
 .g { --f: #ffedd5; --k: #ea580c; --t: #7c2d12; --u: #c2410c; }
-/* Blue (frontend) */
 .n { --f: #dbeafe; --k: #2563eb; --t: #1e3a8a; --u: #1d4ed8; }
-/* Red (deployment) */
 .r { --f: #fee2e2; --k: #dc2626; --t: #7f1d1d; --u: #b91c1c; }
 .a, .rail { stroke: var(--mute); stroke-width: 1.5; fill: none; }
 svg .lg { fill: var(--mute); }
 pre { margin: 0; padding: 18px; background: var(--soft); border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; font: 13px/1.55 ui-monospace, "JetBrains Mono", Menlo, monospace; }
 pre i { color: var(--mute); font-style: normal; }
-code { font: 13px ui-monospace, Menlo, monospace; background: var(--soft); padding: 1px 5px; border-radius: 3px; color: #dc2626; /* Red */ }
+code { font: 13px ui-monospace, Menlo, monospace; background: var(--soft); padding: 1px 5px; border-radius: 3px; color: #dc2626; }
 table { border-collapse: collapse; width: 100%; font-size: 15px; }
 th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { background: var(--soft); font-weight: 600; color: #2563eb; /* Blue */ }
-.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+th { background: var(--soft); font-weight: 600; color: #2563eb; }
+.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; margin: 10px 0; }
 .tw table { min-width: 560px; }
 </style>
 </head>
@@ -168,7 +163,6 @@ s+=`<path d="M638 200 L638 436 L340 436 L340 460" class="rail" marker-end="url(#
 +`<g class="b g"><rect x="160" y="550" width="360" height="96" rx="12"/><text class="h" x="340" y="572" text-anchor="middle" dominant-baseline="central">Cited final answer</text><text class="s" x="184" y="597" dominant-baseline="central">Minimal diff for a draft PR [1]</text><text class="s" x="184" y="616" dominant-baseline="central">Impacted tests pass, no regressions [2]</text><text class="s" x="184" y="635" dominant-baseline="central">Claims cited to repo@commit:lines [3]</text></g>`
 +`<path d="M522 598 L664 598 L664 48 L642 48" class="rail" marker-end="url(#m)"/>`;
 [['p','Agents'],['t','Tools'],['g','Data']].forEach((l,i)=>{const y=572+i*20;s+=`<g class="b ${l[0]}"><rect x="40" y="${y}" width="10" height="10" rx="2"/></g><text class="s lg" x="58" y="${y+5}" dominant-baseline="central">${l[1]}</text>`});
-// Frontend row on top; the original diagram is shifted down 80px to make room
 s=`<g transform="translate(0,80)">${s}</g>`;
 s=B('n',40,6,600,56,'React web app (Vite + TypeScript)','Chat · task graph · diff viewer · citations · cost meter · approval')
 +`<line x1="115" y1="64" x2="115" y2="96" class="a" marker-end="url(#m)"/><line x1="115" y1="64" x2="115" y2="96" class="a" marker-start="url(#m)" marker-end="none"/><text class="s lg" x="127" y="82" dominant-baseline="central">REST + live SSE stream (API)</text>`+s;
