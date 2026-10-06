@@ -3,6 +3,7 @@ from textwrap import dedent
 
 import pytest
 
+from repopilot.indexing.coverage_map import symbol_id
 from repopilot.indexing.parser import parse_repo
 from repopilot.indexing.symbol_graph import EdgeKind, SymbolGraph
 
@@ -226,6 +227,30 @@ def test_neighbors_excludes_start_node_and_handles_cycles(tmp_path):
         def b(): a()
     """})
     assert graph.neighbors("m.a", hops=5) == {"m.b": 1}
+
+
+# ---------- bridge to coverage_map ids ----------
+def test_symbol_id_bridge_matches_coverage_map_format(g):
+    assert g.symbol_id_of("pkg.shop.Cart.add") == "pkg/shop.py::Cart.add"
+    assert g.symbol_id_of("pkg.shop.Cart.add") == symbol_id("pkg/shop.py", "Cart.add")
+    assert g.qualname_of("pkg/shop.py::Cart.add") == "pkg.shop.Cart.add"
+    assert g.symbol_id_of("pkg.shop") is None            # module node
+    assert g.qualname_of("nope.py::x") is None
+
+
+def test_to_symbol_ids_drops_modules_dedupes_and_sorts(g):
+    ids = g.to_symbol_ids(["pkg.shop", "pkg.util.helper", "pkg.shop.Cart.add", "pkg.util.helper"])
+    assert ids == ["pkg/shop.py::Cart.add", "pkg/util.py::helper"]
+
+
+def test_impact_walk_yields_coverage_map_ids(g):
+    reached = g.neighbors("pkg.util.helper", hops=2, direction="in")
+    assert g.to_symbol_ids(reached) == ["pkg/shop.py::Cart.add", "pkg/shop.py::checkout"]
+
+
+def test_every_graph_symbol_has_a_unique_id(g):
+    ids = [g.symbol_id_of(q) for q in g.symbols]
+    assert None not in ids and len(ids) == len(set(ids))
 
 
 # ---------- contract between parser, state.py and graph ----------

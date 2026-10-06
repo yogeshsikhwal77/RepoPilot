@@ -171,6 +171,13 @@ def test_sha256_tracks_content(tmp_path):
     assert a.sha256 == b.sha256 != c.sha256
 
 
+# ---------- encoding ----------
+def test_utf8_bom_file_is_parsed(tmp_path):
+    (tmp_path / "bom.py").write_bytes(b"\xef\xbb\xbfdef f(): pass\n")
+    pf = parse_file(tmp_path / "bom.py", tmp_path, "abc123")
+    assert [s.chunk.symbol for s in pf.symbols] == ["f"]
+
+
 # ---------- parse_repo ----------
 def test_parse_repo_skips_ignored_and_logs_broken_files(tmp_path, caplog):
     (tmp_path / "good.py").write_text("def f(): pass\n")
