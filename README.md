@@ -1,208 +1,207 @@
-# RepoPilot v3
+# RepoPilot v4.1
 https://repopilot-six.vercel.app/
 
-A verified multi-agent coding assistant for large repositories, now with a React frontend and a full deployment pipeline. The architecture picture and the folder tree come first; the written details for each are at the bottom.
+A verified multi-agent coding assistant for large repositories. This version proves it with numbers (evaluation first), makes the core algorithms visible (AST, call graph, hybrid search, graph traversal), hardens the sandbox and verifier, and measures cost control. Memory stays a stretch goal. Kubernetes, Terraform, Grafana, LSP and the VS Code extension are cut.
 
 ## Architecture
+
+See the architecture diagram on the project page above. In short: a React app calls the API (REST plus a live SSE stream). The API starts the orchestrator, which drives specialist agents. Agents get evidence from the index and retrieval layer and act only through the tool layer. Every LLM call goes through the router and budget. An evaluation harness measures the whole system, and Docker, CI with an eval gate, a free-tier live demo and OTel tracing ship and watch it.
+
+## Results
+
+Fill this table only with numbers from `eval/reports/`. Every row comes from 3 runs on a fixed SWE-bench Lite subset.
+
+| Config | Resolve rate | Regression rate | Cost per resolved task |
+| --- | --- | --- | --- |
+| Single call | [Z]% | [ ] | [ ] |
+| Plain RAG | [Y]% | [ ] | [ ] |
+| RepoPilot (full) | [X]% | [ ] | [ ] |
+| no_graph | [ ]% | [ ] | [ ] |
+| no_coverage_map | [ ]% | [ ] | [ ] |
+| no_verifier | [ ]% | [ ] | [ ] |
+| no_router | [ ]% | [ ] | [ ] |
+
+Also reported: recall@k with and without the call graph, false approvals with and without the verifier, and prompt-injection attacks blocked versus not blocked.
 
 ## Folder structure
 
 ```
 repopilot/
-├── README.md
+├── README.md                      # claim, results table, demo gif, architecture, limitations
+├── Makefile                       # make test, make eval, make demo
+├── eval/                          # the proof: built first, shown first
+│   ├── datasets/                  # task_ids.txt (fixed SWE-bench Lite subset), custom_questions, injection_attacks (.jsonl)
+│   ├── baselines/                 # single_call.py, plain_rag.py
+│   ├── ablations/                 # no_graph, no_coverage_map, no_verifier, no_router, no_memory
+│   ├── cache/                     # cached model outputs so anyone can re-check the table
+│   ├── metrics.py                 # resolve rate, regression rate, recall@k, false approvals, cost per resolved task
+│   ├── run_eval.py                # 3 repeats per config, reports mean and spread
+│   └── reports/                   # results.md, ablation_table.md, failure_cases.csv
 ├── pyproject.toml
 ├── docker-compose.yml             # api, web, postgres, redis, qdrant
-├── docker-compose.prod.yml        # production overrides
 ├── .env.example
-├── .github/workflows/             # ci.yml, eval.yml, deploy.yml
+├── .github/workflows/             # ci.yml (lint, tests, eval gate), eval.yml (full eval, manual)
 ├── configs/
 │   ├── agents.yaml                # models, step limits per agent
-│   ├── budget.yaml                # token, cost, loop caps
+│   ├── budget.yaml                # token, dollar, tool-call and loop caps
+│   ├── routing.yaml               # cheap model first, escalation rules
 │   ├── mcp_servers.yaml           # servers and tool scopes
-│   ├── retrieval.yaml             # chunking, top-k, hop limit
-│   └── routing.yaml               # small/large model rules
+│   └── retrieval.yaml             # chunking, top-k, hop limit, fusion weights
 ├── src/repopilot/
-│   ├── api/                       # main.py, routes.py, schemas.py, sse.py, auth.py
-│   ├── orchestrator/              # planner, graph, scheduler, state, budget
+│   ├── indexing/                  # the algorithms live here
+│   │   ├── parser.py              # tree-sitter AST for each file
+│   │   ├── symbol_graph.py        # functions, classes, calls and imports as a directed graph
+│   │   ├── coverage_map.py        # symbol to covering tests
+│   │   ├── bm25.py                # own implementation, checked against a library
+│   │   └── embedder.py
+│   ├── retrieval/
+│   │   ├── hybrid.py              # BM25 + vectors with rank fusion
+│   │   ├── graph_expand.py        # BFS over the call graph with a hop limit
+│   │   ├── reranker.py
+│   │   └── impact.py              # reverse traversal: changed symbols to affected tests
+│   ├── orchestrator/              # planner, graph (LangGraph), scheduler, state, budget
 │   ├── agents/                    # base, retriever, navigator, coder, tester, reflector, verifier
-│   ├── indexing/                  # parser, symbol_graph, coverage_map, embedder, bm25, incremental, linker
-│   ├── retrieval/                 # hybrid, reranker, graph_expand, impact
-│   ├── mcp/
-│   │   ├── client.py
-│   │   └── servers/               # github, fs, lsp, issues, sandbox
-│   ├── memory/                    # short_term, long_term, staleness, policies
+│   ├── sandbox/
+│   │   ├── runner.py              # Docker runner, no network
+│   │   ├── limits.py              # CPU, memory, process and time limits
+│   │   └── test_detect.py
 │   ├── verification/              # citation, executable_claims, entailment, diff_checker
-│   ├── sandbox/                   # runner, test_detect
 │   ├── security/                  # permissions, injection_guard, quarantine
 │   ├── llm/
 │   │   ├── client.py
-│   │   ├── router.py
+│   │   ├── router.py              # cheap model first, escalate on failure or low confidence
 │   │   └── prompts/               # planner, coder, reflector, verifier (.md)
+│   ├── mcp/
+│   │   ├── client.py
+│   │   └── servers/               # github, fs, sandbox
+│   ├── memory/                    # short_term (core); long_term, staleness (stretch)
+│   ├── api/                       # main.py, routes.py, schemas.py, sse.py
 │   └── observability/             # tracing.py, cost.py
 ├── web/                           # React frontend (Vite + TypeScript)
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   ├── .env.example
+│   ├── package.json, vite.config.ts, Dockerfile, nginx.conf
 │   └── src/
-│       ├── main.tsx
-│       ├── App.tsx
-│       ├── api/                   # client.ts, sse.ts, types.ts (mirrors schemas.py)
-│       ├── pages/                 # Home, RunDetail, Repos, Memory, Eval, Settings
+│       ├── api/                   # client.ts, sse.ts, types.ts (generated from schemas.py)
+│       ├── pages/                 # Home, RunDetail, Repos, Eval
 │       ├── components/            # ChatPanel, TaskGraphView, DiffViewer, TestReport, CitationList, CostMeter, ApprovalPrompt
-│       ├── hooks/                 # useRunStream, useRepos
-│       ├── store/                 # run state (Zustand)
-│       └── styles/                # theme.css
+│       ├── hooks/                 # useRunStream
+│       └── store/                 # Zustand run state
 ├── deploy/
 │   ├── docker/                    # api.Dockerfile, worker.Dockerfile
-│   ├── k8s/                       # Helm chart: api, web, worker, ingress, hpa, secrets
-│   ├── terraform/                 # cloud network, cluster, database (optional)
-│   └── monitoring/                # otel-collector.yaml, grafana dashboards, alerts
+│   ├── demo/                      # free-tier host config for the live demo
+│   └── tracing/                   # otel-collector.yaml
 ├── cli/repopilot.py
-├── extensions/vscode/
-├── eval/
-│   ├── datasets/                  # swebench_subset, custom_questions, injection_attacks (.jsonl)
-│   ├── baselines/                 # plain_rag.py, single_call.py
-│   ├── ablations/                 # no_graph, no_memory, no_verifier, no_coverage_map
-│   ├── metrics.py
-│   ├── run_eval.py
-│   └── reports/
 ├── tests/
-│   ├── unit/
+│   ├── unit/                      # includes bm25 vs library, graph traversal, sandbox no-network test
 │   ├── integration/
-│   ├── e2e/                       # Playwright tests for the web app
+│   ├── e2e/                       # Playwright
 │   └── fixtures/sample_repo/
-├── scripts/                       # index_repo.py, seed_memory.py, build_coverage.py
-└── docs/                          # architecture.md, evaluation.md, deployment.md, failure_analysis.md, demo.gif
+├── scripts/                       # index_repo.py, build_coverage.py, seed_memory.py
+└── docs/                          # architecture.md, evaluation.md, design_decisions.md, failure_analysis.md, limitations.md, writeup.md, demo.gif
 ```
 
 ## Details
 
-### 1. Architecture details
+### 1. How it works
 
-The system is seven layers. The React web app, CLI and VS Code extension (interfaces) call the API. The API starts the orchestrator, which drives specialist agents. Agents reach the outside world only through the MCP tool layer, and read evidence from the retrieval and index layer. Memory and security wrap everything. The deployment layer packages, ships and monitors all of it.
+One task runs through these states. Every LLM call goes through the router and budget.
 
-One task runs through these states:
+1. **Plan:** the Planner splits the task into a graph of dependent sub-questions.
+2. **Retrieve:** Retriever (hybrid search) and Navigator (call graph, coverage map) run in parallel and produce evidence plus the impact set: changed code and the tests that cover it.
+3. **Draft:** Coder writes the smallest diff from retrieved evidence only.
+4. **Test:** Tester runs impacted tests first, then the full suite, in a no-network sandbox with CPU, memory and time limits.
+5. **Reflect:** on failure, Reflector writes a short note and the flow returns to Draft, up to the loop cap in `budget.yaml`.
+6. **Verify:** executable checks first (AST, graph query, sandbox run), LLM judge only as fallback. Unsupported claims are removed.
+7. **Respond:** diff, test report, claims cited to `repo@commit:lines`, and run cost, streamed live to the web app. (Remembering verified findings is the stretch goal.)
 
-1. **Plan:** the Planner reads memory and builds a task graph of dependent sub-questions.
-2. **Retrieve:** Retriever and Navigator run in parallel and produce evidence and the impact set (code plus the tests that cover it).
-3. **Draft:** Coder writes the smallest diff, using only retrieved evidence and any reflection notes.
-4. **Test:** Tester runs impacted tests first, then the full suite, in a no-network sandbox.
-5. **Reflect:** on failure, Reflector writes a short note on why it failed and the flow returns to Draft, up to the loop cap in `budget.py`.
-6. **Verify:** the Verifier runs executable checks (AST, graph query, sandbox run) first and falls back to an LLM judge. Unsupported claims are removed.
-7. **Remember:** verified findings are stored in long-term memory with hashes of their source files.
-8. **Respond:** return the diff, test report, cited claims and run cost. Each state change is also streamed to the web app as it happens.
+Design rules:
 
-Design rules that hold across the system:
-
-- **Typed hand-offs.** Agents exchange only `Evidence`, `TaskNode`, `Claim`, `Patch`, `TestReport`, `Verdict` and `Answer` objects, so each agent can be tested alone.
+- **Evidence first.** Every feature has an ablation and a metric. If it does not move a number, it gets cut.
+- **Typed hand-offs.** Agents exchange only `Evidence`, `TaskNode`, `Claim`, `Patch`, `TestReport`, `Verdict` and `Answer`, defined in `orchestrator/state.py`, so each agent is testable alone.
 - **Untrusted text.** Repo files, issues and PR comments are quoted as data. A tool call built from untrusted text is blocked unless the Planner approved it.
-- **Least privilege.** Write tools stay off until the Verifier stage. The agent opens a draft PR and never merges.
-- **Cost control.** The router sends easy steps to a small model and escalates on low confidence. The budget caps tokens, dollars, tool calls and loops, and returns a partial answer instead of looping.
-- **Self-healing memory.** When a source file's hash changes, the memory entry is re-verified, downgraded or deleted.
-- **One contract for UI and API.** `web/src/api/types.ts` is generated from `schemas.py`, so the frontend and backend cannot drift apart.
+- **Least privilege.** Write tools stay off until the Verifier stage. It opens a draft PR and never merges.
+- **Measured cost control.** Cheap model first, escalate on failure or low confidence. The budget caps tokens, dollars, tool calls and loops, and returns a partial answer instead of looping.
+- **One contract.** `web/src/api/types.ts` is generated from `schemas.py`.
 
-### 2. Folder structure details
+### 2. Folder details
 
-| Folder | What lives there | Key files |
+| Folder | Purpose | Key files |
 | --- | --- | --- |
-| `configs/` | All tunable settings, so behavior changes without code changes | `agents`, `budget`, `mcp_servers`, `retrieval`, `routing` (.yaml) |
-| `api/` | HTTP interface to start and watch runs, with login and a live event stream | `main.py`, `routes.py`, `schemas.py`, `sse.py`, `auth.py` |
-| `orchestrator/` | Plans the work and drives the agent loop | `planner`, `graph` (LangGraph), `scheduler`, `state`, `budget` |
-| `agents/` | Specialists with narrow jobs and fixed tool access | `retriever`, `navigator`, `coder`, `tester`, `reflector`, `verifier` |
-| `indexing/` | Turns a repo into searchable structure: chunks, symbol graph, test coverage map | `parser`, `symbol_graph`, `coverage_map`, `embedder`, `bm25`, `incremental`, `linker` |
-| `retrieval/` | Finds the right evidence, not just similar text | `hybrid`, `reranker`, `graph_expand`, `impact` |
-| `mcp/` | One client plus tool servers for GitHub, files, LSP, issues and the sandbox | `client.py`, `servers/*` |
-| `memory/` | Per-run scratchpad and long-term conventions, with staleness checks | `short_term`, `long_term`, `staleness`, `policies` |
-| `verification/` | Decides which claims and patches are allowed out | `citation`, `executable_claims`, `entailment`, `diff_checker` |
-| `sandbox/` | Docker runner with no network and resource limits; detects the test framework | `runner`, `test_detect` |
-| `security/` | Permissions, prompt-injection defense, quarantine of untrusted input | `permissions`, `injection_guard`, `quarantine` |
-| `llm/` | Model client, cost-aware router, prompt files | `client`, `router`, `prompts/*.md` |
-| `observability/` | OpenTelemetry traces and token and cost accounting | `tracing`, `cost` |
-| `web/` | React single-page app to submit tasks, watch runs live and review results | `pages/`, `components/`, `hooks/useRunStream`, `api/` |
-| `deploy/` | Everything needed to build, ship and watch the system in production | `docker/`, `k8s/`, `terraform/`, `monitoring/` |
-| `.github/workflows/` | Automatic checks and releases on every push | `ci.yml`, `eval.yml`, `deploy.yml` |
-| `eval/` | Datasets, baselines, ablations and metrics that prove each upgrade helps | `run_eval.py`, `metrics.py`, `ablations/` |
-| `tests/` | Unit, integration and end-to-end tests plus a small sample repo | `unit/`, `integration/`, `e2e/`, `fixtures/` |
-| `scripts/` | One-off setup commands | `index_repo`, `seed_memory`, `build_coverage` |
-| `cli/`, `extensions/vscode/`, `docs/` | Command-line tool, editor extension, written docs and demo | `repopilot.py` |
+| `eval/` | Fixed task subset, baselines, ablations and metrics; cached outputs so the table can be re-checked | `run_eval.py`, `metrics.py` |
+| `indexing/` | Turns a repo into an AST, a symbol graph and a test coverage map | `parser`, `symbol_graph`, `coverage_map`, `bm25` |
+| `retrieval/` | Finds evidence, not just similar text: fusion search, graph BFS, reverse impact traversal | `hybrid`, `graph_expand`, `impact` |
+| `orchestrator/`, `agents/` | LangGraph state machine and narrow specialists with fixed tool access | `planner`, `graph`, `coder`, `verifier` |
+| `sandbox/` | No-network Docker runner with resource limits; detects the test framework | `runner`, `limits`, `test_detect` |
+| `verification/` | Decides which claims and patches may leave the system | `executable_claims`, `diff_checker` |
+| `security/` | Permissions, prompt-injection guard, quarantine of untrusted input | `injection_guard`, `permissions` |
+| `llm/`, `configs/` | Cost-aware router, prompt files, all tunable settings | `router`, `budget.yaml` |
+| `mcp/` | One client and three tool servers (GitHub, files, sandbox) | `client.py`, `servers/*` |
+| `api/`, `web/` | REST plus SSE backend and the React app | `sse.py`, `useRunStream` |
+| `deploy/`, `.github/` | Docker images, free-tier demo config, tracing, CI with an eval gate | `ci.yml`, `demo/` |
 
-### 3. Frontend details (React)
+### 3. Frontend (React)
 
-The web app is a Vite + TypeScript single-page app. It talks to the API over REST for actions and Server-Sent Events (SSE) for live progress, so there is no polling.
+Vite + TypeScript. REST for actions, Server-Sent Events for live progress, so there is no polling. Four screens only.
 
 | Screen | What the user does | Main components |
 | --- | --- | --- |
-| Home | Type a bug, issue link or feature request and start a run | `ChatPanel` |
-| Run detail | Watch the plan, agents and tests update live; approve or reject the draft PR | `TaskGraphView`, `DiffViewer`, `TestReport`, `CitationList`, `CostMeter`, `ApprovalPrompt` |
-| Repos | Connect a repo, start indexing, see index status | repo list, index progress bar |
-| Memory | Browse stored conventions and delete stale ones | memory table with source hashes |
-| Eval | View resolve rate, regression rate, cost and ablation results | charts from `eval/reports/` |
-| Settings | Choose models, budget caps and tool permissions | forms that write to `configs/` via the API |
+| Home | Enter a bug, issue link or feature request and start a run | `ChatPanel` |
+| Run detail | Watch the plan, agents and tests live; approve or reject the draft PR | `TaskGraphView`, `DiffViewer`, `TestReport`, `CitationList`, `CostMeter`, `ApprovalPrompt` |
+| Repos | Connect a repo and watch indexing progress | repo list, progress bar |
+| Eval | See resolve rate, regression rate, cost and the ablation table | charts from `eval/reports/` |
 
-- **Live stream.** `useRunStream` opens one SSE connection per run and updates the store as each state (Plan, Retrieve, Draft, Test, Reflect, Verify) finishes.
-- **Human approval.** Opening the draft PR needs a click on `ApprovalPrompt`. This keeps the "never merges on its own" rule visible to the user.
-- **Citations you can click.** Every claim in `CitationList` links to `repo@commit:lines`, shown in `DiffViewer`.
-- **Auth.** Login through GitHub OAuth; the API issues a short-lived token that the app keeps in memory, not in local storage.
-- **Styling.** The same white, blue, red, purple, green and orange theme as this page, defined once in `styles/theme.css`.
+- **Human approval.** Opening a draft PR needs a click on `ApprovalPrompt`, which keeps "never merges on its own" visible.
+- **Citations you can click.** Every citation links to `repo@commit:lines` in `DiffViewer`.
+- **Cut:** the Memory and Settings pages and the OAuth login. The demo uses a single token from the environment.
 
-### 4. Deployment details
+### 4. Deployment
 
 | Piece | How it works |
 | --- | --- |
-| Local | `docker compose up` starts api, web, postgres, redis and qdrant with one command. |
-| Images | Three images: `api`, `worker` (runs the agent loop and sandbox) and `web` (React build served by nginx). |
-| CI | `ci.yml` runs lint, unit, integration and Playwright tests. `eval.yml` runs a small eval set and fails the build if resolve rate drops. |
-| CD | `deploy.yml` builds images, pushes them to a registry, then rolls out to staging. Production needs a manual approval. |
-| Runtime | Kubernetes with a Helm chart: api and web behind an ingress with TLS; workers scale with queue length (HPA on Redis depth). |
-| Sandbox safety | Sandbox containers run on a separate node pool with no network and strict CPU, memory and time limits. |
-| Secrets | API keys and the GitHub token live in a secret manager and are injected at runtime, never in images or `.env` files. |
-| Monitoring | OpenTelemetry collector sends traces to Grafana. Alerts fire on error rate, cost per run above the cap and queue backlog. |
+| Local | `docker compose up` starts api, web, postgres, redis and qdrant. |
+| Images | `api`, `worker` (agent loop and sandbox) and `web` (React build behind nginx). |
+| CI | `ci.yml` runs lint, unit, integration and Playwright tests plus a small eval gate that fails if resolve rate drops. `eval.yml` runs the full eval by hand. |
+| Live demo | One free-tier host from `deploy/demo/`, with a hard budget cap so the demo cannot overspend. |
+| Sandbox safety | No network, CPU, memory, process and time limits, covered by a no-network unit test. |
+| Secrets | Injected through environment variables, never baked into images. |
+| Tracing | OpenTelemetry traces and a per-run cost log. |
 
 ## Work split for two people
 
-Both people work on the same kinds of files and logic: each writes indexing code, a retrieval agent, an action agent, tool servers, memory, verification, security and evaluation. Nobody is stuck on only "infrastructure" or only "agents". The frontend and deployment work is split the same way.
+Both people write core algorithms, an agent, tests and evaluation code. Every producer and its consumer sit with different people, so contracts get tested from week 1, and each person owns the tests for their own files.
 
-**Shared in the first 2 days:** create the repo, `pyproject.toml`, `docker-compose.yml` and the empty folder skeleton (including `web/` and `deploy/`); write the data contracts together in `orchestrator/state.py`; add the sample repo in `tests/fixtures/`.
+**Shared in the first 2 days:** repo, `pyproject.toml`, `docker-compose.yml`, `Makefile`, folder skeleton, data contracts in `orchestrator/state.py`, the sample repo in `tests/fixtures/`, and the fixed task list in `eval/datasets/task_ids.txt`.
 
 ### Who owns what
 
-What improved: every producer and its consumer sit with different people, so the contracts get tested from week 1; the agent count is balanced (A has the Retriever and Coder side, B the Navigator and Tester side, and the Verifier goes to B because B owns its checks); and each person owns the tests for their own files.
-
-| Folder | Person A | Person B |
+| Area | Vibhav-j | Yogesh |
 | --- | --- | --- |
-| `indexing/` | `parser`, `symbol_graph`, `incremental` | `coverage_map`, `embedder`, `bm25`, `linker` |
+| `indexing/` | `parser`, `symbol_graph` | `bm25` (plus test against a library), `embedder`, `coverage_map` |
 | `retrieval/` | `hybrid`, `graph_expand` | `reranker`, `impact` |
-| `agents/` | `base`, `retriever`, `coder`, `reflector` | `navigator`, `tester`, `verifier` |
-| `mcp/` | `client`, `github_server`, `issues_server` | `fs_server`, `lsp_server`, `sandbox_server` |
-| `memory/` | `short_term`, `policies` | `long_term`, `staleness` |
+| `agents/` | `base`, Retriever, Coder, Reflector | Navigator, Tester, Verifier |
 | `orchestrator/` | `planner`, `budget` | `graph`, `scheduler` |
-| `verification/` | `citation`, `diff_checker` | `executable_claims`, `entailment` |
-| `security/` | `permissions`, `quarantine` | `injection_guard` |
-| `sandbox/` | `runner` | `test_detect` |
-| `llm/` | `client`, planner and coder prompts | `router`, reflector and verifier prompts |
-| `observability/`, `api/`, `cli/` | `tracing`, `api/` (`routes`, `schemas`, `auth`) | `cost`, `cli/`, `api/sse.py` |
-| `web/` | App shell, `api/`, `useRunStream`, `ChatPanel`, `TaskGraphView`, Home and Run detail pages | `DiffViewer`, `TestReport`, `CitationList`, `CostMeter`, `ApprovalPrompt`, Repos, Memory, Eval and Settings pages |
-| `deploy/`, `.github/` | `docker/`, `k8s/` Helm chart, `ci.yml`, `deploy.yml` | `monitoring/`, `terraform/`, `eval.yml`, `docker-compose.prod.yml` |
-| `tests/e2e/` | Home and Run detail flows | Approval, Repos and Settings flows |
-| `configs/` | `agents`, `budget`, `mcp_servers` | `retrieval`, `routing` |
-| `scripts/` | `index_repo`, `seed_memory` | `build_coverage` |
-| Evaluation: metrics | Resolve rate, recall@k, citation precision | Regression rate, false-approval rate, attack success rate |
-| Evaluation: other | Baselines, datasets, `no_graph` and `no_memory` ablations | `run_eval.py`, cost and latency, `no_verifier` and `no_coverage_map` ablations |
+| `sandbox/` | `runner`, `limits` | `test_detect`, no-network test |
+| `verification/`, `security/` | `citation`, `diff_checker`, `permissions`, `quarantine` | `executable_claims`, `entailment`, `injection_guard` |
+| `llm/`, `mcp/` | llm `client`, planner and coder prompts, mcp `client`, github server | `router`, reflector and verifier prompts, fs and sandbox servers |
+| `api/`, `observability/`, `cli/` | `routes`, `schemas`, `tracing` | `sse.py`, `cost`, `cli/` |
+| `web/` | App shell, `useRunStream`, Home and Run detail, `ChatPanel`, `TaskGraphView` | `DiffViewer`, `TestReport`, `CitationList`, `CostMeter`, `ApprovalPrompt`, Repos and Eval pages |
+| `eval/` | `datasets`, baselines, `no_graph` and `no_router` ablations, recall@k, resolve rate, cost per resolved task | `run_eval.py`, `cache`, `no_verifier` and `no_coverage_map` ablations, regression rate, false approvals, attack success |
+| Deploy and CI | Dockerfiles, `ci.yml`, `demo/` | `eval.yml`, `otel-collector.yaml`, Playwright tests |
 
 ### Week by week
 
-Every week both people work on the same layer, so they can review each other's code and agree on the contracts. Frontend and deployment add a seventh week.
+Evaluation starts in week 1, so every later feature is measured the week it lands. Stretch memory only starts if week 6 finishes early.
 
-| Week | Layer | Vibhav-j | Yogesh |
+| Week | Focus | Vibhav-j | Yogesh |
 | --- | --- | --- | --- |
-| 1 | Index | `parser`, `symbol_graph` | `embedder`, `bm25`, `coverage_map` |
-| 2 | Tools | `client`, `github_server`, `issues_server`, `runner`, llm `client` | `fs_server`, `lsp_server`, `sandbox_server`, `test_detect`, `router` |
-| 3 | Retrieve and remember | `hybrid`, `graph_expand`, `base`, Retriever, `short_term`, `policies` | `reranker`, `impact`, Navigator, `long_term`, `staleness` |
-| 4 | Plan and act | `planner`, `budget`, Coder, Reflector, `incremental` | `graph`, `scheduler`, Tester, `linker` |
-| 5 | Verify and protect | `citation`, `diff_checker`, `permissions`, `quarantine` | `executable_claims`, `entailment`, Verifier, `injection_guard` |
-| 6 | Ship and prove | `tracing`, `api/`, A's evals and ablations, README results table | `cost`, `cli/`, B's evals and ablations, failure analysis, demo video |
-| 7 | Frontend and deploy | `web/` shell, `useRunStream`, `ChatPanel`, `TaskGraphView`, Dockerfiles, Helm chart, `ci.yml`, `deploy.yml` | `DiffViewer`, `TestReport`, `ApprovalPrompt`, `api/sse.py`, `eval.yml`, monitoring, Playwright tests |
+| 1 | Index and eval skeleton | `parser`, `symbol_graph`, task list, `single_call` baseline | `bm25`, `embedder`, `coverage_map`, `metrics.py`, `run_eval.py` |
+| 2 | Tools and sandbox | mcp `client`, github server, llm `client`, `runner`, `limits` | fs and sandbox servers, `test_detect`, `router`, no-network test |
+| 3 | Retrieve | `hybrid`, `graph_expand`, Retriever, `plain_rag` baseline | `reranker`, `impact`, Navigator; first recall@k table |
+| 4 | Plan and act | `planner`, `budget`, Coder, Reflector | `graph`, `scheduler`, Tester; first end-to-end run on the sample repo |
+| 5 | Verify and protect | `citation`, `diff_checker`, `permissions`, `quarantine`, `no_graph`, `no_router` | `executable_claims`, `entailment`, Verifier, `injection_guard`, `no_verifier`, `no_coverage_map`, attack suite |
+| 6 | Interface, ship and write-up | React shell, Home and Run detail, `routes`, Dockerfiles, `ci.yml`, `demo/`, README results table | Diff, test and approval components, Repos and Eval pages, `sse.py`, `eval.yml`, failure analysis, limitations, demo gif |
 
-Rules: every file is reviewed by the other person; each person writes unit tests for their own files; connected files agree on the contracts in `state.py` and `types.ts` before coding; merge and run one end-to-end task every Friday.
+Rules: every file is reviewed by the other person; contracts in `state.py` and `types.ts` are agreed before coding; one end-to-end task runs every Friday; the full eval runs 3 times per config before any number goes into the README.
+
+## Cut and stretch
+
+Cut: Kubernetes and Helm, Terraform, Grafana dashboards, LSP server, VS Code extension, issues server, OAuth login, Memory and Settings pages. Stretch: long-term memory with staleness checks, only after the `no_memory` ablation can show it helps. Whatever is cut or unfinished goes into `docs/limitations.md` instead of being implied.
