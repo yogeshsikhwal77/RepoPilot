@@ -1,74 +1,107 @@
 # ==========================================
-# Environment Variables & Secrets
+# Environment variables & secrets
 # ==========================================
 .env
 .env.*
 !.env.example
 *.pem
+*.key
+*.p12
 secrets.json
+credentials.json
+service-account*.json
 
 # ==========================================
-# Python (API, Agents, Orchestrator)
+# Python (API, agents, orchestrator)
 # ==========================================
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 
-# Virtual Environments
+# Virtual environments
 venv/
 env/
 .venv/
 .env_python/
 
-# Testing & Type Checking
+# Testing, coverage & type checking
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
 .coverage
+.coverage.*
 coverage.xml
 htmlcov/
-.tox/
 
 # Build artifacts
 build/
 dist/
 *.egg-info/
 .eggs/
+pip-wheel-metadata/
 
 # ==========================================
-# Node.js & React (Frontend in web/)
+# RepoPilot generated artifacts
+# ==========================================
+# Embedding cache (CachedEmbedder default path) and built indexes
+.cache/
+.repopilot/
+indexes/
+*.sqlite
+# Cloned repos and SWE-bench working copies
+workspaces/
+repos_cache/
+
+# ==========================================
+# Node.js & React (frontend in web/)
 # ==========================================
 web/node_modules/
 web/dist/
 web/build/
+web/.vite/
+web/coverage/
 web/.npm/
+web/.eslintcache
+web/dist-ssr/
+*.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-web/.eslintcache
-web/dist-ssr/
+
+# Playwright
+playwright-report/
+test-results/
+web/playwright-report/
+web/test-results/
 
 # ==========================================
-# Local Data & Docker Volumes
+# Local data & Docker volumes
 # ==========================================
-# (In case you bind-mount volumes locally instead of using Docker named volumes)
+# Anchored to the repo root so it cannot hide folders like tests/fixtures/data/
+/data/
 postgres_data/
 redis_data/
 qdrant_data/
-data/
+docker-compose.override.yml
 
 # ==========================================
-# Evaluations & Sandbox
+# Evaluations & sandbox
 # ==========================================
-# Ignore large model generated reports, keep the folder structure
-eval/reports/*
-!eval/reports/.gitkeep
+# KEEP in git: eval/cache/ (cached model outputs so anyone can re-check the table)
+# KEEP in git: eval/reports/results.md, ablation_table.md, failure_cases.csv
+# IGNORE only the bulky raw run dumps:
+eval/reports/raw/
+eval/reports/*.tmp
 
-# Ignore temporary files created by the Sandbox runner
+# Temporary files created by the sandbox runner
 sandbox_tmp/
 sandbox_workspace/
 
 # ==========================================
-# Logs & Tracing
+# Logs & tracing
 # ==========================================
 *.log
 logs/
