@@ -28,3 +28,7 @@ dev = [
     "isort",
     "mypy"
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
