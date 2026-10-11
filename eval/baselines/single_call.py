@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import re
 import time
 from dataclasses import dataclass
@@ -7,11 +6,13 @@ from typing import Any, Dict, Optional
 
 from eval.datasets.tasks import TaskInstance
 
+# Official Google GenAI SDK
+from google import genai
+from google.genai import types
 
 @dataclass
 class BaselineResult:
     """Encapsulates the output of a baseline execution."""
-
     instance_id: str
     patch: str
     prompt_tokens: int
@@ -21,12 +22,10 @@ class BaselineResult:
     raw_response: str
     error: Optional[str] = None
 
-
 SINGLE_CALL_PROMPT_TEMPLATE = """You are an expert software engineer tasked with fixing an issue in a Python repository.
 
 ### Issue Description
 {problem_statement}
-
 {hints_section}
 
 ### Instructions
@@ -34,25 +33,27 @@ SINGLE_CALL_PROMPT_TEMPLATE = """You are an expert software engineer tasked with
 2. Produce a valid unified git diff (`git diff`) that resolves the issue.
 3. Output ONLY the git diff enclosed inside a ```diff code block.
 4. Do not include markdown commentary outside the diff block.
-
 ```diff
 """
-
 
 class SingleCallBaseline:
     """B0 Baseline: Single LLM call with no retrieval, no tools, and no verification loop."""
 
     def __init__(
         self,
-        llm_client: Any,
-        model_name: str = "gpt-4o-mini",
-        cost_per_1k_input: float = 0.00015,
-        cost_per_1k_output: float = 0.0006,
+        api_key: Optional[str] = None,
+        model_name: str = "gemini-2.0-flash", 
+        cost_per_1m_input: float = 0.075, # Adjust based on the model tier
+        cost_per_1m_output: float = 0.30, # Adjust based on the model tier
     ) -> None:
-        self.client = llm_client
+        # Initialize the official Google GenAI SDK client
+        # If api_key is None, it defaults to the GEMINI_API_KEY environment variable.
+        self.client = genai.Client(api_key=api_key)
         self.model_name = model_name
-        self.cost_per_1k_input = cost_per_1k_input
-        self.cost_per_1k_output = cost_per_1k_output
+        
+        # Store as cost per 1 token for easier calculation
+        self.cost_per_input_token = cost_per_1m_input / 1_000_000
+        self.cost_per_output_token = cost_per_1m_output / 1_000_000
 
     def _format_prompt(self, task: TaskInstance) -> str:
         hints = f"### Additional Hints\n{task.hints_text}" if task.hints_text else ""
@@ -67,42 +68,46 @@ class SingleCallBaseline:
         match = re.search(pattern, raw_text, re.DOTALL)
         if match:
             return match.group(1).strip()
-        
+            
         # Fallback: Check if output starts directly with 'diff --git'
         if "diff --git" in raw_text:
             start_idx = raw_text.find("diff --git")
             return raw_text[start_idx:].strip()
-
+            
         return ""
 
     def run(self, task: TaskInstance) -> BaselineResult:
-        """Runs the single call baseline on a single task instance."""
+        """Runs the single call baseline on a single task instance using Gemini."""
         prompt = self._format_prompt(task)
         start_time = time.perf_counter()
-
+        
         try:
-            # Universal LLM invocation layer
-            response = self.client.generate(
+            # Gemini API invocation using google.genai
+            response = self.client.models.generate_content(
                 model=self.model_name,
-                prompt=prompt,
-                temperature=0.0,
-                max_tokens=2048,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.0,
+                    max_output_tokens=2048,
+                )
             )
             
             elapsed_time = time.perf_counter() - start_time
             
-            raw_text = response.get("text", "")
-            prompt_tokens = response.get("prompt_tokens", 0)
-            completion_tokens = response.get("completion_tokens", 0)
-
+            raw_text = response.text or ""
+            
+            # Extract token usage safely
+            prompt_tokens = 0
+            completion_tokens = 0
+            if response.usage_metadata:
+                prompt_tokens = response.usage_metadata.prompt_token_count or 0
+                completion_tokens = response.usage_metadata.candidates_token_count or 0
+                
             # Calculate cost
-            cost = (
-                (prompt_tokens / 1000.0) * self.cost_per_1k_input
-                + (completion_tokens / 1000.0) * self.cost_per_1k_output
-            )
-
+            cost = (prompt_tokens * self.cost_per_input_token) + (completion_tokens * self.cost_per_output_token)
+            
             patch = self._extract_diff(raw_text)
-
+            
             return BaselineResult(
                 instance_id=task.instance_id,
                 patch=patch,
@@ -112,7 +117,7 @@ class SingleCallBaseline:
                 latency_seconds=round(elapsed_time, 3),
                 raw_response=raw_text,
             )
-
+            
         except Exception as e:
             elapsed_time = time.perf_counter() - start_time
             return BaselineResult(

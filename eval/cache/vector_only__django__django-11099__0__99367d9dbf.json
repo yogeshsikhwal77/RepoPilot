@@ -1,0 +1,272 @@
+{
+  "task_id": "django__django-11099",
+  "config": "vector_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "django/contrib/auth/validators.py:18-25",
+      "citation": {
+        "path": "django/contrib/auth/validators.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 18,
+        "end_line": 25
+      },
+      "content": "@deconstructible\nclass UnicodeUsernameValidator(validators.RegexValidator):\n    regex = r'^[\\w.@+-]+$'\n    message = _(\n        'Enter a valid username. This value may contain only letters, '\n        'numbers, and @/./+/-/_ characters.'\n    )\n    flags = 0",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.4021903872489929
+    },
+    {
+      "chunk_id": "django/template/defaultfilters.py:444-451",
+      "citation": {
+        "path": "django/template/defaultfilters.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 444,
+        "end_line": 451
+      },
+      "content": "@register.filter(is_safe=True)\ndef safeseq(value):\n    \"\"\"\n    A \"safe\" filter for sequences. Mark each element in the sequence,\n    individually, as safe, after converting them to strings. Return a list\n    with the results.\n    \"\"\"\n    return [mark_safe(obj) for obj in value]",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3973502814769745
+    },
+    {
+      "chunk_id": "django/db/models/sql/where.py:14-204",
+      "citation": {
+        "path": "django/db/models/sql/where.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 14,
+        "end_line": 204
+      },
+      "content": "class WhereNode(tree.Node):\n    \"\"\"\n    An SQL WHERE clause.\n\n    The class is tied to the Query class that created it (in order to create\n    the correct SQL).\n\n    A child is usually an expression producing boolean values. Most likely the\n    expression is a Lookup instance.\n\n    However, a child could also be any class with as_sql() and either\n    relabeled_clone() method or relabel_aliases() and clone() methods and\n    contains_aggregate attribute.\n    \"\"\"\n    default = AND\n    resolved = False\n    conditional = True\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.39625978469848633
+    },
+    {
+      "chunk_id": "django/contrib/auth/middleware.py:27-110",
+      "citation": {
+        "path": "django/contrib/auth/middleware.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 27,
+        "end_line": 110
+      },
+      "content": "class RemoteUserMiddleware(MiddlewareMixin):\n    \"\"\"\n    Middleware for utilizing Web-server-provided authentication.\n\n    If request.user is not authenticated, then this middleware attempts to\n    authenticate the username passed in the ``REMOTE_USER`` request header.\n    If authentication is successful, the user is automatically logged in to\n    persist the user in the session.\n\n    The header used is configurable and defaults to ``REMOTE_USER``.  Subclass\n    this class and change the ``header`` attribute if you need to use a\n    different header.\n    \"\"\"\n\n    # Name of request header to grab username from.  This will be the key as\n    # used in the request.META dictionary, i.e. the normalization of headers to\n    # all uppercase and the addition of \"HTTP_\" prefix apply.\n    header = \"REMOTE_USER\"\n    force_logout_if_no_header = True\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.38727885484695435
+    },
+    {
+      "chunk_id": "django/contrib/auth/models.py:33-78",
+      "citation": {
+        "path": "django/contrib/auth/models.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 33,
+        "end_line": 78
+      },
+      "content": "class Permission(models.Model):\n    \"\"\"\n    The permissions system provides a way to assign permissions to specific\n    users and groups of users.\n\n    The permission system is used by the Django admin site, but may also be\n    useful in your own code. The Django admin site uses permissions as follows:\n\n        - The \"add\" permission limits the user's ability to view the \"add\" form\n          and add an object.\n        - The \"change\" permission limits a user's ability to view the change\n          list, view the \"change\" form and change an object.\n        - The \"delete\" permission limits the ability to delete an object.\n        - The \"view\" permission limits the ability to view an object.\n\n    Permissions are set globally per type of object, not per specific object\n    instance. It is possible to say \"Mary may change news stories,\" but it's\n    not currently possible to say \"Mary may change news stories, but only the\n    ones she created herself\" or \"Mary may only change news stories that have a\n    certain status or publication date.\"\n\n    The permissions listed above are automatically created for each model.\n    \"\"\"\n    name = models.CharField(_('name'), max_length=255)\n    content_type = models.ForeignKey(\n        ContentType,\n        models.CASCADE,\n        verbose_name=_('content type'),\n    )\n    codename = models.CharField(_('codename'), max_length=100)\n\n    objects = PermissionManager()\n\n\n\n    natural_key.dependencies = ['contenttypes.contenttype']",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.37295201420783997
+    },
+    {
+      "chunk_id": "django/contrib/auth/validators.py:8-15",
+      "citation": {
+        "path": "django/contrib/auth/validators.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 8,
+        "end_line": 15
+      },
+      "content": "@deconstructible\nclass ASCIIUsernameValidator(validators.RegexValidator):\n    regex = r'^[\\w.@+-]+$'\n    message = _(\n        'Enter a valid username. This value may contain only English letters, '\n        'numbers, and @/./+/-/_ characters.'\n    )\n    flags = re.ASCII",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.37117183208465576
+    },
+    {
+      "chunk_id": "django/db/models/query.py:1235-1247",
+      "citation": {
+        "path": "django/db/models/query.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 1235,
+        "end_line": 1247
+      },
+      "content": "def _next_is_sticky(self):\n    \"\"\"\n    Indicate that the next filter call and the one following that should\n    be treated as a single filter. This is only important when it comes to\n    determining when to reuse tables for many-to-many filters. Required so\n    that we can filter naturally on the results of related managers.\n\n    This doesn't return a clone of the current QuerySet (it returns\n    \"self\"). The method is only used internally and should be immediately\n    followed by a filter() that does create a clone.\n    \"\"\"\n    self._sticky_filter = True\n    return self",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36577627062797546
+    },
+    {
+      "chunk_id": "django/http/multipartparser.py:470-563",
+      "citation": {
+        "path": "django/http/multipartparser.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 470,
+        "end_line": 563
+      },
+      "content": "class BoundaryIter:\n    \"\"\"\n    A Producer that is sensitive to boundaries.\n\n    Will happily yield bytes until a boundary is found. Will yield the bytes\n    before the boundary, throw away the boundary bytes themselves, and push the\n    post-boundary bytes back on the stream.\n\n    The future calls to next() after locating the boundary will raise a\n    StopIteration exception.\n    \"\"\"\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3633960485458374
+    },
+    {
+      "chunk_id": "django/contrib/gis/utils/ogrinspect.py:51-119",
+      "citation": {
+        "path": "django/contrib/gis/utils/ogrinspect.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 51,
+        "end_line": 119
+      },
+      "content": "def ogrinspect(*args, **kwargs):\n    \"\"\"\n    Given a data source (either a string or a DataSource object) and a string\n    model name this function will generate a GeoDjango model.\n\n    Usage:\n\n    >>> from django.contrib.gis.utils import ogrinspect\n    >>> ogrinspect('/path/to/shapefile.shp','NewModel')\n\n    ...will print model definition to stout\n\n    or put this in a Python script and use to redirect the output to a new\n    model like:\n\n    $ python generate_model.py > myapp/models.py\n\n    # generate_model.py\n    from django.contrib.gis.utils import ogrinspect\n    shp_file = 'data/mapping_hacks/world_borders.shp'\n    model_name = 'WorldBorders'\n\n    print(ogrinspect(shp_file, model_name, multi_geom=True, srid=4326,\n                     geom_name='shapes', blank=True))\n\n    Required Arguments\n     `datasource` => string or DataSource object to file pointer\n\n     `model name` => string of name of new model class to create\n\n    Optional Keyword Arguments\n     `geom_name` => For specifying the model name for the Geometry Field.\n       Otherwise will default to `geom`\n\n     `layer_key` => The key for specifying which layer in the DataSource to use;\n       defaults to 0 (the first layer).  May be an integer index or a string\n       identifier for the layer.\n\n     `srid` => The SRID to use for the Geometry Field.  If it can be determined,\n       the SRID of the datasource is used.\n\n     `multi_geom` => Boolean (default: False) - specify as multigeometry.\n\n     `name_field` => String - specifies a field name to return for the\n       __str__() method (which will be generated if specified).\n\n     `imports` => Boolean (default: True) - set to False to omit the\n       `from django.contrib.gis.db import models` code from the\n       autogenerated models thus avoiding duplicated imports when building\n       more than one model by batching ogrinspect()\n\n     `decimal` => Boolean or sequence (default: False).  When set to True\n       all generated model fields corresponding to the `OFTReal` type will\n       be `DecimalField` instead of `FloatField`.  A sequence of specific\n       field names to generate as `DecimalField` may also be used.\n\n     `blank` => Boolean or sequence (default: False).  When set to True all\n       generated model fields will have `blank=True`.  If the user wants to\n       give specific fields to have blank, then a list/tuple of OGR field\n       names may be used.\n\n     `null` => Boolean (default: False) - When set to True all generated\n       model fields will have `null=True`.  If the user wants to specify\n       give specific fields to have null, then a list/tuple of OGR field\n       names may be used.\n\n    Note: Call the _ogrinspect() helper to do the heavy lifting.\n    \"\"\"\n    return '\\n'.join(_ogrinspect(*args, **kwargs))",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3544122278690338
+    },
+    {
+      "chunk_id": "tests/test_client_regress/views.py:46-56",
+      "citation": {
+        "path": "tests/test_client_regress/views.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 46,
+        "end_line": 56
+      },
+      "content": "def view_with_argument(request, name):\n    \"\"\"A view that takes a string argument\n\n    The purpose of this view is to check that if a space is provided in\n    the argument, the test framework unescapes the %20 before passing\n    the value to the view.\n    \"\"\"\n    if name == 'Arthur Dent':\n        return HttpResponse('Hi, Arthur')\n    else:\n        return HttpResponse('Howdy, %s' % name)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.35408034920692444
+    },
+    {
+      "chunk_id": "django/core/files/base.py:75-100",
+      "citation": {
+        "path": "django/core/files/base.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 75,
+        "end_line": 100
+      },
+      "content": "def __iter__(self):\n    # Iterate over this file-like object by newlines\n    buffer_ = None\n    for chunk in self.chunks():\n        for line in chunk.splitlines(True):\n            if buffer_:\n                if endswith_cr(buffer_) and not equals_lf(line):\n                    # Line split after a \\r newline; yield buffer_.\n                    yield buffer_\n                    # Continue with line.\n                else:\n                    # Line either split without a newline (line\n                    # continues after buffer_) or with \\r\\n\n                    # newline (line == b'\\n').\n                    line = buffer_ + line\n                # buffer_ handled, clear it.\n                buffer_ = None\n\n            # If this is the end of a \\n or \\r\\n line, yield.\n            if endswith_lf(line):\n                yield line\n            else:\n                buffer_ = line\n\n    if buffer_ is not None:\n        yield buffer_",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.352550208568573
+    },
+    {
+      "chunk_id": "django/utils/encoding.py:118-147",
+      "citation": {
+        "path": "django/utils/encoding.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 118,
+        "end_line": 147
+      },
+      "content": "def iri_to_uri(iri):\n    \"\"\"\n    Convert an Internationalized Resource Identifier (IRI) portion to a URI\n    portion that is suitable for inclusion in a URL.\n\n    This is the algorithm from section 3.1 of RFC 3987, slightly simplified\n    since the input is assumed to be a string rather than an arbitrary byte\n    stream.\n\n    Take an IRI (string or UTF-8 bytes, e.g. '/I ♥ Django/' or\n    b'/I \\xe2\\x99\\xa5 Django/') and return a string containing the encoded\n    result with ASCII chars only (e.g. '/I%20%E2%99%A5%20Django/').\n    \"\"\"\n    # The list of safe characters here is constructed from the \"reserved\" and\n    # \"unreserved\" characters specified in sections 2.2 and 2.3 of RFC 3986:\n    #     reserved    = gen-delims / sub-delims\n    #     gen-delims  = \":\" / \"/\" / \"?\" / \"#\" / \"[\" / \"]\" / \"@\"\n    #     sub-delims  = \"!\" / \"$\" / \"&\" / \"'\" / \"(\" / \")\"\n    #                   / \"*\" / \"+\" / \",\" / \";\" / \"=\"\n    #     unreserved  = ALPHA / DIGIT / \"-\" / \".\" / \"_\" / \"~\"\n    # Of the unreserved characters, urllib.parse.quote() already considers all\n    # but the ~ safe.\n    # The % character is also added to the list of safe characters here, as the\n    # end of section 3.1 of RFC 3987 specifically mentions that % must not be\n    # converted.\n    if iri is None:\n        return iri\n    elif isinstance(iri, Promise):\n        iri = str(iri)\n    return quote(iri, safe=\"/#%[]=:;$&()+,!?*@'~\")",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3514637053012848
+    },
+    {
+      "chunk_id": "django/template/exceptions.py:9-35",
+      "citation": {
+        "path": "django/template/exceptions.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 9,
+        "end_line": 35
+      },
+      "content": "class TemplateDoesNotExist(Exception):\n    \"\"\"\n    The exception used when a template does not exist. Optional arguments:\n\n    backend\n        The template backend class used when raising this exception.\n\n    tried\n        A list of sources that were tried when finding the template. This\n        is formatted as a list of tuples containing (origin, status), where\n        origin is an Origin object or duck type and status is a string with the\n        reason the template wasn't found.\n\n    chain\n        A list of intermediate TemplateDoesNotExist exceptions. This is used to\n        encapsulate multiple exceptions when loading templates from multiple\n        engines.\n    \"\"\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.351218581199646
+    },
+    {
+      "chunk_id": "tests/test_client/views.py:268-273",
+      "citation": {
+        "path": "tests/test_client/views.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 268,
+        "end_line": 273
+      },
+      "content": "@login_required(redirect_field_name='redirect_to')\ndef login_protected_view_changed_redirect(request):\n    \"A simple view that is login protected with a custom redirect field set\"\n    t = Template('This is a login protected test. Username is {{ user.username }}.', name='Login Template')\n    c = Context({'user': request.user})\n    return HttpResponse(t.render(c))",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3502580225467682
+    },
+    {
+      "chunk_id": "django/db/models/sql/compiler.py:1141-1171",
+      "citation": {
+        "path": "django/db/models/sql/compiler.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 1141,
+        "end_line": 1171
+      },
+      "content": "def field_as_sql(self, field, val):\n    \"\"\"\n    Take a field and a value intended to be saved on that field, and\n    return placeholder SQL and accompanying params. Check for raw values,\n    expressions, and fields with get_placeholder() defined in that order.\n\n    When field is None, consider the value raw and use it as the\n    placeholder, with no corresponding parameters returned.\n    \"\"\"\n    if field is None:\n        # A field value of None means the value is raw.\n        sql, params = val, []\n    elif hasattr(val, 'as_sql'):\n        # This is an expression, let's compile it.\n        sql, params = self.compile(val)\n    elif hasattr(field, 'get_placeholder'):\n        # Some fields (e.g. geo fields) need special munging before\n        # they can be inserted.\n        sql, params = field.get_placeholder(val, self, self.connection), [val]\n    else:\n        # Return the common case for the placeholder\n        sql, params = '%s', [val]\n\n    # The following hook is only used by Oracle Spatial, which sometimes\n    # needs to yield 'NULL' and [] as its placeholder and params instead\n    # of '%s' and [None]. The 'NULL' placeholder is produced earlier by\n    # OracleOperations.get_geom_placeholder(). The following line removes\n    # the corresponding None parameter. See ticket #10888.\n    params = self.connection.ops.modify_insert_params(sql, params)\n\n    return sql, params",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3491969108581543
+    },
+    {
+      "chunk_id": "django/test/client.py:173-224",
+      "citation": {
+        "path": "django/test/client.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 173,
+        "end_line": 224
+      },
+      "content": "def encode_multipart(boundary, data):\n    \"\"\"\n    Encode multipart POST data from a dictionary of form values.\n\n    The key will be used as the form data name; the value will be transmitted\n    as content. If the value is a file, the contents of the file will be sent\n    as an application/octet-stream; otherwise, str(value) will be sent.\n    \"\"\"\n    lines = []\n\n    def to_bytes(s):\n        return force_bytes(s, settings.DEFAULT_CHARSET)\n\n    # Not by any means perfect, but good enough for our purposes.\n    def is_file(thing):\n        return hasattr(thing, \"read\") and callable(thing.read)\n\n    # Each bit of the multipart form data could be either a form value or a\n    # file, or a *list* of form values and/or files. Remember that HTTP field\n    # names can be duplicated!\n    for (key, value) in data.items():\n        if value is None:\n            raise TypeError(\n                'Cannot encode None as POST data. Did you mean to pass an '\n                'empty string or omit the value?'\n            )\n        elif is_file(value):\n            lines.extend(encode_file(boundary, key, value))\n        elif not isinstance(value, str) and is_iterable(value):\n            for item in value:\n                if is_file(item):\n                    lines.extend(encode_file(boundary, key, item))\n                else:\n                    lines.extend(to_bytes(val) for val in [\n                        '--%s' % boundary,\n                        'Content-Disposition: form-data; name=\"%s\"' % key,\n                        '',\n                        item\n                    ])\n        else:\n            lines.extend(to_bytes(val) for val in [\n                '--%s' % boundary,\n                'Content-Disposition: form-data; name=\"%s\"' % key,\n                '',\n                value\n            ])\n\n    lines.extend([\n        to_bytes('--%s--' % boundary),\n        b'',\n    ])\n    return b'\\r\\n'.join(lines)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34917932748794556
+    },
+    {
+      "chunk_id": "django/template/base.py:200-276",
+      "citation": {
+        "path": "django/template/base.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 200,
+        "end_line": 276
+      },
+      "content": "def get_exception_info(self, exception, token):\n    \"\"\"\n    Return a dictionary containing contextual line information of where\n    the exception occurred in the template. The following information is\n    provided:\n\n    message\n        The message of the exception raised.\n\n    source_lines\n        The lines before, after, and including the line the exception\n        occurred on.\n\n    line\n        The line number the exception occurred on.\n\n    before, during, after\n        The line the exception occurred on split into three parts:\n        1. The content before the token that raised the error.\n        2. The token that raised the error.\n        3. The content after the token that raised the error.\n\n    total\n        The number of lines in source_lines.\n\n    top\n        The line number where source_lines starts.\n\n    bottom\n        The line number where source_lines ends.\n\n    start\n        The start position of the token in the template source.\n\n    end\n        The end position of the token in the template source.\n    \"\"\"\n    start, end = token.position\n    context_lines = 10\n    line = 0\n    upto = 0\n    source_lines = []\n    before = during = after = \"\"\n    for num, next in enumerate(linebreak_iter(self.source)):\n        if start >= upto and end <= next:\n            line = num\n            before = escape(self.source[upto:start])\n            during = escape(self.source[start:end])\n            after = escape(self.source[end:next])\n        source_lines.append((num, escape(self.source[upto:next])))\n        upto = next\n    total = len(source_lines)\n\n    top = max(1, line - context_lines)\n    bottom = min(total, line + 1 + context_lines)\n\n    # In some rare cases exc_value.args can be empty or an invalid\n    # string.\n    try:\n        message = str(exception.args[0])\n    except (IndexError, UnicodeDecodeError):\n        message = '(Could not get exception message)'\n\n    return {\n        'message': message,\n        'source_lines': source_lines[top:bottom],\n        'before': before,\n        'during': during,\n        'after': after,\n        'top': top,\n        'bottom': bottom,\n        'total': total,\n        'line': line,\n        'name': self.origin.name,\n        'start': start,\n        'end': end,\n    }",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3483104705810547
+    },
+    {
+      "chunk_id": "django/contrib/auth/password_validation.py:160-190",
+      "citation": {
+        "path": "django/contrib/auth/password_validation.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 160,
+        "end_line": 190
+      },
+      "content": "class CommonPasswordValidator:\n    \"\"\"\n    Validate whether the password is a common password.\n\n    The password is rejected if it occurs in a provided list of passwords,\n    which may be gzipped. The list Django ships with contains 20000 common\n    passwords (lowercased and deduplicated), created by Royce Williams:\n    https://gist.github.com/roycewilliams/281ce539915a947a23db17137d91aeb7\n    The password list must be lowercased to match the comparison in validate().\n    \"\"\"\n    DEFAULT_PASSWORD_LIST_PATH = Path(__file__).resolve().parent / 'common-passwords.txt.gz'\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34578877687454224
+    },
+    {
+      "chunk_id": "django/db/transaction.py:135-282",
+      "citation": {
+        "path": "django/db/transaction.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 135,
+        "end_line": 282
+      },
+      "content": "class Atomic(ContextDecorator):\n    \"\"\"\n    Guarantee the atomic execution of a given block.\n\n    An instance can be used either as a decorator or as a context manager.\n\n    When it's used as a decorator, __call__ wraps the execution of the\n    decorated function in the instance itself, used as a context manager.\n\n    When it's used as a context manager, __enter__ creates a transaction or a\n    savepoint, depending on whether a transaction is already in progress, and\n    __exit__ commits the transaction or releases the savepoint on normal exit,\n    and rolls back the transaction or to the savepoint on exceptions.\n\n    It's possible to disable the creation of savepoints if the goal is to\n    ensure that some code runs within a transaction without creating overhead.\n\n    A stack of savepoints identifiers is maintained as an attribute of the\n    connection. None denotes the absence of a savepoint.\n\n    This allows reentrancy even if the same AtomicWrapper is reused. For\n    example, it's possible to define `oa = atomic('other')` and use `@oa` or\n    `with oa:` multiple times.\n\n    Since database connections are thread-local, this is thread-safe.\n\n    This is a private API.\n    \"\"\"\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.344881534576416
+    },
+    {
+      "chunk_id": "django/db/backends/base/features.py:5-308",
+      "citation": {
+        "path": "django/db/backends/base/features.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 5,
+        "end_line": 308
+      },
+      "content": "class BaseDatabaseFeatures:\n    gis_enabled = False\n    allows_group_by_pk = False\n    allows_group_by_selected_pks = False\n    empty_fetchmany_value = []\n    update_can_self_select = True\n\n    # Does the backend distinguish between '' and None?\n    interprets_empty_strings_as_nulls = False\n\n    # Does the backend allow inserting duplicate NULL rows in a nullable\n    # unique field? All core backends implement this correctly, but other\n    # databases such as SQL Server do not.\n    supports_nullable_unique_constraints = True\n\n    # Does the backend allow inserting duplicate rows when a unique_together\n    # constraint exists and some fields are nullable but not all of them?\n    supports_partially_nullable_unique_constraints = True\n\n    can_use_chunked_reads = True\n    can_return_columns_from_insert = False\n    can_return_rows_from_bulk_insert = False\n    has_bulk_insert = True\n    uses_savepoints = True\n    can_release_savepoints = False\n\n    # If True, don't use integer foreign keys referring to, e.g., positive\n    # integer primary keys.\n    related_fields_match_type = False\n    allow_sliced_subqueries_with_in = True\n    has_select_for_update = False\n    has_select_for_update_nowait = False\n    has_select_for_update_skip_locked = False\n    has_select_for_update_of = False\n    # Does the database's SELECT FOR UPDATE OF syntax require a column rather\n    # than a table?\n    select_for_update_of_column = False\n\n    # Does the default test database allow multiple connections?\n    # Usually an indication that the test database is in-memory\n    test_db_allows_multiple_connections = True\n\n    # Can an object be saved without an explicit primary key?\n    supports_unspecified_pk = False\n\n    # Can a fixture contain forward references? i.e., are\n    # FK constraints checked at the end of transaction, or\n    # at the end of each save operation?\n    supports_forward_references = True\n\n    # Does the backend truncate names properly when they are too long?\n    truncates_names = False\n\n    # Is there a REAL datatype in addition to floats/doubles?\n    has_real_datatype = False\n    supports_subqueries_in_group_by = True\n\n    # Is there a true datatype for uuid?\n    has_native_uuid_field = False\n\n    # Is there a true datatype for timedeltas?\n    has_native_duration_field = False\n\n    # Does the database driver supports same type temporal data subtraction\n    # by returning the type used to store duration field?\n    supports_temporal_subtraction = False\n\n    # Does the __regex lookup support backreferencing and grouping?\n    supports_regex_backreferencing = True\n\n    # Can date/datetime lookups be performed using a string?\n    supports_date_lookup_using_string = True\n\n    # Can datetimes with timezones be used?\n    supports_timezones = True\n\n    # Does the database have a copy of the zoneinfo database?\n    has_zoneinfo_database = True\n\n    # When performing a GROUP BY, is an ORDER BY NULL required\n    # to remove any ordering?\n    requires_explicit_null_ordering_when_grouping = False\n\n    # Does the backend order NULL values as largest or smallest?\n    nulls_order_largest = False\n\n    # The database's limit on the number of query parameters.\n    max_query_params = None\n\n    # Can an object have an autoincrement primary key of 0? MySQL says No.\n    allows_auto_pk_0 = True\n\n    # Do we need to NULL a ForeignKey out, or can the constraint check be\n    # deferred\n    can_defer_constraint_checks = False\n\n    # date_interval_sql can properly handle mixed Date/DateTime fields and timedeltas\n    supports_mixed_date_datetime_comparisons = True\n\n    # Does the backend support tablespaces? Default to False because it isn't\n    # in the SQL standard.\n    supports_tablespaces = False\n\n    # Does the backend reset sequences between tests?\n    supports_sequence_reset = True\n\n    # Can the backend introspect the default value of a column?\n    can_introspect_default = True\n\n    # Confirm support for introspected foreign keys\n    # Every database can do this reliably, except MySQL,\n    # which can't do it for MyISAM tables\n    can_introspect_foreign_keys = True\n\n    # Can the backend introspect an AutoField, instead of an IntegerField?\n    can_introspect_autofield = False\n\n    # Can the backend introspect a BigIntegerField, instead of an IntegerField?\n    can_introspect_big_integer_field = True\n\n    # Can the backend introspect an BinaryField, instead of an TextField?\n    can_introspect_binary_field = True\n\n    # Can the backend introspect an DecimalField, instead of an FloatField?\n    can_introspect_decimal_field = True\n\n    # Can the backend introspect a DurationField, instead of a BigIntegerField?\n    can_introspect_duration_field = True\n\n    # Can the backend introspect an IPAddressField, instead of an CharField?\n    can_introspect_ip_address_field = False\n\n    # Can the backend introspect a PositiveIntegerField, instead of an IntegerField?\n    can_introspect_positive_integer_field = False\n\n    # Can the backend introspect a SmallIntegerField, instead of an IntegerField?\n    can_introspect_small_integer_field = False\n\n    # Can the backend introspect a TimeField, instead of a DateTimeField?\n    can_introspect_time_field = True\n\n    # Some backends may not be able to differentiate BigAutoField from other\n    # fields such as AutoField.\n    introspected_big_auto_field_type = 'BigAutoField'\n\n    # Some backends may not be able to differentiate BooleanField from other\n    # fields such as IntegerField.\n    introspected_boolean_field_type = 'BooleanField'\n\n    # Can the backend introspect the column order (ASC/DESC) for indexes?\n    supports_index_column_ordering = True\n\n    # Does the backend support introspection of materialized views?\n    can_introspect_materialized_views = False\n\n    # Support for the DISTINCT ON clause\n    can_distinct_on_fields = False\n\n    # Does the backend prevent running SQL queries in broken transactions?\n    atomic_transactions = True\n\n    # Can we roll back DDL in a transaction?\n    can_rollback_ddl = False\n\n    # Does it support operations requiring references rename in a transaction?\n    supports_atomic_references_rename = True\n\n    # Can we issue more than one ALTER COLUMN clause in an ALTER TABLE?\n    supports_combined_alters = False\n\n    # Does it support foreign keys?\n    supports_foreign_keys = True\n\n    # Can it create foreign key constraints inline when adding columns?\n    can_create_inline_fk = True\n\n    # Does it support CHECK constraints?\n    supports_column_check_constraints = True\n    supports_table_check_constraints = True\n\n    # Does the backend support 'pyformat' style (\"... %(name)s ...\", {'name': value})\n    # parameter passing? Note this can be provided by the backend even if not\n    # supported by the Python driver\n    supports_paramstyle_pyformat = True\n\n    # Does the backend require literal defaults, rather than parameterized ones?\n    requires_literal_defaults = False\n\n    # Does the backend require a connection reset after each material schema change?\n    connection_persists_old_columns = False\n\n    # What kind of error does the backend throw when accessing closed cursor?\n    closed_cursor_error_class = ProgrammingError\n\n    # Does 'a' LIKE 'A' match?\n    has_case_insensitive_like = True\n\n    # Suffix for backends that don't support \"SELECT xxx;\" queries.\n    bare_select_suffix = ''\n\n    # If NULL is implied on columns without needing to be explicitly specified\n    implied_column_null = False\n\n    # Does the backend support \"select for update\" queries with limit (and offset)?\n    supports_select_for_update_with_limit = True\n\n    # Does the backend ignore null expressions in GREATEST and LEAST queries unless\n    # every expression is null?\n    greatest_least_ignores_nulls = False\n\n    # Can the backend clone databases for parallel test execution?\n    # Defaults to False to allow third-party backends to opt-in.\n    can_clone_databases = False\n\n    # Does the backend consider table names with different casing to\n    # be equal?\n    ignores_table_name_case = False\n\n    # Place FOR UPDATE right after FROM clause. Used on MSSQL.\n    for_update_after_from = False\n\n    # Combinatorial flags\n    supports_select_union = True\n    supports_select_intersection = True\n    supports_select_difference = True\n    supports_slicing_ordering_in_compound = False\n    supports_parentheses_in_compound = True\n\n    # Does the database support SQL 2003 FILTER (WHERE ...) in aggregate\n    # expressions?\n    supports_aggregate_filter_clause = False\n\n    # Does the backend support indexing a TextField?\n    supports_index_on_text_field = True\n\n    # Does the backend support window expressions (expression OVER (...))?\n    supports_over_clause = False\n    supports_frame_range_fixed_distance = False\n\n    # Does the backend support CAST with precision?\n    supports_cast_with_precision = True\n\n    # How many second decimals does the database return when casting a value to\n    # a type with time?\n    time_cast_precision = 6\n\n    # SQL to create a procedure for use by the Django test suite. The\n    # functionality of the procedure isn't important.\n    create_test_procedure_without_params_sql = None\n    create_test_procedure_with_int_param_sql = None\n\n    # Does the backend support keyword parameters for cursor.callproc()?\n    supports_callproc_kwargs = False\n\n    # Convert CharField results from bytes to str in database functions.\n    db_functions_convert_bytes_to_str = False\n\n    # What formats does the backend EXPLAIN syntax support?\n    supported_explain_formats = set()\n\n    # Does DatabaseOperations.explain_query_prefix() raise ValueError if\n    # unknown kwargs are passed to QuerySet.explain()?\n    validates_explain_options = True\n\n    # Does the backend support the default parameter in lead() and lag()?\n    supports_default_in_lead_lag = True\n\n    # Does the backend support ignoring constraint or uniqueness errors during\n    # INSERT?\n    supports_ignore_conflicts = True\n\n    # Does this backend require casting the results of CASE expressions used\n    # in UPDATE statements to ensure the expression has the correct type?\n    requires_casted_case_in_updates = False\n\n    # Does the backend support partial indexes (CREATE INDEX ... WHERE ...)?\n    supports_partial_indexes = True\n    supports_functions_in_partial_indexes = True\n\n    # Does the database allow more than one constraint or index on the same\n    # field(s)?\n    allows_multiple_constraints_on_same_fields = True\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34419897198677063
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 16.35298650000186
+}

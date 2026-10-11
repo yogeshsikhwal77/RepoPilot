@@ -1,0 +1,25 @@
+{
+  "task_id": "astropy__astropy-12907",
+  "config": "dummy_gold",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "astropy/modeling/separable.py:1-1",
+      "citation": {
+        "path": "astropy/modeling/separable.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 1.0
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 0.00010119999933522195
+}
