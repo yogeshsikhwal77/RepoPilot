@@ -1,0 +1,142 @@
+{
+  "task_id": "astropy__astropy-12907",
+  "config": "dummy_none",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "nowhere/8152.py:1-1",
+      "citation": {
+        "path": "nowhere/8152.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 1.0
+    },
+    {
+      "chunk_id": "nowhere/103246.py:1-1",
+      "citation": {
+        "path": "nowhere/103246.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 0.99
+    },
+    {
+      "chunk_id": "nowhere/548920.py:1-1",
+      "citation": {
+        "path": "nowhere/548920.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 0.98
+    },
+    {
+      "chunk_id": "nowhere/940241.py:1-1",
+      "citation": {
+        "path": "nowhere/940241.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 0.97
+    },
+    {
+      "chunk_id": "nowhere/174730.py:1-1",
+      "citation": {
+        "path": "nowhere/174730.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 0.96
+    },
+    {
+      "chunk_id": "nowhere/62868.py:1-1",
+      "citation": {
+        "path": "nowhere/62868.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 0.95
+    },
+    {
+      "chunk_id": "nowhere/217708.py:1-1",
+      "citation": {
+        "path": "nowhere/217708.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 0.94
+    },
+    {
+      "chunk_id": "nowhere/414063.py:1-1",
+      "citation": {
+        "path": "nowhere/414063.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 0.9299999999999999
+    },
+    {
+      "chunk_id": "nowhere/951906.py:1-1",
+      "citation": {
+        "path": "nowhere/951906.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 0.92
+    },
+    {
+      "chunk_id": "nowhere/202145.py:1-1",
+      "citation": {
+        "path": "nowhere/202145.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 0.91
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 0.000304899993352592
+}

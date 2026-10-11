@@ -1,0 +1,31 @@
+{
+  "task_id": "astropy__astropy-12907",
+  "config": "single_call",
+  "run_idx": 0,
+  "evidence": [],
+  "answer": {
+    "diffs": [
+      {
+        "filepath": "",
+        "diff": "diff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py\n--- a/astropy/modeling/separable.py\n+++ b/astropy/modeling/separable.py\n@@ -242,8 +242,24 @@\n     return matrix\n \n \n+def _cstack(left, right):\n+    \"\"\"\n+    Compute the separability matrix for a compound model formed by '&'.\n+    \"\"\"\n+    shape_left = left.shape\n+    shape_right = right.shape\n+    matrix = np.zeros((shape_left[0] + shape_right[0],\n+                       shape_left[1] + shape_right[1]),\n+                      dtype=bool)\n+    matrix[:shape_left[0], :shape_left[1]] = left\n+    matrix[shape_left[0]:, shape_left[1]:] = right\n+    return matrix\n+\n+\n operator_table = {\n-    '+': _coord_matrix,\n-    '-': _coord_matrix,\n-    '*': _coord_matrix,\n-    '/': _coord_matrix,\n+    '+': (_coord_matrix, '+'),\n+    '-': (_coord_matrix, '-'),\n+    '*': (_coord_matrix, '*'),\n+    '/': (_coord_matrix, '/'),\n+    '&': (_cstack, '&'),\n }\ndiff --git a/astropy/modeling/separable.py b/astropy/modeling/separable.py\n--- a/astropy/modeling/separable.py\n+++ b/astropy/modeling/separable.py\n@@ -300,7 +316,7 @@\n         return _coord_matrix(model, separability_matrix(model.left),\n                              separability_matrix(model.right))\n     elif model.op == '&':\n-        return _n_inputs_matrix(model)\n+        return _cstack(separability_matrix(model.left), separability_matrix(model.right))\n     elif model.op == '|':\n         return _vstack(separability_matrix(model.left), separability_matrix(model.right))",
+        "base_commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "commit_msg": null
+      }
+    ],
+    "test_report": {
+      "passed": false,
+      "total_run": 0,
+      "failed_tests": [],
+      "impacted_tests": [],
+      "ran_full_suite": false,
+      "error_logs": ""
+    },
+    "verified_claims": [],
+    "cost_usd": 0.000191,
+    "tokens": 996
+  },
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 9.921745200001169
+}

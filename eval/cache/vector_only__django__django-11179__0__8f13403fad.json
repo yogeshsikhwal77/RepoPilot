@@ -1,0 +1,272 @@
+{
+  "task_id": "django__django-11179",
+  "config": "vector_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "django/db/models/base.py:744-791",
+      "citation": {
+        "path": "django/db/models/base.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 744,
+        "end_line": 791
+      },
+      "content": "def save_base(self, raw=False, force_insert=False,\n              force_update=False, using=None, update_fields=None):\n    \"\"\"\n    Handle the parts of saving which should be done only once per save,\n    yet need to be done in raw saves, too. This includes some sanity\n    checks and signal sending.\n\n    The 'raw' argument is telling save_base not to save any parent\n    models and not to do any changes to the values before save. This\n    is used by fixture loading.\n    \"\"\"\n    using = using or router.db_for_write(self.__class__, instance=self)\n    assert not (force_insert and (force_update or update_fields))\n    assert update_fields is None or update_fields\n    cls = origin = self.__class__\n    # Skip proxies, but keep the origin as the proxy model.\n    if cls._meta.proxy:\n        cls = cls._meta.concrete_model\n    meta = cls._meta\n    if not meta.auto_created:\n        pre_save.send(\n            sender=origin, instance=self, raw=raw, using=using,\n            update_fields=update_fields,\n        )\n    # A transaction isn't needed if one query is issued.\n    if meta.parents:\n        context_manager = transaction.atomic(using=using, savepoint=False)\n    else:\n        context_manager = transaction.mark_for_rollback_on_error(using=using)\n    with context_manager:\n        parent_inserted = False\n        if not raw:\n            parent_inserted = self._save_parents(cls, using, update_fields)\n        updated = self._save_table(\n            raw, cls, force_insert or parent_inserted,\n            force_update, using, update_fields,\n        )\n    # Store the database on which the object was saved\n    self._state.db = using\n    # Once saved, this is no longer a to-be-added instance.\n    self._state.adding = False\n\n    # Signal that the save is complete\n    if not meta.auto_created:\n        post_save.send(\n            sender=origin, instance=self, created=(not updated),\n            update_fields=update_fields, raw=raw, using=using,\n        )",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3955248296260834
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:80-105",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 80,
+        "end_line": 105
+      },
+      "content": "def add(self, objs, source=None, nullable=False, reverse_dependency=False):\n    \"\"\"\n    Add 'objs' to the collection of objects to be deleted.  If the call is\n    the result of a cascade, 'source' should be the model that caused it,\n    and 'nullable' should be set to True if the relation can be null.\n\n    Return a list of all objects that were not already collected.\n    \"\"\"\n    if not objs:\n        return []\n    new_objs = []\n    model = objs[0].__class__\n    instances = self.data.setdefault(model, set())\n    for obj in objs:\n        if obj not in instances:\n            new_objs.append(obj)\n    instances.update(new_objs)\n    # Nullable relationships can be ignored -- they are nulled out before\n    # deleting, and therefore do not affect the order in which objects have\n    # to be deleted.\n    if source is not None and not nullable:\n        if reverse_dependency:\n            source, model = model, source\n        self.dependencies.setdefault(\n            source._meta.concrete_model, set()).add(model._meta.concrete_model)\n    return new_objs",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3865887224674225
+    },
+    {
+      "chunk_id": "django/db/models/base.py:585-644",
+      "citation": {
+        "path": "django/db/models/base.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 585,
+        "end_line": 644
+      },
+      "content": "def refresh_from_db(self, using=None, fields=None):\n    \"\"\"\n    Reload field values from the database.\n\n    By default, the reloading happens from the database this instance was\n    loaded from, or by the read router if this instance wasn't loaded from\n    any database. The using parameter will override the default.\n\n    Fields can be used to specify which fields to reload. The fields\n    should be an iterable of field attnames. If fields is None, then\n    all non-deferred fields are reloaded.\n\n    When accessing deferred fields of an instance, the deferred loading\n    of the field will call this method.\n    \"\"\"\n    if fields is None:\n        self._prefetched_objects_cache = {}\n    else:\n        prefetched_objects_cache = getattr(self, '_prefetched_objects_cache', ())\n        for field in fields:\n            if field in prefetched_objects_cache:\n                del prefetched_objects_cache[field]\n                fields.remove(field)\n        if not fields:\n            return\n        if any(LOOKUP_SEP in f for f in fields):\n            raise ValueError(\n                'Found \"%s\" in fields argument. Relations and transforms '\n                'are not allowed in fields.' % LOOKUP_SEP)\n\n    hints = {'instance': self}\n    db_instance_qs = self.__class__._base_manager.db_manager(using, hints=hints).filter(pk=self.pk)\n\n    # Use provided fields, if not set then reload all non-deferred fields.\n    deferred_fields = self.get_deferred_fields()\n    if fields is not None:\n        fields = list(fields)\n        db_instance_qs = db_instance_qs.only(*fields)\n    elif deferred_fields:\n        fields = [f.attname for f in self._meta.concrete_fields\n                  if f.attname not in deferred_fields]\n        db_instance_qs = db_instance_qs.only(*fields)\n\n    db_instance = db_instance_qs.get()\n    non_loaded_fields = db_instance.get_deferred_fields()\n    for field in self._meta.concrete_fields:\n        if field.attname in non_loaded_fields:\n            # This field wasn't refreshed - skip ahead.\n            continue\n        setattr(self, field.attname, getattr(db_instance, field.attname))\n        # Clear cached foreign keys.\n        if field.is_relation and field.is_cached(self):\n            field.delete_cached_value(self)\n\n    # Clear cached relations.\n    for field in self._meta.related_objects:\n        if field.is_cached(self):\n            field.delete_cached_value(self)\n\n    self._state.db = db_instance._state.db",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.38622575998306274
+    },
+    {
+      "chunk_id": "django/apps/config.py:13-49",
+      "citation": {
+        "path": "django/apps/config.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 13,
+        "end_line": 49
+      },
+      "content": "def __init__(self, app_name, app_module):\n    # Full Python path to the application e.g. 'django.contrib.admin'.\n    self.name = app_name\n\n    # Root module for the application e.g. <module 'django.contrib.admin'\n    # from 'django/contrib/admin/__init__.py'>.\n    self.module = app_module\n\n    # Reference to the Apps registry that holds this AppConfig. Set by the\n    # registry when it registers the AppConfig instance.\n    self.apps = None\n\n    # The following attributes could be defined at the class level in a\n    # subclass, hence the test-and-set pattern.\n\n    # Last component of the Python path to the application e.g. 'admin'.\n    # This value must be unique across a Django project.\n    if not hasattr(self, 'label'):\n        self.label = app_name.rpartition(\".\")[2]\n\n    # Human-readable name for the application e.g. \"Admin\".\n    if not hasattr(self, 'verbose_name'):\n        self.verbose_name = self.label.title()\n\n    # Filesystem path to the application directory e.g.\n    # '/path/to/django/contrib/admin'.\n    if not hasattr(self, 'path'):\n        self.path = self._path_from_module(app_module)\n\n    # Module containing models e.g. <module 'django.contrib.admin.models'\n    # from 'django/contrib/admin/models.py'>. Set by import_models().\n    # None if the application doesn't have a models module.\n    self.models_module = None\n\n    # Mapping of lowercase model names to model classes. Initially set to\n    # None to prevent accidental access before import_models() runs.\n    self.models = None",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3840731978416443
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:64-78",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 64,
+        "end_line": 78
+      },
+      "content": "def __init__(self, using):\n    self.using = using\n    # Initially, {model: {instances}}, later values become lists.\n    self.data = {}\n    self.field_updates = {}  # {model: {(field, value): {instances}}}\n    # fast_deletes is a list of queryset-likes that can be deleted without\n    # fetching the objects into memory.\n    self.fast_deletes = []\n\n    # Tracks deletion-order dependency for databases without transactions\n    # or ability to defer constraint checks. Only concrete model classes\n    # should be included, as the dependencies exist only between actual\n    # database tables; proxy models are represented here by their concrete\n    # parent.\n    self.dependencies = {}  # {model: {models}}",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.37637174129486084
+    },
+    {
+      "chunk_id": "tests/model_fields/test_filefield.py:49-55",
+      "citation": {
+        "path": "tests/model_fields/test_filefield.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 49,
+        "end_line": 55
+      },
+      "content": "def test_delete_when_file_unset(self):\n    \"\"\"\n    Calling delete on an unset FileField should not call the file deletion\n    process, but fail silently (#20660).\n    \"\"\"\n    d = Document()\n    d.myfile.delete()",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36572837829589844
+    },
+    {
+      "chunk_id": "django/db/models/fields/related_descriptors.py:260-266",
+      "citation": {
+        "path": "django/db/models/fields/related_descriptors.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 260,
+        "end_line": 266
+      },
+      "content": "def __reduce__(self):\n    \"\"\"\n    Pickling should return the instance attached by self.field on the\n    model, not a new copy of that descriptor. Use getattr() to retrieve\n    the instance directly from the model.\n    \"\"\"\n    return getattr, (self.field.model, self.field.name)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3630497455596924
+    },
+    {
+      "chunk_id": "django/db/models/base.py:388-396",
+      "citation": {
+        "path": "django/db/models/base.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 388,
+        "end_line": 396
+      },
+      "content": "class ModelState:\n    \"\"\"Store model instance state.\"\"\"\n    db = None\n    # If true, uniqueness validation checks will consider this a new, unsaved\n    # object. Necessary for correct validation of new instances of objects with\n    # explicit (non-auto) PKs. This impacts validation only; it has no effect\n    # on the actual save.\n    adding = True\n    fields_cache = ModelStateFieldsCacheDescriptor()",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3612702786922455
+    },
+    {
+      "chunk_id": "django/core/serializers/base.py:252-270",
+      "citation": {
+        "path": "django/core/serializers/base.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 252,
+        "end_line": 270
+      },
+      "content": "def build_instance(Model, data, db):\n    \"\"\"\n    Build a model instance.\n\n    If the model instance doesn't have a primary key and the model supports\n    natural keys, try to retrieve it from the database.\n    \"\"\"\n    default_manager = Model._meta.default_manager\n    pk = data.get(Model._meta.pk.name)\n    if (pk is None and hasattr(default_manager, 'get_by_natural_key') and\n            hasattr(Model, 'natural_key')):\n        natural_key = Model(**data).natural_key()\n        try:\n            data[Model._meta.pk.attname] = Model._meta.pk.to_python(\n                default_manager.db_manager(db).get_by_natural_key(*natural_key).pk\n            )\n        except Model.DoesNotExist:\n            pass\n    return Model(**data)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3603959083557129
+    },
+    {
+      "chunk_id": "tests/migrations/test_optimizer.py:42-51",
+      "citation": {
+        "path": "tests/migrations/test_optimizer.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 42,
+        "end_line": 51
+      },
+      "content": "def test_single(self):\n    \"\"\"\n    The optimizer does nothing on a single operation,\n    and that it does it in just one pass.\n    \"\"\"\n    self.assertOptimizesTo(\n        [migrations.DeleteModel(\"Foo\")],\n        [migrations.DeleteModel(\"Foo\")],\n        exact=1,\n    )",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36036068201065063
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:262-327",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 262,
+        "end_line": 327
+      },
+      "content": "def delete(self):\n    # sort instance collections\n    for model, instances in self.data.items():\n        self.data[model] = sorted(instances, key=attrgetter(\"pk\"))\n\n    # if possible, bring the models in an order suitable for databases that\n    # don't support transactions or cannot defer constraint checks until the\n    # end of a transaction.\n    self.sort()\n    # number of objects deleted for each model label\n    deleted_counter = Counter()\n\n    # Optimize for the case with a single obj and no dependencies\n    if len(self.data) == 1 and len(instances) == 1:\n        instance = list(instances)[0]\n        if self.can_fast_delete(instance):\n            with transaction.mark_for_rollback_on_error():\n                count = sql.DeleteQuery(model).delete_batch([instance.pk], self.using)\n            return count, {model._meta.label: count}\n\n    with transaction.atomic(using=self.using, savepoint=False):\n        # send pre_delete signals\n        for model, obj in self.instances_with_model():\n            if not model._meta.auto_created:\n                signals.pre_delete.send(\n                    sender=model, instance=obj, using=self.using\n                )\n\n        # fast deletes\n        for qs in self.fast_deletes:\n            count = qs._raw_delete(using=self.using)\n            deleted_counter[qs.model._meta.label] += count\n\n        # update fields\n        for model, instances_for_fieldvalues in self.field_updates.items():\n            for (field, value), instances in instances_for_fieldvalues.items():\n                query = sql.UpdateQuery(model)\n                query.update_batch([obj.pk for obj in instances],\n                                   {field.name: value}, self.using)\n\n        # reverse instance collections\n        for instances in self.data.values():\n            instances.reverse()\n\n        # delete instances\n        for model, instances in self.data.items():\n            query = sql.DeleteQuery(model)\n            pk_list = [obj.pk for obj in instances]\n            count = query.delete_batch(pk_list, self.using)\n            deleted_counter[model._meta.label] += count\n\n            if not model._meta.auto_created:\n                for obj in instances:\n                    signals.post_delete.send(\n                        sender=model, instance=obj, using=self.using\n                    )\n\n    # update collected instances\n    for instances_for_fieldvalues in self.field_updates.values():\n        for (field, value), instances in instances_for_fieldvalues.items():\n            for obj in instances:\n                setattr(obj, field.attname, value)\n    for model, instances in self.data.items():\n        for instance in instances:\n            setattr(instance, model._meta.pk.attname, None)\n    return sum(deleted_counter.values()), dict(deleted_counter)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3564411699771881
+    },
+    {
+      "chunk_id": "django/db/models/fields/related_descriptors.py:421-478",
+      "citation": {
+        "path": "django/db/models/fields/related_descriptors.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 421,
+        "end_line": 478
+      },
+      "content": "def __set__(self, instance, value):\n    \"\"\"\n    Set the related instance through the reverse relation.\n\n    With the example above, when setting ``place.restaurant = restaurant``:\n\n    - ``self`` is the descriptor managing the ``restaurant`` attribute\n    - ``instance`` is the ``place`` instance\n    - ``value`` is the ``restaurant`` instance on the right of the equal sign\n\n    Keep in mind that ``Restaurant`` holds the foreign key to ``Place``.\n    \"\"\"\n    # The similarity of the code below to the code in\n    # ForwardManyToOneDescriptor is annoying, but there's a bunch\n    # of small differences that would make a common base class convoluted.\n\n    if value is None:\n        # Update the cached related instance (if any) & clear the cache.\n        # Following the example above, this would be the cached\n        # ``restaurant`` instance (if any).\n        rel_obj = self.related.get_cached_value(instance, default=None)\n        if rel_obj is not None:\n            # Remove the ``restaurant`` instance from the ``place``\n            # instance cache.\n            self.related.delete_cached_value(instance)\n            # Set the ``place`` field on the ``restaurant``\n            # instance to None.\n            setattr(rel_obj, self.related.field.name, None)\n    elif not isinstance(value, self.related.related_model):\n        # An object must be an instance of the related class.\n        raise ValueError(\n            'Cannot assign \"%r\": \"%s.%s\" must be a \"%s\" instance.' % (\n                value,\n                instance._meta.object_name,\n                self.related.get_accessor_name(),\n                self.related.related_model._meta.object_name,\n            )\n        )\n    else:\n        if instance._state.db is None:\n            instance._state.db = router.db_for_write(instance.__class__, instance=value)\n        if value._state.db is None:\n            value._state.db = router.db_for_write(value.__class__, instance=instance)\n        if not router.allow_relation(value, instance):\n            raise ValueError('Cannot assign \"%r\": the current database router prevents this relation.' % value)\n\n        related_pk = tuple(getattr(instance, field.attname) for field in self.related.field.foreign_related_fields)\n        # Set the value of the related field to the value of the related object's related field\n        for index, field in enumerate(self.related.field.local_related_fields):\n            setattr(value, field.attname, related_pk[index])\n\n        # Set the related instance cache used by __get__ to avoid an SQL query\n        # when accessing the attribute we just set.\n        self.related.set_cached_value(instance, value)\n\n        # Set the forward accessor cache on the related object to the current\n        # instance to avoid an extra SQL query if it's accessed later on.\n        self.related.field.set_cached_value(value, instance)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.35361266136169434
+    },
+    {
+      "chunk_id": "django/db/models/query.py:1235-1247",
+      "citation": {
+        "path": "django/db/models/query.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 1235,
+        "end_line": 1247
+      },
+      "content": "def _next_is_sticky(self):\n    \"\"\"\n    Indicate that the next filter call and the one following that should\n    be treated as a single filter. This is only important when it comes to\n    determining when to reuse tables for many-to-many filters. Required so\n    that we can filter naturally on the results of related managers.\n\n    This doesn't return a clone of the current QuerySet (it returns\n    \"self\"). The method is only used internally and should be immediately\n    followed by a filter() that does create a clone.\n    \"\"\"\n    self._sticky_filter = True\n    return self",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.35336363315582275
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:169-229",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 169,
+        "end_line": 229
+      },
+      "content": "def collect(self, objs, source=None, nullable=False, collect_related=True,\n            source_attr=None, reverse_dependency=False, keep_parents=False):\n    \"\"\"\n    Add 'objs' to the collection of objects to be deleted as well as all\n    parent instances.  'objs' must be a homogeneous iterable collection of\n    model instances (e.g. a QuerySet).  If 'collect_related' is True,\n    related objects will be handled by their respective on_delete handler.\n\n    If the call is the result of a cascade, 'source' should be the model\n    that caused it and 'nullable' should be set to True, if the relation\n    can be null.\n\n    If 'reverse_dependency' is True, 'source' will be deleted before the\n    current model, rather than after. (Needed for cascading to parent\n    models, the one case in which the cascade follows the forwards\n    direction of an FK rather than the reverse direction.)\n\n    If 'keep_parents' is True, data of parent model's will be not deleted.\n    \"\"\"\n    if self.can_fast_delete(objs):\n        self.fast_deletes.append(objs)\n        return\n    new_objs = self.add(objs, source, nullable,\n                        reverse_dependency=reverse_dependency)\n    if not new_objs:\n        return\n\n    model = new_objs[0].__class__\n\n    if not keep_parents:\n        # Recursively collect concrete model's parent models, but not their\n        # related objects. These will be found by meta.get_fields()\n        concrete_model = model._meta.concrete_model\n        for ptr in concrete_model._meta.parents.values():\n            if ptr:\n                parent_objs = [getattr(obj, ptr.name) for obj in new_objs]\n                self.collect(parent_objs, source=model,\n                             source_attr=ptr.remote_field.related_name,\n                             collect_related=False,\n                             reverse_dependency=True)\n    if collect_related:\n        parents = model._meta.parents\n        for related in get_candidate_relations_to_delete(model._meta):\n            # Preserve parent reverse relationships if keep_parents=True.\n            if keep_parents and related.model in parents:\n                continue\n            field = related.field\n            if field.remote_field.on_delete == DO_NOTHING:\n                continue\n            batches = self.get_del_batches(new_objs, field)\n            for batch in batches:\n                sub_objs = self.related_objects(related, batch)\n                if self.can_fast_delete(sub_objs, from_field=field):\n                    self.fast_deletes.append(sub_objs)\n                elif sub_objs:\n                    field.remote_field.on_delete(self, field, sub_objs, self.using)\n        for field in model._meta.private_fields:\n            if hasattr(field, 'bulk_related_objects'):\n                # It's something like generic foreign key.\n                sub_objs = field.bulk_related_objects(new_objs, self.using)\n                self.collect(sub_objs, source=model, nullable=True)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.35041433572769165
+    },
+    {
+      "chunk_id": "django/db/models/base.py:1048-1091",
+      "citation": {
+        "path": "django/db/models/base.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 1048,
+        "end_line": 1091
+      },
+      "content": "def _perform_unique_checks(self, unique_checks):\n    errors = {}\n\n    for model_class, unique_check in unique_checks:\n        # Try to look up an existing object with the same values as this\n        # object's values for all the unique field.\n\n        lookup_kwargs = {}\n        for field_name in unique_check:\n            f = self._meta.get_field(field_name)\n            lookup_value = getattr(self, f.attname)\n            # TODO: Handle multiple backends with different feature flags.\n            if (lookup_value is None or\n                    (lookup_value == '' and connection.features.interprets_empty_strings_as_nulls)):\n                # no value, skip the lookup\n                continue\n            if f.primary_key and not self._state.adding:\n                # no need to check for unique primary key when editing\n                continue\n            lookup_kwargs[str(field_name)] = lookup_value\n\n        # some fields were skipped, no reason to do the check\n        if len(unique_check) != len(lookup_kwargs):\n            continue\n\n        qs = model_class._default_manager.filter(**lookup_kwargs)\n\n        # Exclude the current object from the query if we are editing an\n        # instance (as opposed to creating a new one)\n        # Note that we need to use the pk as defined by model_class, not\n        # self.pk. These can be different fields because model inheritance\n        # allows single model to have effectively multiple primary keys.\n        # Refs #17615.\n        model_class_pk = self._get_pk_val(model_class._meta)\n        if not self._state.adding and model_class_pk is not None:\n            qs = qs.exclude(pk=model_class_pk)\n        if qs.exists():\n            if len(unique_check) == 1:\n                key = unique_check[0]\n            else:\n                key = NON_FIELD_ERRORS\n            errors.setdefault(key, []).append(self.unique_error_message(model_class, unique_check))\n\n    return errors",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34849822521209717
+    },
+    {
+      "chunk_id": "django/db/models/fields/related.py:759-986",
+      "citation": {
+        "path": "django/db/models/fields/related.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 759,
+        "end_line": 986
+      },
+      "content": "class ForeignKey(ForeignObject):\n    \"\"\"\n    Provide a many-to-one relation by adding a column to the local model\n    to hold the remote value.\n\n    By default ForeignKey will target the pk of the remote model but this\n    behavior can be changed by using the ``to_field`` argument.\n    \"\"\"\n\n    # Field flags\n    many_to_many = False\n    many_to_one = True\n    one_to_many = False\n    one_to_one = False\n\n    rel_class = ManyToOneRel\n\n    empty_strings_allowed = False\n    default_error_messages = {\n        'invalid': _('%(model)s instance with %(field)s %(value)r does not exist.')\n    }\n    description = _(\"Foreign Key (type determined by related field)\")\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34729158878326416
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:119-155",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 119,
+        "end_line": 155
+      },
+      "content": "def can_fast_delete(self, objs, from_field=None):\n    \"\"\"\n    Determine if the objects in the given queryset-like or single object\n    can be fast-deleted. This can be done if there are no cascades, no\n    parents and no signal listeners for the object class.\n\n    The 'from_field' tells where we are coming from - we need this to\n    determine if the objects are in fact to be deleted. Allow also\n    skipping parent -> child -> parent chain preventing fast delete of\n    the child.\n    \"\"\"\n    if from_field and from_field.remote_field.on_delete is not CASCADE:\n        return False\n    if hasattr(objs, '_meta'):\n        model = type(objs)\n    elif hasattr(objs, 'model') and hasattr(objs, '_raw_delete'):\n        model = objs.model\n    else:\n        return False\n    if (signals.pre_delete.has_listeners(model) or\n            signals.post_delete.has_listeners(model) or\n            signals.m2m_changed.has_listeners(model)):\n        return False\n    # The use of from_field comes from the need to avoid cascade back to\n    # parent when parent delete is cascading to child.\n    opts = model._meta\n    return (\n        all(link == from_field for link in opts.concrete_model._meta.parents.values()) and\n        # Foreign keys pointing to this model.\n        all(\n            related.field.remote_field.on_delete is DO_NOTHING\n            for related in get_candidate_relations_to_delete(opts)\n        ) and (\n            # Something like generic foreign key.\n            not any(hasattr(field, 'bulk_related_objects') for field in opts.private_fields)\n        )\n    )",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34670358896255493
+    },
+    {
+      "chunk_id": "django/db/models/fields/related.py:1193-1390",
+      "citation": {
+        "path": "django/db/models/fields/related.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 1193,
+        "end_line": 1390
+      },
+      "content": "def _check_relationship_model(self, from_model=None, **kwargs):\n    if hasattr(self.remote_field.through, '_meta'):\n        qualified_model_name = \"%s.%s\" % (\n            self.remote_field.through._meta.app_label, self.remote_field.through.__name__)\n    else:\n        qualified_model_name = self.remote_field.through\n\n    errors = []\n\n    if self.remote_field.through not in self.opts.apps.get_models(include_auto_created=True):\n        # The relationship model is not installed.\n        errors.append(\n            checks.Error(\n                \"Field specifies a many-to-many relation through model \"\n                \"'%s', which has not been installed.\" % qualified_model_name,\n                obj=self,\n                id='fields.E331',\n            )\n        )\n\n    else:\n        assert from_model is not None, (\n            \"ManyToManyField with intermediate \"\n            \"tables cannot be checked if you don't pass the model \"\n            \"where the field is attached to.\"\n        )\n        # Set some useful local variables\n        to_model = resolve_relation(from_model, self.remote_field.model)\n        from_model_name = from_model._meta.object_name\n        if isinstance(to_model, str):\n            to_model_name = to_model\n        else:\n            to_model_name = to_model._meta.object_name\n        relationship_model_name = self.remote_field.through._meta.object_name\n        self_referential = from_model == to_model\n\n        # Check symmetrical attribute.\n        if (self_referential and self.remote_field.symmetrical and\n                not self.remote_field.through._meta.auto_created):\n            errors.append(\n                checks.Error(\n                    'Many-to-many fields with intermediate tables must not be symmetrical.',\n                    obj=self,\n                    id='fields.E332',\n                )\n            )\n\n        # Count foreign keys in intermediate model\n        if self_referential:\n            seen_self = sum(\n                from_model == getattr(field.remote_field, 'model', None)\n                for field in self.remote_field.through._meta.fields\n            )\n\n            if seen_self > 2 and not self.remote_field.through_fields:\n                errors.append(\n                    checks.Error(\n                        \"The model is used as an intermediate model by \"\n                        \"'%s', but it has more than two foreign keys \"\n                        \"to '%s', which is ambiguous. You must specify \"\n                        \"which two foreign keys Django should use via the \"\n                        \"through_fields keyword argument.\" % (self, from_model_name),\n                        hint=\"Use through_fields to specify which two foreign keys Django should use.\",\n                        obj=self.remote_field.through,\n                        id='fields.E333',\n                    )\n                )\n\n        else:\n            # Count foreign keys in relationship model\n            seen_from = sum(\n                from_model == getattr(field.remote_field, 'model', None)\n                for field in self.remote_field.through._meta.fields\n            )\n            seen_to = sum(\n                to_model == getattr(field.remote_field, 'model', None)\n                for field in self.remote_field.through._meta.fields\n            )\n\n            if seen_from > 1 and not self.remote_field.through_fields:\n                errors.append(\n                    checks.Error(\n                        (\"The model is used as an intermediate model by \"\n                         \"'%s', but it has more than one foreign key \"\n                         \"from '%s', which is ambiguous. You must specify \"\n                         \"which foreign key Django should use via the \"\n                         \"through_fields keyword argument.\") % (self, from_model_name),\n                        hint=(\n                            'If you want to create a recursive relationship, '\n                            'use ForeignKey(\"self\", symmetrical=False, through=\"%s\").'\n                        ) % relationship_model_name,\n                        obj=self,\n                        id='fields.E334',\n                    )\n                )\n\n            if seen_to > 1 and not self.remote_field.through_fields:\n                errors.append(\n                    checks.Error(\n                        \"The model is used as an intermediate model by \"\n                        \"'%s', but it has more than one foreign key \"\n                        \"to '%s', which is ambiguous. You must specify \"\n                        \"which foreign key Django should use via the \"\n                        \"through_fields keyword argument.\" % (self, to_model_name),\n                        hint=(\n                            'If you want to create a recursive relationship, '\n                            'use ForeignKey(\"self\", symmetrical=False, through=\"%s\").'\n                        ) % relationship_model_name,\n                        obj=self,\n                        id='fields.E335',\n                    )\n                )\n\n            if seen_from == 0 or seen_to == 0:\n                errors.append(\n                    checks.Error(\n                        \"The model is used as an intermediate model by \"\n                        \"'%s', but it does not have a foreign key to '%s' or '%s'.\" % (\n                            self, from_model_name, to_model_name\n                        ),\n                        obj=self.remote_field.through,\n                        id='fields.E336',\n                    )\n                )\n\n    # Validate `through_fields`.\n    if self.remote_field.through_fields is not None:\n        # Validate that we're given an iterable of at least two items\n        # and that none of them is \"falsy\".\n        if not (len(self.remote_field.through_fields) >= 2 and\n                self.remote_field.through_fields[0] and self.remote_field.through_fields[1]):\n            errors.append(\n                checks.Error(\n                    \"Field specifies 'through_fields' but does not provide \"\n                    \"the names of the two link fields that should be used \"\n                    \"for the relation through model '%s'.\" % qualified_model_name,\n                    hint=\"Make sure you specify 'through_fields' as through_fields=('field1', 'field2')\",\n                    obj=self,\n                    id='fields.E337',\n                )\n            )\n\n        # Validate the given through fields -- they should be actual\n        # fields on the through model, and also be foreign keys to the\n        # expected models.\n        else:\n            assert from_model is not None, (\n                \"ManyToManyField with intermediate \"\n                \"tables cannot be checked if you don't pass the model \"\n                \"where the field is attached to.\"\n            )\n\n            source, through, target = from_model, self.remote_field.through, self.remote_field.model\n            source_field_name, target_field_name = self.remote_field.through_fields[:2]\n\n            for field_name, related_model in ((source_field_name, source),\n                                              (target_field_name, target)):\n\n                possible_field_names = []\n                for f in through._meta.fields:\n                    if hasattr(f, 'remote_field') and getattr(f.remote_field, 'model', None) == related_model:\n                        possible_field_names.append(f.name)\n                if possible_field_names:\n                    hint = \"Did you mean one of the following foreign keys to '%s': %s?\" % (\n                        related_model._meta.object_name,\n                        ', '.join(possible_field_names),\n                    )\n                else:\n                    hint = None\n\n                try:\n                    field = through._meta.get_field(field_name)\n                except exceptions.FieldDoesNotExist:\n                    errors.append(\n                        checks.Error(\n                            \"The intermediary model '%s' has no field '%s'.\"\n                            % (qualified_model_name, field_name),\n                            hint=hint,\n                            obj=self,\n                            id='fields.E338',\n                        )\n                    )\n                else:\n                    if not (hasattr(field, 'remote_field') and\n                            getattr(field.remote_field, 'model', None) == related_model):\n                        errors.append(\n                            checks.Error(\n                                \"'%s.%s' is not a foreign key to '%s'.\" % (\n                                    through._meta.object_name, field_name,\n                                    related_model._meta.object_name,\n                                ),\n                                hint=hint,\n                                obj=self,\n                                id='fields.E339',\n                            )\n                        )\n\n    return errors",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3466228246688843
+    },
+    {
+      "chunk_id": "django/db/models/fields/related.py:822-843",
+      "citation": {
+        "path": "django/db/models/fields/related.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 822,
+        "end_line": 843
+      },
+      "content": "def _check_on_delete(self):\n    on_delete = getattr(self.remote_field, 'on_delete', None)\n    if on_delete == SET_NULL and not self.null:\n        return [\n            checks.Error(\n                'Field specifies on_delete=SET_NULL, but cannot be null.',\n                hint='Set null=True argument on the field, or change the on_delete rule.',\n                obj=self,\n                id='fields.E320',\n            )\n        ]\n    elif on_delete == SET_DEFAULT and not self.has_default():\n        return [\n            checks.Error(\n                'Field specifies on_delete=SET_DEFAULT, but has no default value.',\n                hint='Set a default value, or change the on_delete rule.',\n                obj=self,\n                id='fields.E321',\n            )\n        ]\n    else:\n        return []",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34597182273864746
+    },
+    {
+      "chunk_id": "django/db/models/sql/query.py:1385-1479",
+      "citation": {
+        "path": "django/db/models/sql/query.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 1385,
+        "end_line": 1479
+      },
+      "content": "def names_to_path(self, names, opts, allow_many=True, fail_on_missing=False):\n    \"\"\"\n    Walk the list of names and turns them into PathInfo tuples. A single\n    name in 'names' can generate multiple PathInfos (m2m, for example).\n\n    'names' is the path of names to travel, 'opts' is the model Options we\n    start the name resolving from, 'allow_many' is as for setup_joins().\n    If fail_on_missing is set to True, then a name that can't be resolved\n    will generate a FieldError.\n\n    Return a list of PathInfo tuples. In addition return the final field\n    (the last used join field) and target (which is a field guaranteed to\n    contain the same value as the final field). Finally, return those names\n    that weren't found (which are likely transforms and the final lookup).\n    \"\"\"\n    path, names_with_path = [], []\n    for pos, name in enumerate(names):\n        cur_names_with_path = (name, [])\n        if name == 'pk':\n            name = opts.pk.name\n\n        field = None\n        filtered_relation = None\n        try:\n            field = opts.get_field(name)\n        except FieldDoesNotExist:\n            if name in self.annotation_select:\n                field = self.annotation_select[name].output_field\n            elif name in self._filtered_relations and pos == 0:\n                filtered_relation = self._filtered_relations[name]\n                field = opts.get_field(filtered_relation.relation_name)\n        if field is not None:\n            # Fields that contain one-to-many relations with a generic\n            # model (like a GenericForeignKey) cannot generate reverse\n            # relations and therefore cannot be used for reverse querying.\n            if field.is_relation and not field.related_model:\n                raise FieldError(\n                    \"Field %r does not generate an automatic reverse \"\n                    \"relation and therefore cannot be used for reverse \"\n                    \"querying. If it is a GenericForeignKey, consider \"\n                    \"adding a GenericRelation.\" % name\n                )\n            try:\n                model = field.model._meta.concrete_model\n            except AttributeError:\n                # QuerySet.annotate() may introduce fields that aren't\n                # attached to a model.\n                model = None\n        else:\n            # We didn't find the current field, so move position back\n            # one step.\n            pos -= 1\n            if pos == -1 or fail_on_missing:\n                available = sorted([\n                    *get_field_names_from_opts(opts),\n                    *self.annotation_select,\n                    *self._filtered_relations,\n                ])\n                raise FieldError(\"Cannot resolve keyword '%s' into field. \"\n                                 \"Choices are: %s\" % (name, \", \".join(available)))\n            break\n        # Check if we need any joins for concrete inheritance cases (the\n        # field lives in parent, but we are currently in one of its\n        # children)\n        if model is not opts.model:\n            path_to_parent = opts.get_path_to_parent(model)\n            if path_to_parent:\n                path.extend(path_to_parent)\n                cur_names_with_path[1].extend(path_to_parent)\n                opts = path_to_parent[-1].to_opts\n        if hasattr(field, 'get_path_info'):\n            pathinfos = field.get_path_info(filtered_relation)\n            if not allow_many:\n                for inner_pos, p in enumerate(pathinfos):\n                    if p.m2m:\n                        cur_names_with_path[1].extend(pathinfos[0:inner_pos + 1])\n                        names_with_path.append(cur_names_with_path)\n                        raise MultiJoin(pos + 1, names_with_path)\n            last = pathinfos[-1]\n            path.extend(pathinfos)\n            final_field = last.join_field\n            opts = last.to_opts\n            targets = last.target_fields\n            cur_names_with_path[1].extend(pathinfos)\n            names_with_path.append(cur_names_with_path)\n        else:\n            # Local non-relational field.\n            final_field = field\n            targets = (field,)\n            if fail_on_missing and pos + 1 != len(names):\n                raise FieldError(\n                    \"Cannot resolve keyword %r into field. Join on '%s'\"\n                    \" not permitted.\" % (names[pos + 1], name))\n            break\n    return path, final_field, targets, names[pos + 1:]",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3435176610946655
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 16.483972100002575
+}

@@ -1,0 +1,272 @@
+{
+  "task_id": "matplotlib__matplotlib-23913",
+  "config": "vector_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "examples/misc/custom_projection.py:233-242",
+      "citation": {
+        "path": "examples/misc/custom_projection.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 233,
+        "end_line": 242
+      },
+      "content": "def _gen_axes_patch(self):\n    \"\"\"\n    Override this method to define the shape that is used for the\n    background of the plot.  It should be a subclass of Patch.\n\n    In this case, it is a Circle (that may be warped by the axes\n    transform into an ellipse).  Any data and gridlines will be\n    clipped to this shape.\n    \"\"\"\n    return Circle((0.5, 0.5), 0.5)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36799508333206177
+    },
+    {
+      "chunk_id": "lib/matplotlib/axes/_base.py:2700-2773",
+      "citation": {
+        "path": "lib/matplotlib/axes/_base.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 2700,
+        "end_line": 2773
+      },
+      "content": "def margins(self, *margins, x=None, y=None, tight=True):\n    \"\"\"\n    Set or retrieve autoscaling margins.\n\n    The padding added to each limit of the Axes is the *margin*\n    times the data interval. All input parameters must be floats\n    within the range [0, 1]. Passing both positional and keyword\n    arguments is invalid and will raise a TypeError. If no\n    arguments (positional or otherwise) are provided, the current\n    margins will remain in place and simply be returned.\n\n    Specifying any margin changes only the autoscaling; for example,\n    if *xmargin* is not None, then *xmargin* times the X data\n    interval will be added to each end of that interval before\n    it is used in autoscaling.\n\n    Parameters\n    ----------\n    *margins : float, optional\n        If a single positional argument is provided, it specifies\n        both margins of the x-axis and y-axis limits. If two\n        positional arguments are provided, they will be interpreted\n        as *xmargin*, *ymargin*. If setting the margin on a single\n        axis is desired, use the keyword arguments described below.\n\n    x, y : float, optional\n        Specific margin values for the x-axis and y-axis,\n        respectively. These cannot be used with positional\n        arguments, but can be used individually to alter on e.g.,\n        only the y-axis.\n\n    tight : bool or None, default: True\n        The *tight* parameter is passed to `~.axes.Axes.autoscale_view`,\n        which is executed after a margin is changed; the default\n        here is *True*, on the assumption that when margins are\n        specified, no additional padding to match tick marks is\n        usually desired.  Setting *tight* to *None* preserves\n        the previous setting.\n\n    Returns\n    -------\n    xmargin, ymargin : float\n\n    Notes\n    -----\n    If a previously used Axes method such as :meth:`pcolor` has set\n    :attr:`use_sticky_edges` to `True`, only the limits not set by\n    the \"sticky artists\" will be modified. To force all of the\n    margins to be set, set :attr:`use_sticky_edges` to `False`\n    before calling :meth:`margins`.\n    \"\"\"\n\n    if margins and (x is not None or y is not None):\n        raise TypeError('Cannot pass both positional and keyword '\n                        'arguments for x and/or y.')\n    elif len(margins) == 1:\n        x = y = margins[0]\n    elif len(margins) == 2:\n        x, y = margins\n    elif margins:\n        raise TypeError('Must pass a single positional argument for all '\n                        'margins, or one for each margin (x, y).')\n\n    if x is None and y is None:\n        if tight is not True:\n            _api.warn_external(f'ignoring tight={tight!r} in get mode')\n        return self._xmargin, self._ymargin\n\n    if tight is not None:\n        self._tight = tight\n    if x is not None:\n        self.set_xmargin(x)\n    if y is not None:\n        self.set_ymargin(y)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.33785855770111084
+    },
+    {
+      "chunk_id": "lib/matplotlib/pyplot.py:924-936",
+      "citation": {
+        "path": "lib/matplotlib/pyplot.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 924,
+        "end_line": 936
+      },
+      "content": "def draw():\n    \"\"\"\n    Redraw the current figure.\n\n    This is used to update a figure that has been altered, but not\n    automatically re-drawn.  If interactive mode is on (via `.ion()`), this\n    should be only rarely needed, but there may be ways to modify the state of\n    a figure without marking it as \"stale\".  Please report these cases as bugs.\n\n    This is equivalent to calling ``fig.canvas.draw_idle()``, where ``fig`` is\n    the current figure.\n    \"\"\"\n    gcf().canvas.draw_idle()",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.33330702781677246
+    },
+    {
+      "chunk_id": "examples/event_handling/poly_editor.py:50-197",
+      "citation": {
+        "path": "examples/event_handling/poly_editor.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 50,
+        "end_line": 197
+      },
+      "content": "class PolygonInteractor:\n    \"\"\"\n    A polygon editor.\n\n    Key-bindings\n\n      't' toggle vertex markers on and off.  When vertex markers are on,\n          you can move them, delete them\n\n      'd' delete the vertex under point\n\n      'i' insert a vertex at point.  You must be within epsilon of the\n          line connecting two existing vertices\n\n    \"\"\"\n\n    showverts = True\n    epsilon = 5  # max pixel distance to count as a vertex hit\n\n\n        # do not need to blit here, this will fire before the screen is\n        # updated\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3332850933074951
+    },
+    {
+      "chunk_id": "lib/matplotlib/path.py:549-591",
+      "citation": {
+        "path": "lib/matplotlib/path.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 549,
+        "end_line": 591
+      },
+      "content": "def contains_points(self, points, transform=None, radius=0.0):\n    \"\"\"\n    Return whether the area enclosed by the path contains the given points.\n\n    The path is always treated as closed; i.e. if the last code is not\n    CLOSEPOLY an implicit segment connecting the last vertex to the first\n    vertex is assumed.\n\n    Parameters\n    ----------\n    points : (N, 2) array\n        The points to check. Columns contain x and y values.\n    transform : `matplotlib.transforms.Transform`, optional\n        If not ``None``, *points* will be compared to ``self`` transformed\n        by *transform*; i.e. for a correct check, *transform* should\n        transform the path into the coordinate system of *points*.\n    radius : float, default: 0\n        Add an additional margin on the path in coordinates of *points*.\n        The path is extended tangentially by *radius/2*; i.e. if you would\n        draw the path with a linewidth of *radius*, all points on the line\n        would still be considered to be contained in the area. Conversely,\n        negative values shrink the area: Points on the imaginary line\n        will be considered outside the area.\n\n    Returns\n    -------\n    length-N bool array\n\n    Notes\n    -----\n    The current algorithm has some limitations:\n\n    - The result is undefined for points exactly at the boundary\n      (i.e. at the path shifted by *radius/2*).\n    - The result is undefined if there is no enclosed area, i.e. all\n      vertices are on a straight line.\n    - If bounding lines start to cross each other due to *radius* shift,\n      the result is not guaranteed to be correct.\n    \"\"\"\n    if transform is not None:\n        transform = transform.frozen()\n    result = _path.points_in_path(points, radius, self, transform)\n    return result.astype('bool')",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3304937183856964
+    },
+    {
+      "chunk_id": "lib/matplotlib/axes/_base.py:1549-1621",
+      "citation": {
+        "path": "lib/matplotlib/axes/_base.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 1549,
+        "end_line": 1621
+      },
+      "content": "def set_prop_cycle(self, *args, **kwargs):\n    \"\"\"\n    Set the property cycle of the Axes.\n\n    The property cycle controls the style properties such as color,\n    marker and linestyle of future plot commands. The style properties\n    of data already added to the Axes are not modified.\n\n    Call signatures::\n\n      set_prop_cycle(cycler)\n      set_prop_cycle(label=values[, label2=values2[, ...]])\n      set_prop_cycle(label, values)\n\n    Form 1 sets given `~cycler.Cycler` object.\n\n    Form 2 creates a `~cycler.Cycler` which cycles over one or more\n    properties simultaneously and set it as the property cycle of the\n    Axes. If multiple properties are given, their value lists must have\n    the same length. This is just a shortcut for explicitly creating a\n    cycler and passing it to the function, i.e. it's short for\n    ``set_prop_cycle(cycler(label=values label2=values2, ...))``.\n\n    Form 3 creates a `~cycler.Cycler` for a single property and set it\n    as the property cycle of the Axes. This form exists for compatibility\n    with the original `cycler.cycler` interface. Its use is discouraged\n    in favor of the kwarg form, i.e. ``set_prop_cycle(label=values)``.\n\n    Parameters\n    ----------\n    cycler : Cycler\n        Set the given Cycler. *None* resets to the cycle defined by the\n        current style.\n\n    label : str\n        The property key. Must be a valid `.Artist` property.\n        For example, 'color' or 'linestyle'. Aliases are allowed,\n        such as 'c' for 'color' and 'lw' for 'linewidth'.\n\n    values : iterable\n        Finite-length iterable of the property values. These values\n        are validated and will raise a ValueError if invalid.\n\n    See Also\n    --------\n    matplotlib.rcsetup.cycler\n        Convenience function for creating validated cyclers for properties.\n    cycler.cycler\n        The original function for creating unvalidated cyclers.\n\n    Examples\n    --------\n    Setting the property cycle for a single property:\n\n    >>> ax.set_prop_cycle(color=['red', 'green', 'blue'])\n\n    Setting the property cycle for simultaneously cycling over multiple\n    properties (e.g. red circle, green plus, blue cross):\n\n    >>> ax.set_prop_cycle(color=['red', 'green', 'blue'],\n    ...                   marker=['o', '+', 'x'])\n\n    \"\"\"\n    if args and kwargs:\n        raise TypeError(\"Cannot supply both positional and keyword \"\n                        \"arguments to this method.\")\n    # Can't do `args == (None,)` as that crashes cycler.\n    if len(args) == 1 and args[0] is None:\n        prop_cycle = None\n    else:\n        prop_cycle = cycler(*args, **kwargs)\n    self._get_lines.set_prop_cycle(prop_cycle)\n    self._get_patches_for_fill.set_prop_cycle(prop_cycle)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.329620897769928
+    },
+    {
+      "chunk_id": "lib/matplotlib/pyplot.py:196-207",
+      "citation": {
+        "path": "lib/matplotlib/pyplot.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 196,
+        "end_line": 207
+      },
+      "content": "def _get_backend_mod():\n    \"\"\"\n    Ensure that a backend is selected and return it.\n\n    This is currently private, but may be made public in the future.\n    \"\"\"\n    if _backend_mod is None:\n        # Use __getitem__ here to avoid going through the fallback logic (which\n        # will (re)import pyplot and then call switch_backend if we need to\n        # resolve the auto sentinel)\n        switch_backend(dict.__getitem__(rcParams, \"backend\"))\n    return _backend_mod",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3171747922897339
+    },
+    {
+      "chunk_id": "lib/matplotlib/axes/_axes.py:2859-3050",
+      "citation": {
+        "path": "lib/matplotlib/axes/_axes.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 2859,
+        "end_line": 3050
+      },
+      "content": "@_preprocess_data()\n@_api.delete_parameter(\"3.6\", \"use_line_collection\")\ndef stem(self, *args, linefmt=None, markerfmt=None, basefmt=None, bottom=0,\n         label=None, use_line_collection=True, orientation='vertical'):\n    \"\"\"\n    Create a stem plot.\n\n    A stem plot draws lines perpendicular to a baseline at each location\n    *locs* from the baseline to *heads*, and places a marker there. For\n    vertical stem plots (the default), the *locs* are *x* positions, and\n    the *heads* are *y* values. For horizontal stem plots, the *locs* are\n    *y* positions, and the *heads* are *x* values.\n\n    Call signature::\n\n      stem([locs,] heads, linefmt=None, markerfmt=None, basefmt=None)\n\n    The *locs*-positions are optional. The formats may be provided either\n    as positional or as keyword-arguments.\n    Passing *markerfmt* and *basefmt* positionally is deprecated since\n    Matplotlib 3.5.\n\n    Parameters\n    ----------\n    locs : array-like, default: (0, 1, ..., len(heads) - 1)\n        For vertical stem plots, the x-positions of the stems.\n        For horizontal stem plots, the y-positions of the stems.\n\n    heads : array-like\n        For vertical stem plots, the y-values of the stem heads.\n        For horizontal stem plots, the x-values of the stem heads.\n\n    linefmt : str, optional\n        A string defining the color and/or linestyle of the vertical lines:\n\n        =========  =============\n        Character  Line Style\n        =========  =============\n        ``'-'``    solid line\n        ``'--'``   dashed line\n        ``'-.'``   dash-dot line\n        ``':'``    dotted line\n        =========  =============\n\n        Default: 'C0-', i.e. solid line with the first color of the color\n        cycle.\n\n        Note: Markers specified through this parameter (e.g. 'x') will be\n        silently ignored (unless using ``use_line_collection=False``).\n        Instead, markers should be specified using *markerfmt*.\n\n    markerfmt : str, optional\n        A string defining the color and/or shape of the markers at the stem\n        heads. If the marker is not given, use the marker 'o', i.e. filled\n        circles. If the color is not given, use the color from *linefmt*.\n\n    basefmt : str, default: 'C3-' ('C2-' in classic mode)\n        A format string defining the properties of the baseline.\n\n    orientation : str, default: 'vertical'\n        If 'vertical', will produce a plot with stems oriented vertically,\n        otherwise the stems will be oriented horizontally.\n\n    bottom : float, default: 0\n        The y/x-position of the baseline (depending on orientation).\n\n    label : str, default: None\n        The label to use for the stems in legends.\n\n    use_line_collection : bool, default: True\n        *Deprecated since 3.6*\n\n        If ``True``, store and plot the stem lines as a\n        `~.collections.LineCollection` instead of individual lines, which\n        significantly increases performance.  If ``False``, defaults to the\n        old behavior of using a list of `.Line2D` objects.\n\n    data : indexable object, optional\n        DATA_PARAMETER_PLACEHOLDER\n\n    Returns\n    -------\n    `.StemContainer`\n        The container may be treated like a tuple\n        (*markerline*, *stemlines*, *baseline*)\n\n    Notes\n    -----\n    .. seealso::\n        The MATLAB function\n        `stem <https://www.mathworks.com/help/matlab/ref/stem.html>`_\n        which inspired this method.\n    \"\"\"\n    if not 1 <= len(args) <= 5:\n        raise TypeError('stem expected between 1 and 5 positional '\n                        'arguments, got {}'.format(args))\n    _api.check_in_list(['horizontal', 'vertical'], orientation=orientation)\n\n    if len(args) == 1:\n        heads, = args\n        locs = np.arange(len(heads))\n        args = ()\n    elif isinstance(args[1], str):\n        heads, *args = args\n        locs = np.arange(len(heads))\n    else:\n        locs, heads, *args = args\n    if len(args) > 1:\n        _api.warn_deprecated(\n            \"3.5\",\n            message=\"Passing the markerfmt parameter positionally is \"\n                    \"deprecated since Matplotlib %(since)s; the \"\n                    \"parameter will become keyword-only %(removal)s.\")\n\n    if orientation == 'vertical':\n        locs, heads = self._process_unit_info([(\"x\", locs), (\"y\", heads)])\n    else:  # horizontal\n        heads, locs = self._process_unit_info([(\"x\", heads), (\"y\", locs)])\n\n    # resolve line format\n    if linefmt is None:\n        linefmt = args[0] if len(args) > 0 else \"C0-\"\n    linestyle, linemarker, linecolor = _process_plot_format(linefmt)\n\n    # resolve marker format\n    if markerfmt is None:\n        # if not given as kwarg, check for positional or fall back to 'o'\n        markerfmt = args[1] if len(args) > 1 else \"o\"\n    if markerfmt == '':\n        markerfmt = ' '  # = empty line style; '' would resolve rcParams\n    markerstyle, markermarker, markercolor = \\\n        _process_plot_format(markerfmt)\n    if markermarker is None:\n        markermarker = 'o'\n    if markerstyle is None:\n        markerstyle = 'None'\n    if markercolor is None:\n        markercolor = linecolor\n\n    # resolve baseline format\n    if basefmt is None:\n        basefmt = (args[2] if len(args) > 2 else\n                   \"C2-\" if mpl.rcParams[\"_internal.classic_mode\"] else\n                   \"C3-\")\n    basestyle, basemarker, basecolor = _process_plot_format(basefmt)\n\n    # New behaviour in 3.1 is to use a LineCollection for the stemlines\n    if use_line_collection:\n        if linestyle is None:\n            linestyle = mpl.rcParams['lines.linestyle']\n        xlines = self.vlines if orientation == \"vertical\" else self.hlines\n        stemlines = xlines(\n            locs, bottom, heads,\n            colors=linecolor, linestyles=linestyle, label=\"_nolegend_\")\n    # Old behaviour is to plot each of the lines individually\n    else:\n        stemlines = []\n        for loc, head in zip(locs, heads):\n            if orientation == 'horizontal':\n                xs = [bottom, head]\n                ys = [loc, loc]\n            else:\n                xs = [loc, loc]\n                ys = [bottom, head]\n            l, = self.plot(xs, ys,\n                           color=linecolor, linestyle=linestyle,\n                           marker=linemarker, label=\"_nolegend_\")\n            stemlines.append(l)\n\n    if orientation == 'horizontal':\n        marker_x = heads\n        marker_y = locs\n        baseline_x = [bottom, bottom]\n        baseline_y = [np.min(locs), np.max(locs)]\n    else:\n        marker_x = locs\n        marker_y = heads\n        baseline_x = [np.min(locs), np.max(locs)]\n        baseline_y = [bottom, bottom]\n\n    markerline, = self.plot(marker_x, marker_y,\n                            color=markercolor, linestyle=markerstyle,\n                            marker=markermarker, label=\"_nolegend_\")\n\n    baseline, = self.plot(baseline_x, baseline_y,\n                          color=basecolor, linestyle=basestyle,\n                          marker=basemarker, label=\"_nolegend_\")\n\n    stem_container = StemContainer((markerline, stemlines, baseline),\n                                   label=label)\n    self.add_container(stem_container)\n    return stem_container",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3162141442298889
+    },
+    {
+      "chunk_id": "lib/matplotlib/legend.py:1027-1071",
+      "citation": {
+        "path": "lib/matplotlib/legend.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 1027,
+        "end_line": 1071
+      },
+      "content": "def _find_best_position(self, width, height, renderer, consider=None):\n    \"\"\"\n    Determine the best location to place the legend.\n\n    *consider* is a list of ``(x, y)`` pairs to consider as a potential\n    lower-left corner of the legend. All are display coords.\n    \"\"\"\n    assert self.isaxes  # always holds, as this is only called internally\n\n    start_time = time.perf_counter()\n\n    bboxes, lines, offsets = self._auto_legend_data()\n\n    bbox = Bbox.from_bounds(0, 0, width, height)\n    if consider is None:\n        consider = [self._get_anchored_bbox(x, bbox,\n                                            self.get_bbox_to_anchor(),\n                                            renderer)\n                    for x in range(1, len(self.codes))]\n\n    candidates = []\n    for idx, (l, b) in enumerate(consider):\n        legendBox = Bbox.from_bounds(l, b, width, height)\n        badness = 0\n        # XXX TODO: If markers are present, it would be good to take them\n        # into account when checking vertex overlaps in the next line.\n        badness = (sum(legendBox.count_contains(line.vertices)\n                       for line in lines)\n                   + legendBox.count_contains(offsets)\n                   + legendBox.count_overlaps(bboxes)\n                   + sum(line.intersects_bbox(legendBox, filled=False)\n                         for line in lines))\n        if badness == 0:\n            return l, b\n        # Include the index to favor lower codes in case of a tie.\n        candidates.append((badness, idx, (l, b)))\n\n    _, _, (l, b) = min(candidates)\n\n    if self._loc_used_default and time.perf_counter() - start_time > 1:\n        _api.warn_external(\n            'Creating legend with loc=\"best\" can be slow with large '\n            'amounts of data.')\n\n    return l, b",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3118056356906891
+    },
+    {
+      "chunk_id": "lib/matplotlib/tests/test_path.py:88-99",
+      "citation": {
+        "path": "lib/matplotlib/tests/test_path.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 88,
+        "end_line": 99
+      },
+      "content": "@pytest.mark.parametrize('path, extents', zip(_test_paths, _test_path_extents))\ndef test_exact_extents(path, extents):\n    # notice that if we just looked at the control points to get the bounding\n    # box of each curve, we would get the wrong answers. For example, for\n    # hard_curve = Path([[0, 0], [1, 0], [1, 1], [0, 1]],\n    #                   [Path.MOVETO, Path.CURVE4, Path.CURVE4, Path.CURVE4])\n    # we would get that the extents area (0, 0, 1, 1). This code takes into\n    # account the curved part of the path, which does not typically extend all\n    # the way out to the control points.\n    # Note that counterintuitively, path.get_extents() returns a Bbox, so we\n    # have to get that Bbox's `.extents`.\n    assert np.all(path.get_extents().extents == extents)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3077363967895508
+    },
+    {
+      "chunk_id": "lib/matplotlib/path.py:225-235",
+      "citation": {
+        "path": "lib/matplotlib/path.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 225,
+        "end_line": 235
+      },
+      "content": "@property\ndef codes(self):\n    \"\"\"\n    The list of codes in the `Path` as a 1D numpy array.  Each\n    code is one of `STOP`, `MOVETO`, `LINETO`, `CURVE3`, `CURVE4`\n    or `CLOSEPOLY`.  For codes that correspond to more than one\n    vertex (`CURVE3` and `CURVE4`), that code will be repeated so\n    that the length of `vertices` and `codes` is always\n    the same.\n    \"\"\"\n    return self._codes",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3071608245372772
+    },
+    {
+      "chunk_id": "lib/matplotlib/backends/backend_template.py:109-128",
+      "citation": {
+        "path": "lib/matplotlib/backends/backend_template.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 109,
+        "end_line": 128
+      },
+      "content": "class GraphicsContextTemplate(GraphicsContextBase):\n    \"\"\"\n    The graphics context provides the color, line styles, etc.  See the cairo\n    and postscript backends for examples of mapping the graphics context\n    attributes (cap styles, join styles, line widths, colors) to a particular\n    backend.  In cairo this is done by wrapping a cairo.Context object and\n    forwarding the appropriate calls to it using a dictionary mapping styles\n    to gdk constants.  In Postscript, all the work is done by the renderer,\n    mapping line styles to postscript calls.\n\n    If it's more appropriate to do the mapping at the renderer level (as in\n    the postscript backend), you don't need to override any of the GC methods.\n    If it's more appropriate to wrap an instance (as in the cairo backend) and\n    do the mapping here, you'll need to override several of the setter\n    methods.\n\n    The base GraphicsContext stores colors as a RGB tuple on the unit\n    interval, e.g., (0.5, 0.0, 1.0). You may need to map this to colors\n    appropriate for your backend.\n    \"\"\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.30536240339279175
+    },
+    {
+      "chunk_id": "lib/matplotlib/backends/qt_compat.py:193-261",
+      "citation": {
+        "path": "lib/matplotlib/backends/qt_compat.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 193,
+        "end_line": 261
+      },
+      "content": "@contextlib.contextmanager\ndef _maybe_allow_interrupt(qapp):\n    \"\"\"\n    This manager allows to terminate a plot by sending a SIGINT. It is\n    necessary because the running Qt backend prevents Python interpreter to\n    run and process signals (i.e., to raise KeyboardInterrupt exception). To\n    solve this one needs to somehow wake up the interpreter and make it close\n    the plot window. We do this by using the signal.set_wakeup_fd() function\n    which organizes a write of the signal number into a socketpair connected\n    to the QSocketNotifier (since it is part of the Qt backend, it can react\n    to that write event). Afterwards, the Qt handler empties the socketpair\n    by a recv() command to re-arm it (we need this if a signal different from\n    SIGINT was caught by set_wakeup_fd() and we shall continue waiting). If\n    the SIGINT was caught indeed, after exiting the on_signal() function the\n    interpreter reacts to the SIGINT according to the handle() function which\n    had been set up by a signal.signal() call: it causes the qt_object to\n    exit by calling its quit() method. Finally, we call the old SIGINT\n    handler with the same arguments that were given to our custom handle()\n    handler.\n\n    We do this only if the old handler for SIGINT was not None, which means\n    that a non-python handler was installed, i.e. in Julia, and not SIG_IGN\n    which means we should ignore the interrupts.\n    \"\"\"\n    old_sigint_handler = signal.getsignal(signal.SIGINT)\n    handler_args = None\n    skip = False\n    if old_sigint_handler in (None, signal.SIG_IGN, signal.SIG_DFL):\n        skip = True\n    else:\n        wsock, rsock = socket.socketpair()\n        wsock.setblocking(False)\n        old_wakeup_fd = signal.set_wakeup_fd(wsock.fileno())\n        sn = QtCore.QSocketNotifier(\n            rsock.fileno(), _enum('QtCore.QSocketNotifier.Type').Read\n        )\n\n        # We do not actually care about this value other than running some\n        # Python code to ensure that the interpreter has a chance to handle the\n        # signal in Python land.  We also need to drain the socket because it\n        # will be written to as part of the wakeup!  There are some cases where\n        # this may fire too soon / more than once on Windows so we should be\n        # forgiving about reading an empty socket.\n        rsock.setblocking(False)\n        # Clear the socket to re-arm the notifier.\n        @sn.activated.connect\n        def _may_clear_sock(*args):\n            try:\n                rsock.recv(1)\n            except BlockingIOError:\n                pass\n\n        def handle(*args):\n            nonlocal handler_args\n            handler_args = args\n            qapp.quit()\n\n        signal.signal(signal.SIGINT, handle)\n    try:\n        yield\n    finally:\n        if not skip:\n            wsock.close()\n            rsock.close()\n            sn.setEnabled(False)\n            signal.set_wakeup_fd(old_wakeup_fd)\n            signal.signal(signal.SIGINT, old_sigint_handler)\n            if handler_args is not None:\n                old_sigint_handler(*handler_args)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3027610182762146
+    },
+    {
+      "chunk_id": "lib/matplotlib/dates.py:858-975",
+      "citation": {
+        "path": "lib/matplotlib/dates.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 858,
+        "end_line": 975
+      },
+      "content": "class AutoDateFormatter(ticker.Formatter):\n    \"\"\"\n    A `.Formatter` which attempts to figure out the best format to use.  This\n    is most useful when used with the `AutoDateLocator`.\n\n    `.AutoDateFormatter` has a ``.scale`` dictionary that maps tick scales (the\n    interval in days between one major tick) to format strings; this dictionary\n    defaults to ::\n\n        self.scaled = {\n            DAYS_PER_YEAR: rcParams['date.autoformatter.year'],\n            DAYS_PER_MONTH: rcParams['date.autoformatter.month'],\n            1: rcParams['date.autoformatter.day'],\n            1 / HOURS_PER_DAY: rcParams['date.autoformatter.hour'],\n            1 / MINUTES_PER_DAY: rcParams['date.autoformatter.minute'],\n            1 / SEC_PER_DAY: rcParams['date.autoformatter.second'],\n            1 / MUSECONDS_PER_DAY: rcParams['date.autoformatter.microsecond'],\n        }\n\n    The formatter uses the format string corresponding to the lowest key in\n    the dictionary that is greater or equal to the current scale.  Dictionary\n    entries can be customized::\n\n        locator = AutoDateLocator()\n        formatter = AutoDateFormatter(locator)\n        formatter.scaled[1/(24*60)] = '%M:%S' # only show min and sec\n\n    Custom callables can also be used instead of format strings.  The following\n    example shows how to use a custom format function to strip trailing zeros\n    from decimal seconds and adds the date to the first ticklabel::\n\n        def my_format_function(x, pos=None):\n            x = matplotlib.dates.num2date(x)\n            if pos == 0:\n                fmt = '%D %H:%M:%S.%f'\n            else:\n                fmt = '%H:%M:%S.%f'\n            label = x.strftime(fmt)\n            label = label.rstrip(\"0\")\n            label = label.rstrip(\".\")\n            return label\n\n        formatter.scaled[1/(24*60)] = my_format_function\n    \"\"\"\n\n    # This can be improved by providing some user-level direction on\n    # how to choose the best format (precedence, etc.).\n\n    # Perhaps a 'struct' that has a field for each time-type where a\n    # zero would indicate \"don't show\" and a number would indicate\n    # \"show\" with some sort of priority.  Same priorities could mean\n    # show all with the same priority.\n\n    # Or more simply, perhaps just a format string for each\n    # possibility...\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3026355803012848
+    },
+    {
+      "chunk_id": "lib/matplotlib/_enums.py:27-111",
+      "citation": {
+        "path": "lib/matplotlib/_enums.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 27,
+        "end_line": 111
+      },
+      "content": "class JoinStyle(str, _AutoStringNameEnum):\n    \"\"\"\n    Define how the connection between two line segments is drawn.\n\n    For a visual impression of each *JoinStyle*, `view these docs online\n    <JoinStyle>`, or run `JoinStyle.demo`.\n\n    Lines in Matplotlib are typically defined by a 1D `~.path.Path` and a\n    finite ``linewidth``, where the underlying 1D `~.path.Path` represents the\n    center of the stroked line.\n\n    By default, `~.backend_bases.GraphicsContextBase` defines the boundaries of\n    a stroked line to simply be every point within some radius,\n    ``linewidth/2``, away from any point of the center line. However, this\n    results in corners appearing \"rounded\", which may not be the desired\n    behavior if you are drawing, for example, a polygon or pointed star.\n\n    **Supported values:**\n\n    .. rst-class:: value-list\n\n        'miter'\n            the \"arrow-tip\" style. Each boundary of the filled-in area will\n            extend in a straight line parallel to the tangent vector of the\n            centerline at the point it meets the corner, until they meet in a\n            sharp point.\n        'round'\n            stokes every point within a radius of ``linewidth/2`` of the center\n            lines.\n        'bevel'\n            the \"squared-off\" style. It can be thought of as a rounded corner\n            where the \"circular\" part of the corner has been cut off.\n\n    .. note::\n\n        Very long miter tips are cut off (to form a *bevel*) after a\n        backend-dependent limit called the \"miter limit\", which specifies the\n        maximum allowed ratio of miter length to line width. For example, the\n        PDF backend uses the default value of 10 specified by the PDF standard,\n        while the SVG backend does not even specify the miter limit, resulting\n        in a default value of 4 per the SVG specification. Matplotlib does not\n        currently allow the user to adjust this parameter.\n\n        A more detailed description of the effect of a miter limit can be found\n        in the `Mozilla Developer Docs\n        <https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/stroke-miterlimit>`_\n\n    .. plot::\n        :alt: Demo of possible JoinStyle's\n\n        from matplotlib._enums import JoinStyle\n        JoinStyle.demo()\n\n    \"\"\"\n\n    miter = auto()\n    round = auto()\n    bevel = auto()\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.30097487568855286
+    },
+    {
+      "chunk_id": "examples/lines_bars_and_markers/filled_step.py:18-77",
+      "citation": {
+        "path": "examples/lines_bars_and_markers/filled_step.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 18,
+        "end_line": 77
+      },
+      "content": "def filled_hist(ax, edges, values, bottoms=None, orientation='v',\n                **kwargs):\n    \"\"\"\n    Draw a histogram as a stepped patch.\n\n    Parameters\n    ----------\n    ax : Axes\n        The axes to plot to\n\n    edges : array\n        A length n+1 array giving the left edges of each bin and the\n        right edge of the last bin.\n\n    values : array\n        A length n array of bin counts or values\n\n    bottoms : float or array, optional\n        A length n array of the bottom of the bars.  If None, zero is used.\n\n    orientation : {'v', 'h'}\n       Orientation of the histogram.  'v' (default) has\n       the bars increasing in the positive y-direction.\n\n    **kwargs\n        Extra keyword arguments are passed through to `.fill_between`.\n\n    Returns\n    -------\n    ret : PolyCollection\n        Artist added to the Axes\n    \"\"\"\n    print(orientation)\n    if orientation not in 'hv':\n        raise ValueError(\"orientation must be in {{'h', 'v'}} \"\n                         \"not {o}\".format(o=orientation))\n\n    kwargs.setdefault('step', 'post')\n    kwargs.setdefault('alpha', 0.7)\n    edges = np.asarray(edges)\n    values = np.asarray(values)\n    if len(edges) - 1 != len(values):\n        raise ValueError('Must provide one more bin edge than value not: '\n                         'len(edges): {lb} len(values): {lv}'.format(\n                             lb=len(edges), lv=len(values)))\n\n    if bottoms is None:\n        bottoms = 0\n    bottoms = np.broadcast_to(bottoms, values.shape)\n\n    values = np.append(values, values[-1])\n    bottoms = np.append(bottoms, bottoms[-1])\n    if orientation == 'h':\n        return ax.fill_betweenx(edges, values, bottoms,\n                                **kwargs)\n    elif orientation == 'v':\n        return ax.fill_between(edges, values, bottoms,\n                               **kwargs)\n    else:\n        raise AssertionError(\"you should never be here\")",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.299773633480072
+    },
+    {
+      "chunk_id": "lib/matplotlib/transforms.py:1413-1461",
+      "citation": {
+        "path": "lib/matplotlib/transforms.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 1413,
+        "end_line": 1461
+      },
+      "content": "def __sub__(self, other):\n    \"\"\"\n    Compose *self* with the inverse of *other*, cancelling identical terms\n    if any::\n\n        # In general:\n        A - B == A + B.inverted()\n        # (but see note regarding frozen transforms below).\n\n        # If A \"ends with\" B (i.e. A == A' + B for some A') we can cancel\n        # out B:\n        (A' + B) - B == A'\n\n        # Likewise, if B \"starts with\" A (B = A + B'), we can cancel out A:\n        A - (A + B') == B'.inverted() == B'^-1\n\n    Cancellation (rather than naively returning ``A + B.inverted()``) is\n    important for multiple reasons:\n\n    - It avoids floating-point inaccuracies when computing the inverse of\n      B: ``B - B`` is guaranteed to cancel out exactly (resulting in the\n      identity transform), whereas ``B + B.inverted()`` may differ by a\n      small epsilon.\n    - ``B.inverted()`` always returns a frozen transform: if one computes\n      ``A + B + B.inverted()`` and later mutates ``B``, then\n      ``B.inverted()`` won't be updated and the last two terms won't cancel\n      out anymore; on the other hand, ``A + B - B`` will always be equal to\n      ``A`` even if ``B`` is mutated.\n    \"\"\"\n    # we only know how to do this operation if other is a Transform.\n    if not isinstance(other, Transform):\n        return NotImplemented\n    for remainder, sub_tree in self._iter_break_from_left_to_right():\n        if sub_tree == other:\n            return remainder\n    for remainder, sub_tree in other._iter_break_from_left_to_right():\n        if sub_tree == self:\n            if not remainder.has_inverse:\n                raise ValueError(\n                    \"The shortcut cannot be computed since 'other' \"\n                    \"includes a non-invertible component\")\n            return remainder.inverted()\n    # if we have got this far, then there was no shortcut possible\n    if other.has_inverse:\n        return self + other.inverted()\n    else:\n        raise ValueError('It is not possible to compute transA - transB '\n                         'since transB cannot be inverted and there is no '\n                         'shortcut possible.')",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.2991567850112915
+    },
+    {
+      "chunk_id": "lib/matplotlib/artist.py:1437-1471",
+      "citation": {
+        "path": "lib/matplotlib/artist.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 1437,
+        "end_line": 1471
+      },
+      "content": "def get_valid_values(self, attr):\n    \"\"\"\n    Get the legal arguments for the setter associated with *attr*.\n\n    This is done by querying the docstring of the setter for a line that\n    begins with \"ACCEPTS:\" or \".. ACCEPTS:\", and then by looking for a\n    numpydoc-style documentation for the setter's first argument.\n    \"\"\"\n\n    name = 'set_%s' % attr\n    if not hasattr(self.o, name):\n        raise AttributeError('%s has no function %s' % (self.o, name))\n    func = getattr(self.o, name)\n\n    docstring = inspect.getdoc(func)\n    if docstring is None:\n        return 'unknown'\n\n    if docstring.startswith('Alias for '):\n        return None\n\n    match = self._get_valid_values_regex.search(docstring)\n    if match is not None:\n        return re.sub(\"\\n *\", \" \", match.group(1))\n\n    # Much faster than list(inspect.signature(func).parameters)[1],\n    # although barely relevant wrt. matplotlib's total import time.\n    param_name = func.__code__.co_varnames[1]\n    # We could set the presence * based on whether the parameter is a\n    # varargs (it can't be a varkwargs) but it's not really worth the it.\n    match = re.search(r\"(?m)^ *\\*?{} : (.+)\".format(param_name), docstring)\n    if match:\n        return match.group(1)\n\n    return 'unknown'",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.2989226281642914
+    },
+    {
+      "chunk_id": "lib/matplotlib/backends/backend_template.py:139-148",
+      "citation": {
+        "path": "lib/matplotlib/backends/backend_template.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 139,
+        "end_line": 148
+      },
+      "content": "def show(*, block=None):\n    \"\"\"\n    For image backends - is not required.\n    For GUI backends - show() is usually the last line of a pyplot script and\n    tells the backend that it is time to draw.  In interactive mode, this\n    should do nothing.\n    \"\"\"\n    for manager in Gcf.get_all_fig_managers():\n        # do something to display the GUI\n        pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.29875558614730835
+    },
+    {
+      "chunk_id": "lib/matplotlib/scale.py:493-574",
+      "citation": {
+        "path": "lib/matplotlib/scale.py",
+        "commit": "5c4595267ccd3daf78f5fd05693b7ecbcd575c1e",
+        "start_line": 493,
+        "end_line": 574
+      },
+      "content": "class AsinhScale(ScaleBase):\n    \"\"\"\n    A quasi-logarithmic scale based on the inverse hyperbolic sine (asinh)\n\n    For values close to zero, this is essentially a linear scale,\n    but for large magnitude values (either positive or negative)\n    it is asymptotically logarithmic. The transition between these\n    linear and logarithmic regimes is smooth, and has no discontinuities\n    in the function gradient in contrast to\n    the `.SymmetricalLogScale` (\"symlog\") scale.\n\n    Specifically, the transformation of an axis coordinate :math:`a` is\n    :math:`a \\\\rightarrow a_0 \\\\sinh^{-1} (a / a_0)` where :math:`a_0`\n    is the effective width of the linear region of the transformation.\n    In that region, the transformation is\n    :math:`a \\\\rightarrow a + \\\\mathcal{O}(a^3)`.\n    For large values of :math:`a` the transformation behaves as\n    :math:`a \\\\rightarrow a_0 \\\\, \\\\mathrm{sgn}(a) \\\\ln |a| + \\\\mathcal{O}(1)`.\n\n    .. note::\n\n       This API is provisional and may be revised in the future\n       based on early user feedback.\n    \"\"\"\n\n    name = 'asinh'\n\n    auto_tick_multipliers = {\n        3: (2, ),\n        4: (2, ),\n        5: (2, ),\n        8: (2, 4),\n        10: (2, 5),\n        16: (2, 4, 8),\n        64: (4, 16),\n        1024: (256, 512)\n    }\n\n\n    linear_width = property(lambda self: self._transform.linear_width)\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.2987053394317627
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 7.480793499998981
+}

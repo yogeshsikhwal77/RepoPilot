@@ -1,0 +1,272 @@
+{
+  "task_id": "django__django-11179",
+  "config": "bm25_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "django/db/models/deletion.py:64-78",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 64,
+        "end_line": 78
+      },
+      "content": "def __init__(self, using):\n    self.using = using\n    # Initially, {model: {instances}}, later values become lists.\n    self.data = {}\n    self.field_updates = {}  # {model: {(field, value): {instances}}}\n    # fast_deletes is a list of queryset-likes that can be deleted without\n    # fetching the objects into memory.\n    self.fast_deletes = []\n\n    # Tracks deletion-order dependency for databases without transactions\n    # or ability to defer constraint checks. Only concrete model classes\n    # should be included, as the dependencies exist only between actual\n    # database tables; proxy models are represented here by their concrete\n    # parent.\n    self.dependencies = {}  # {model: {models}}",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 68.29722797403568
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:80-105",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 80,
+        "end_line": 105
+      },
+      "content": "def add(self, objs, source=None, nullable=False, reverse_dependency=False):\n    \"\"\"\n    Add 'objs' to the collection of objects to be deleted.  If the call is\n    the result of a cascade, 'source' should be the model that caused it,\n    and 'nullable' should be set to True if the relation can be null.\n\n    Return a list of all objects that were not already collected.\n    \"\"\"\n    if not objs:\n        return []\n    new_objs = []\n    model = objs[0].__class__\n    instances = self.data.setdefault(model, set())\n    for obj in objs:\n        if obj not in instances:\n            new_objs.append(obj)\n    instances.update(new_objs)\n    # Nullable relationships can be ignored -- they are nulled out before\n    # deleting, and therefore do not affect the order in which objects have\n    # to be deleted.\n    if source is not None and not nullable:\n        if reverse_dependency:\n            source, model = model, source\n        self.dependencies.setdefault(\n            source._meta.concrete_model, set()).add(model._meta.concrete_model)\n    return new_objs",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 68.06112102711013
+    },
+    {
+      "chunk_id": "tests/delete/tests.py:514-524",
+      "citation": {
+        "path": "tests/delete/tests.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 514,
+        "end_line": 524
+      },
+      "content": "def test_fast_delete_empty_no_update_can_self_select(self):\n    \"\"\"\n    #25932 - Fast deleting on backends that don't have the\n    `no_update_can_self_select` feature should work even if the specified\n    filter doesn't match any row.\n    \"\"\"\n    with self.assertNumQueries(1):\n        self.assertEqual(\n            User.objects.filter(avatar__desc='missing').delete(),\n            (0, {'delete.User': 0})\n        )",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 63.08948349822621
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:262-327",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 262,
+        "end_line": 327
+      },
+      "content": "def delete(self):\n    # sort instance collections\n    for model, instances in self.data.items():\n        self.data[model] = sorted(instances, key=attrgetter(\"pk\"))\n\n    # if possible, bring the models in an order suitable for databases that\n    # don't support transactions or cannot defer constraint checks until the\n    # end of a transaction.\n    self.sort()\n    # number of objects deleted for each model label\n    deleted_counter = Counter()\n\n    # Optimize for the case with a single obj and no dependencies\n    if len(self.data) == 1 and len(instances) == 1:\n        instance = list(instances)[0]\n        if self.can_fast_delete(instance):\n            with transaction.mark_for_rollback_on_error():\n                count = sql.DeleteQuery(model).delete_batch([instance.pk], self.using)\n            return count, {model._meta.label: count}\n\n    with transaction.atomic(using=self.using, savepoint=False):\n        # send pre_delete signals\n        for model, obj in self.instances_with_model():\n            if not model._meta.auto_created:\n                signals.pre_delete.send(\n                    sender=model, instance=obj, using=self.using\n                )\n\n        # fast deletes\n        for qs in self.fast_deletes:\n            count = qs._raw_delete(using=self.using)\n            deleted_counter[qs.model._meta.label] += count\n\n        # update fields\n        for model, instances_for_fieldvalues in self.field_updates.items():\n            for (field, value), instances in instances_for_fieldvalues.items():\n                query = sql.UpdateQuery(model)\n                query.update_batch([obj.pk for obj in instances],\n                                   {field.name: value}, self.using)\n\n        # reverse instance collections\n        for instances in self.data.values():\n            instances.reverse()\n\n        # delete instances\n        for model, instances in self.data.items():\n            query = sql.DeleteQuery(model)\n            pk_list = [obj.pk for obj in instances]\n            count = query.delete_batch(pk_list, self.using)\n            deleted_counter[model._meta.label] += count\n\n            if not model._meta.auto_created:\n                for obj in instances:\n                    signals.post_delete.send(\n                        sender=model, instance=obj, using=self.using\n                    )\n\n    # update collected instances\n    for instances_for_fieldvalues in self.field_updates.values():\n        for (field, value), instances in instances_for_fieldvalues.items():\n            for obj in instances:\n                setattr(obj, field.attname, value)\n    for model, instances in self.data.items():\n        for instance in instances:\n            setattr(instance, model._meta.pk.attname, None)\n    return sum(deleted_counter.values()), dict(deleted_counter)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 61.107425476150965
+    },
+    {
+      "chunk_id": "django/core/serializers/__init__.py:159-234",
+      "citation": {
+        "path": "django/core/serializers/__init__.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 159,
+        "end_line": 234
+      },
+      "content": "def sort_dependencies(app_list):\n    \"\"\"Sort a list of (app_config, models) pairs into a single list of models.\n\n    The single list of models is sorted so that any model with a natural key\n    is serialized before a normal model, and any model with a natural key\n    dependency has it's dependencies serialized first.\n    \"\"\"\n    # Process the list of models, and get the list of dependencies\n    model_dependencies = []\n    models = set()\n    for app_config, model_list in app_list:\n        if model_list is None:\n            model_list = app_config.get_models()\n\n        for model in model_list:\n            models.add(model)\n            # Add any explicitly defined dependencies\n            if hasattr(model, 'natural_key'):\n                deps = getattr(model.natural_key, 'dependencies', [])\n                if deps:\n                    deps = [apps.get_model(dep) for dep in deps]\n            else:\n                deps = []\n\n            # Now add a dependency for any FK relation with a model that\n            # defines a natural key\n            for field in model._meta.fields:\n                if field.remote_field:\n                    rel_model = field.remote_field.model\n                    if hasattr(rel_model, 'natural_key') and rel_model != model:\n                        deps.append(rel_model)\n            # Also add a dependency for any simple M2M relation with a model\n            # that defines a natural key.  M2M relations with explicit through\n            # models don't count as dependencies.\n            for field in model._meta.many_to_many:\n                if field.remote_field.through._meta.auto_created:\n                    rel_model = field.remote_field.model\n                    if hasattr(rel_model, 'natural_key') and rel_model != model:\n                        deps.append(rel_model)\n            model_dependencies.append((model, deps))\n\n    model_dependencies.reverse()\n    # Now sort the models to ensure that dependencies are met. This\n    # is done by repeatedly iterating over the input list of models.\n    # If all the dependencies of a given model are in the final list,\n    # that model is promoted to the end of the final list. This process\n    # continues until the input list is empty, or we do a full iteration\n    # over the input models without promoting a model to the final list.\n    # If we do a full iteration without a promotion, that means there are\n    # circular dependencies in the list.\n    model_list = []\n    while model_dependencies:\n        skipped = []\n        changed = False\n        while model_dependencies:\n            model, deps = model_dependencies.pop()\n\n            # If all of the models in the dependency list are either already\n            # on the final model list, or not on the original serialization list,\n            # then we've found another model with all it's dependencies satisfied.\n            if all(d not in models or d in model_list for d in deps):\n                model_list.append(model)\n                changed = True\n            else:\n                skipped.append((model, deps))\n        if not changed:\n            raise RuntimeError(\n                \"Can't resolve dependencies for %s in serialized app list.\" %\n                ', '.join(\n                    '%s.%s' % (model._meta.app_label, model._meta.object_name)\n                    for model, deps in sorted(skipped, key=lambda obj: obj[0].__name__)\n                )\n            )\n        model_dependencies = skipped\n\n    return model_list",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 60.28555094679458
+    },
+    {
+      "chunk_id": "tests/delete/tests.py:428-437",
+      "citation": {
+        "path": "tests/delete/tests.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 428,
+        "end_line": 437
+      },
+      "content": "def test_proxied_model_duplicate_queries(self):\n    \"\"\"\n    #25685 - Deleting instances of a model with existing proxy\n    classes should not issue multiple queries during cascade\n    deletion of referring models.\n    \"\"\"\n    avatar = Avatar.objects.create()\n    # One query for the Avatar table and a second for the User one.\n    with self.assertNumQueries(2):\n        avatar.delete()",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 59.693070059368395
+    },
+    {
+      "chunk_id": "django/db/models/base.py:388-396",
+      "citation": {
+        "path": "django/db/models/base.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 388,
+        "end_line": 396
+      },
+      "content": "class ModelState:\n    \"\"\"Store model instance state.\"\"\"\n    db = None\n    # If true, uniqueness validation checks will consider this a new, unsaved\n    # object. Necessary for correct validation of new instances of objects with\n    # explicit (non-auto) PKs. This impacts validation only; it has no effect\n    # on the actual save.\n    adding = True\n    fields_cache = ModelStateFieldsCacheDescriptor()",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 59.53206090302056
+    },
+    {
+      "chunk_id": "tests/delete_regress/tests.py:251-332",
+      "citation": {
+        "path": "tests/delete_regress/tests.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 251,
+        "end_line": 332
+      },
+      "content": "class Ticket19102Tests(TestCase):\n    \"\"\"\n    Test different queries which alter the SELECT clause of the query. We\n    also must be using a subquery for the deletion (that is, the original\n    query has a join in it). The deletion should be done as \"fast-path\"\n    deletion (that is, just one query for the .delete() call).\n\n    Note that .values() is not tested here on purpose. .values().delete()\n    doesn't work for non fast-path deletes at all.\n    \"\"\"\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 57.22860295739674
+    },
+    {
+      "chunk_id": "django/db/models/sql/subqueries.py:88-95",
+      "citation": {
+        "path": "django/db/models/sql/subqueries.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 88,
+        "end_line": 95
+      },
+      "content": "def _setup_query(self):\n    \"\"\"\n    Run on initialization and at the end of chaining. Any attributes that\n    would normally be set in __init__() should go here instead.\n    \"\"\"\n    self.values = []\n    self.related_ids = None\n    self.related_updates = {}",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 57.10224213640991
+    },
+    {
+      "chunk_id": "django/contrib/admin/options.py:487-500",
+      "citation": {
+        "path": "django/contrib/admin/options.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 487,
+        "end_line": 500
+      },
+      "content": "def has_delete_permission(self, request, obj=None):\n    \"\"\"\n    Return True if the given request has permission to change the given\n    Django model instance, the default implementation doesn't examine the\n    `obj` parameter.\n\n    Can be overridden by the user in subclasses. In such case it should\n    return True if the given request has permission to delete the `obj`\n    model instance. If `obj` is None, this should return True if the given\n    request has permission to delete *any* object of the given type.\n    \"\"\"\n    opts = self.opts\n    codename = get_permission_codename('delete', opts)\n    return request.user.has_perm(\"%s.%s\" % (opts.app_label, codename))",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 57.046836825689645
+    },
+    {
+      "chunk_id": "django/db/migrations/autodetector.py:673-705",
+      "citation": {
+        "path": "django/db/migrations/autodetector.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 673,
+        "end_line": 705
+      },
+      "content": "def generate_created_proxies(self):\n    \"\"\"\n    Make CreateModel statements for proxy models. Use the same statements\n    as that way there's less code duplication, but of course for proxy\n    models it's safe to skip all the pointless field stuff and just chuck\n    out an operation.\n    \"\"\"\n    added = self.new_proxy_keys - self.old_proxy_keys\n    for app_label, model_name in sorted(added):\n        model_state = self.to_state.models[app_label, model_name]\n        assert model_state.options.get(\"proxy\")\n        # Depend on the deletion of any possible non-proxy version of us\n        dependencies = [\n            (app_label, model_name, None, False),\n        ]\n        # Depend on all bases\n        for base in model_state.bases:\n            if isinstance(base, str) and \".\" in base:\n                base_app_label, base_name = base.split(\".\", 1)\n                dependencies.append((base_app_label, base_name, None, True))\n        # Generate creation operation\n        self.add_operation(\n            app_label,\n            operations.CreateModel(\n                name=model_state.name,\n                fields=[],\n                options=model_state.options,\n                bases=model_state.bases,\n                managers=model_state.managers,\n            ),\n            # Depend on the deletion of any possible non-proxy version of us\n            dependencies=dependencies,\n        )",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 56.672512157516316
+    },
+    {
+      "chunk_id": "django/db/migrations/migration.py:6-176",
+      "citation": {
+        "path": "django/db/migrations/migration.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 6,
+        "end_line": 176
+      },
+      "content": "class Migration:\n    \"\"\"\n    The base class for all migrations.\n\n    Migration files will import this from django.db.migrations.Migration\n    and subclass it as a class called Migration. It will have one or more\n    of the following attributes:\n\n     - operations: A list of Operation instances, probably from django.db.migrations.operations\n     - dependencies: A list of tuples of (app_path, migration_name)\n     - run_before: A list of tuples of (app_path, migration_name)\n     - replaces: A list of migration_names\n\n    Note that all migrations come out of migrations and into the Loader or\n    Graph as instances, having been initialized with their app label and name.\n    \"\"\"\n\n    # Operations to apply during this migration, in order.\n    operations = []\n\n    # Other migrations that should be run before this migration.\n    # Should be a list of (app, migration_name).\n    dependencies = []\n\n    # Other migrations that should be run after this one (i.e. have\n    # this migration added to their dependencies). Useful to make third-party\n    # apps' migrations run after your AUTH_USER replacement, for example.\n    run_before = []\n\n    # Migration names in this app that this migration replaces. If this is\n    # non-empty, this migration will only be applied if all these migrations\n    # are not applied.\n    replaces = []\n\n    # Is this an initial migration? Initial migrations are skipped on\n    # --fake-initial if the table or fields already exist. If None, check if\n    # the migration has any dependencies to determine if there are dependencies\n    # to tell if db introspection needs to be done. If True, always perform\n    # introspection. If False, never perform introspection.\n    initial = None\n\n    # Whether to wrap the whole migration in a transaction. Only has an effect\n    # on database backends which support transactional DDL.\n    atomic = True\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 55.96808091453343
+    },
+    {
+      "chunk_id": "django/db/models/query.py:678-704",
+      "citation": {
+        "path": "django/db/models/query.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 678,
+        "end_line": 704
+      },
+      "content": "def delete(self):\n    \"\"\"Delete the records in the current QuerySet.\"\"\"\n    assert self.query.can_filter(), \\\n        \"Cannot use 'limit' or 'offset' with delete.\"\n\n    if self._fields is not None:\n        raise TypeError(\"Cannot call delete() after .values() or .values_list()\")\n\n    del_query = self._chain()\n\n    # The delete is actually 2 queries - one to find related objects,\n    # and one to delete. Make sure that the discovery of related\n    # objects is performed on the same database as the deletion.\n    del_query._for_write = True\n\n    # Disable non-supported fields.\n    del_query.query.select_for_update = False\n    del_query.query.select_related = False\n    del_query.query.clear_ordering(force_empty=True)\n\n    collector = Collector(using=del_query.db)\n    collector.collect(del_query)\n    deleted, _rows_count = collector.delete()\n\n    # Clear the result cache, in case this QuerySet gets reused.\n    self._result_cache = None\n    return deleted, _rows_count",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 53.29174896809851
+    },
+    {
+      "chunk_id": "django/db/models/query.py:429-481",
+      "citation": {
+        "path": "django/db/models/query.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 429,
+        "end_line": 481
+      },
+      "content": "def bulk_create(self, objs, batch_size=None, ignore_conflicts=False):\n    \"\"\"\n    Insert each of the instances into the database. Do *not* call\n    save() on each of the instances, do not send any pre/post_save\n    signals, and do not set the primary key attribute if it is an\n    autoincrement field (except if features.can_return_rows_from_bulk_insert=True).\n    Multi-table models are not supported.\n    \"\"\"\n    # When you bulk insert you don't get the primary keys back (if it's an\n    # autoincrement, except if can_return_rows_from_bulk_insert=True), so\n    # you can't insert into the child tables which references this. There\n    # are two workarounds:\n    # 1) This could be implemented if you didn't have an autoincrement pk\n    # 2) You could do it by doing O(n) normal inserts into the parent\n    #    tables to get the primary keys back and then doing a single bulk\n    #    insert into the childmost table.\n    # We currently set the primary keys on the objects when using\n    # PostgreSQL via the RETURNING ID clause. It should be possible for\n    # Oracle as well, but the semantics for extracting the primary keys is\n    # trickier so it's not done yet.\n    assert batch_size is None or batch_size > 0\n    # Check that the parents share the same concrete model with the our\n    # model to detect the inheritance pattern ConcreteGrandParent ->\n    # MultiTableParent -> ProxyChild. Simply checking self.model._meta.proxy\n    # would not identify that case as involving multiple tables.\n    for parent in self.model._meta.get_parent_list():\n        if parent._meta.concrete_model is not self.model._meta.concrete_model:\n            raise ValueError(\"Can't bulk create a multi-table inherited model\")\n    if not objs:\n        return objs\n    self._for_write = True\n    connection = connections[self.db]\n    fields = self.model._meta.concrete_fields\n    objs = list(objs)\n    self._populate_pk_values(objs)\n    with transaction.atomic(using=self.db, savepoint=False):\n        objs_with_pk, objs_without_pk = partition(lambda o: o.pk is None, objs)\n        if objs_with_pk:\n            self._batched_insert(objs_with_pk, fields, batch_size, ignore_conflicts=ignore_conflicts)\n            for obj_with_pk in objs_with_pk:\n                obj_with_pk._state.adding = False\n                obj_with_pk._state.db = self.db\n        if objs_without_pk:\n            fields = [f for f in fields if not isinstance(f, AutoField)]\n            ids = self._batched_insert(objs_without_pk, fields, batch_size, ignore_conflicts=ignore_conflicts)\n            if connection.features.can_return_rows_from_bulk_insert and not ignore_conflicts:\n                assert len(ids) == len(objs_without_pk)\n            for obj_without_pk, pk in zip(objs_without_pk, ids):\n                obj_without_pk.pk = pk\n                obj_without_pk._state.adding = False\n                obj_without_pk._state.db = self.db\n\n    return objs",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 53.010933683187986
+    },
+    {
+      "chunk_id": "tests/custom_managers/tests.py:636-652",
+      "citation": {
+        "path": "tests/custom_managers/tests.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 636,
+        "end_line": 652
+      },
+      "content": "def test_delete_related_on_filtered_manager(self):\n    \"\"\"Deleting related objects should also not be distracted by a\n    restricted manager on the related object. This is a regression\n    test for #2698.\"\"\"\n    related = RelatedModel.objects.create(name=\"xyzzy\")\n\n    for name, public in (('one', True), ('two', False), ('three', False)):\n        RestrictedModel.objects.create(name=name, is_public=public, related=related)\n\n    obj = RelatedModel.objects.get(name=\"xyzzy\")\n    obj.delete()\n\n    # All of the RestrictedModel instances should have been\n    # deleted, since they *all* pointed to the RelatedModel. If\n    # the default manager is used, only the public one will be\n    # deleted.\n    self.assertEqual(len(RestrictedModel.plain_manager.all()), 0)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 52.85936711410146
+    },
+    {
+      "chunk_id": "tests/model_fields/test_imagefield.py:257-273",
+      "citation": {
+        "path": "tests/model_fields/test_imagefield.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 257,
+        "end_line": 273
+      },
+      "content": "def test_field_save_and_delete_methods(self):\n    \"\"\"\n    Tests assignment using the field's save method and deletion using\n    the field's delete method.\n    \"\"\"\n    p = self.PersonModel(name='Joe')\n    p.mugshot.save(\"mug\", self.file1)\n    self.check_dimensions(p, 4, 8)\n\n    # A new file should update dimensions.\n    p.mugshot.save(\"mug\", self.file2)\n    self.check_dimensions(p, 8, 4)\n\n    # Field and dimensions should be cleared after a delete.\n    p.mugshot.delete(save=False)\n    self.assertEqual(p.mugshot, None)\n    self.check_dimensions(p, None, None)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 52.27635130783033
+    },
+    {
+      "chunk_id": "django/contrib/admin/options.py:2053-2083",
+      "citation": {
+        "path": "django/contrib/admin/options.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 2053,
+        "end_line": 2083
+      },
+      "content": "def hand_clean_DELETE(self):\n    \"\"\"\n    We don't validate the 'DELETE' field itself because on\n    templates it's not rendered using the field information, but\n    just using a generic \"deletion_field\" of the InlineModelAdmin.\n    \"\"\"\n    if self.cleaned_data.get(DELETION_FIELD_NAME, False):\n        using = router.db_for_write(self._meta.model)\n        collector = NestedObjects(using=using)\n        if self.instance._state.adding:\n            return\n        collector.collect([self.instance])\n        if collector.protected:\n            objs = []\n            for p in collector.protected:\n                objs.append(\n                    # Translators: Model verbose name and instance representation,\n                    # suitable to be an item in a list.\n                    _('%(class_name)s %(instance)s') % {\n                        'class_name': p._meta.verbose_name,\n                        'instance': p}\n                )\n            params = {\n                'class_name': self._meta.model._meta.verbose_name,\n                'instance': self.instance,\n                'related_objects': get_text_list(objs, _('and')),\n            }\n            msg = _(\"Deleting %(class_name)s %(instance)s would require \"\n                    \"deleting the following protected related objects: \"\n                    \"%(related_objects)s\")\n            raise ValidationError(msg, code='deleting_protected', params=params)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 51.270512575345876
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:119-155",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 119,
+        "end_line": 155
+      },
+      "content": "def can_fast_delete(self, objs, from_field=None):\n    \"\"\"\n    Determine if the objects in the given queryset-like or single object\n    can be fast-deleted. This can be done if there are no cascades, no\n    parents and no signal listeners for the object class.\n\n    The 'from_field' tells where we are coming from - we need this to\n    determine if the objects are in fact to be deleted. Allow also\n    skipping parent -> child -> parent chain preventing fast delete of\n    the child.\n    \"\"\"\n    if from_field and from_field.remote_field.on_delete is not CASCADE:\n        return False\n    if hasattr(objs, '_meta'):\n        model = type(objs)\n    elif hasattr(objs, 'model') and hasattr(objs, '_raw_delete'):\n        model = objs.model\n    else:\n        return False\n    if (signals.pre_delete.has_listeners(model) or\n            signals.post_delete.has_listeners(model) or\n            signals.m2m_changed.has_listeners(model)):\n        return False\n    # The use of from_field comes from the need to avoid cascade back to\n    # parent when parent delete is cascading to child.\n    opts = model._meta\n    return (\n        all(link == from_field for link in opts.concrete_model._meta.parents.values()) and\n        # Foreign keys pointing to this model.\n        all(\n            related.field.remote_field.on_delete is DO_NOTHING\n            for related in get_candidate_relations_to_delete(opts)\n        ) and (\n            # Something like generic foreign key.\n            not any(hasattr(field, 'bulk_related_objects') for field in opts.private_fields)\n        )\n    )",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 51.04894935082598
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:169-229",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 169,
+        "end_line": 229
+      },
+      "content": "def collect(self, objs, source=None, nullable=False, collect_related=True,\n            source_attr=None, reverse_dependency=False, keep_parents=False):\n    \"\"\"\n    Add 'objs' to the collection of objects to be deleted as well as all\n    parent instances.  'objs' must be a homogeneous iterable collection of\n    model instances (e.g. a QuerySet).  If 'collect_related' is True,\n    related objects will be handled by their respective on_delete handler.\n\n    If the call is the result of a cascade, 'source' should be the model\n    that caused it and 'nullable' should be set to True, if the relation\n    can be null.\n\n    If 'reverse_dependency' is True, 'source' will be deleted before the\n    current model, rather than after. (Needed for cascading to parent\n    models, the one case in which the cascade follows the forwards\n    direction of an FK rather than the reverse direction.)\n\n    If 'keep_parents' is True, data of parent model's will be not deleted.\n    \"\"\"\n    if self.can_fast_delete(objs):\n        self.fast_deletes.append(objs)\n        return\n    new_objs = self.add(objs, source, nullable,\n                        reverse_dependency=reverse_dependency)\n    if not new_objs:\n        return\n\n    model = new_objs[0].__class__\n\n    if not keep_parents:\n        # Recursively collect concrete model's parent models, but not their\n        # related objects. These will be found by meta.get_fields()\n        concrete_model = model._meta.concrete_model\n        for ptr in concrete_model._meta.parents.values():\n            if ptr:\n                parent_objs = [getattr(obj, ptr.name) for obj in new_objs]\n                self.collect(parent_objs, source=model,\n                             source_attr=ptr.remote_field.related_name,\n                             collect_related=False,\n                             reverse_dependency=True)\n    if collect_related:\n        parents = model._meta.parents\n        for related in get_candidate_relations_to_delete(model._meta):\n            # Preserve parent reverse relationships if keep_parents=True.\n            if keep_parents and related.model in parents:\n                continue\n            field = related.field\n            if field.remote_field.on_delete == DO_NOTHING:\n                continue\n            batches = self.get_del_batches(new_objs, field)\n            for batch in batches:\n                sub_objs = self.related_objects(related, batch)\n                if self.can_fast_delete(sub_objs, from_field=field):\n                    self.fast_deletes.append(sub_objs)\n                elif sub_objs:\n                    field.remote_field.on_delete(self, field, sub_objs, self.using)\n        for field in model._meta.private_fields:\n            if hasattr(field, 'bulk_related_objects'):\n                # It's something like generic foreign key.\n                sub_objs = field.bulk_related_objects(new_objs, self.using)\n                self.collect(sub_objs, source=model, nullable=True)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 50.6655067916415
+    },
+    {
+      "chunk_id": "django/db/models/deletion.py:107-117",
+      "citation": {
+        "path": "django/db/models/deletion.py",
+        "commit": "19fc6376ce67d01ca37a91ef2f55ef769f50513a",
+        "start_line": 107,
+        "end_line": 117
+      },
+      "content": "def add_field_update(self, field, value, objs):\n    \"\"\"\n    Schedule a field update. 'objs' must be a homogeneous iterable\n    collection of model instances (e.g. a QuerySet).\n    \"\"\"\n    if not objs:\n        return\n    model = objs[0].__class__\n    self.field_updates.setdefault(\n        model, {}).setdefault(\n        (field, value), set()).update(objs)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 49.91555385609997
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 16.59893999999622
+}

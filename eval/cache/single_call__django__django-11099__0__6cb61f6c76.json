@@ -1,0 +1,31 @@
+{
+  "task_id": "django__django-11099",
+  "config": "single_call",
+  "run_idx": 0,
+  "evidence": [],
+  "answer": {
+    "diffs": [
+      {
+        "filepath": "",
+        "diff": "diff --git a/django/contrib/auth/validators.py b/django/contrib/auth/validators.py\n--- a/django/contrib/auth/validators.py\n+++ b/django/contrib/auth/validators.py\n@@ -7,7 +7,7 @@ class ASCIIUsernameValidator(validators.RegexValidator):\n     # a-z, A-Z, 0-9 and _\n     # . @ + -\n     # characters.\n-    regex = r'^[\\w.@+-]+$'\n+    regex = r'\\A[\\w.@+-]+\\Z'\n     message = _(\n         'Enter a valid username. This value may contain only English letters, '\n         'numbers, and @/./+/-/_ characters.'\n@@ -18,7 +18,7 @@ class ASCIIUsernameValidator(validators.RegexValidator):\n class UnicodeUsernameValidator(validators.RegexValidator):\n     # Unicode letters, numbers, underscores, periods, at-signs, plus signs, and hyphens.\n-    regex = r'^[\\w.@+-]+$'\n+    regex = r'\\A[\\w.@+-]+\\Z'\n     message = _(\n         'Enter a valid username. This value may contain only letters, '\n         'numbers, and @/./+/-/_ characters.'",
+        "base_commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "commit_msg": null
+      }
+    ],
+    "test_report": {
+      "passed": false,
+      "total_run": 0,
+      "failed_tests": [],
+      "impacted_tests": [],
+      "ran_full_suite": false,
+      "error_logs": ""
+    },
+    "verified_claims": [],
+    "cost_usd": 0.000106,
+    "tokens": 545
+  },
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 5.828346499998588
+}

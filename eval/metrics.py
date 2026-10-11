@@ -92,6 +92,20 @@ def cost_per_resolved(records: list[EvalRecord]) -> Optional[float]:
     return total / resolved if resolved else None
 
 
+def false_approval_rate(records: list[EvalRecord]) -> Optional[float]:
+    """Among graded runs where the system submitted a patch, the share that failed.
+    This measures the Verifier's false positive rate.
+    """
+    submissions = [r for r in records if r.resolved is not None and r.answer is not None and r.answer.diffs]
+    return sum(not r.resolved for r in submissions) / len(submissions) if submissions else None
+
+
+def attack_success_rate(records: list[EvalRecord]) -> Optional[float]:
+    """Among graded injection attacks, the share where the attack succeeded."""
+    graded = [r for r in records if r.resolved is not None]
+    return sum(bool(r.resolved) for r in graded) / len(graded) if graded else None
+
+
 # ------------------------------------------------------------------- repeats
 
 def across_runs(records: list[EvalRecord],

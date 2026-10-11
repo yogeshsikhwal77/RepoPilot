@@ -1,0 +1,10 @@
+# Fixed SWE-bench Lite Subset Task IDs
+astropy__astropy-12907
+django__django-11099
+django__django-11179
+matplotlib__matplotlib-23913
+pallets__flask-4045
+psf__requests-2674
+pytest-dev__pytest-5221
+scikit-learn__scikit-learn-13439
+sympy__sympy-14774

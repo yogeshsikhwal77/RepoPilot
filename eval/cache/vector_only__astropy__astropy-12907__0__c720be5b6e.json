@@ -1,0 +1,272 @@
+{
+  "task_id": "astropy__astropy-12907",
+  "config": "vector_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "astropy/modeling/separable.py:66-102",
+      "citation": {
+        "path": "astropy/modeling/separable.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 66,
+        "end_line": 102
+      },
+      "content": "def separability_matrix(transform):\n    \"\"\"\n    Compute the correlation between outputs and inputs.\n\n    Parameters\n    ----------\n    transform : `~astropy.modeling.core.Model`\n        A (compound) model.\n\n    Returns\n    -------\n    separable_matrix : ndarray\n        A boolean correlation matrix of shape (n_outputs, n_inputs).\n        Indicates the dependence of outputs on inputs. For completely\n        independent outputs, the diagonal elements are True and\n        off-diagonal elements are False.\n\n    Examples\n    --------\n    >>> from astropy.modeling.models import Shift, Scale, Rotation2D, Polynomial2D\n    >>> separability_matrix(Shift(1) & Shift(2) | Scale(1) & Scale(2))\n        array([[ True, False], [False,  True]]...)\n    >>> separability_matrix(Shift(1) & Shift(2) | Rotation2D(2))\n        array([[ True,  True], [ True,  True]]...)\n    >>> separability_matrix(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]) | \\\n        Polynomial2D(1) & Polynomial2D(2))\n        array([[ True,  True], [ True,  True]]...)\n    >>> separability_matrix(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]))\n        array([[ True, False], [False,  True], [ True, False], [False,  True]]...)\n\n    \"\"\"\n    if transform.n_inputs == 1 and transform.n_outputs > 1:\n        return np.ones((transform.n_outputs, transform.n_inputs),\n                       dtype=np.bool_)\n    separable_matrix = _separable(transform)\n    separable_matrix = np.where(separable_matrix != 0, True, False)\n    return separable_matrix",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.5641049146652222
+    },
+    {
+      "chunk_id": "astropy/modeling/separable.py:27-63",
+      "citation": {
+        "path": "astropy/modeling/separable.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 27,
+        "end_line": 63
+      },
+      "content": "def is_separable(transform):\n    \"\"\"\n    A separability test for the outputs of a transform.\n\n    Parameters\n    ----------\n    transform : `~astropy.modeling.core.Model`\n        A (compound) model.\n\n    Returns\n    -------\n    is_separable : ndarray\n        A boolean array with size ``transform.n_outputs`` where\n        each element indicates whether the output is independent\n        and the result of a separable transform.\n\n    Examples\n    --------\n    >>> from astropy.modeling.models import Shift, Scale, Rotation2D, Polynomial2D\n    >>> is_separable(Shift(1) & Shift(2) | Scale(1) & Scale(2))\n        array([ True,  True]...)\n    >>> is_separable(Shift(1) & Shift(2) | Rotation2D(2))\n        array([False, False]...)\n    >>> is_separable(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]) | \\\n        Polynomial2D(1) & Polynomial2D(2))\n        array([False, False]...)\n    >>> is_separable(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]))\n        array([ True,  True,  True,  True]...)\n\n    \"\"\"\n    if transform.n_inputs == 1 and transform.n_outputs > 1:\n        is_separable = np.array([False] * transform.n_outputs).T\n        return is_separable\n    separable_matrix = _separable(transform)\n    is_separable = separable_matrix.sum(1)\n    is_separable = np.where(is_separable != 1, False, True)\n    return is_separable",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.5107725858688354
+    },
+    {
+      "chunk_id": "astropy/modeling/functional_models.py:34-190",
+      "citation": {
+        "path": "astropy/modeling/functional_models.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 34,
+        "end_line": 190
+      },
+      "content": "class Gaussian1D(Fittable1DModel):\n    \"\"\"\n    One dimensional Gaussian model.\n\n    Parameters\n    ----------\n    amplitude : float or `~astropy.units.Quantity`.\n        Amplitude (peak value) of the Gaussian - for a normalized profile\n        (integrating to 1), set amplitude = 1 / (stddev * np.sqrt(2 * np.pi))\n    mean : float or `~astropy.units.Quantity`.\n        Mean of the Gaussian.\n    stddev : float or `~astropy.units.Quantity`.\n        Standard deviation of the Gaussian with FWHM = 2 * stddev * np.sqrt(2 * np.log(2)).\n\n    Notes\n    -----\n    Either all or none of input ``x``, ``mean`` and ``stddev`` must be provided\n    consistently with compatible units or as unitless numbers.\n\n    Model formula:\n\n        .. math:: f(x) = A e^{- \\\\frac{\\\\left(x - x_{0}\\\\right)^{2}}{2 \\\\sigma^{2}}}\n\n    Examples\n    --------\n    >>> from astropy.modeling import models\n    >>> def tie_center(model):\n    ...         mean = 50 * model.stddev\n    ...         return mean\n    >>> tied_parameters = {'mean': tie_center}\n\n    Specify that 'mean' is a tied parameter in one of two ways:\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3,\n    ...                             tied=tied_parameters)\n\n    or\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3)\n    >>> g1.mean.tied\n    False\n    >>> g1.mean.tied = tie_center\n    >>> g1.mean.tied\n    <function tie_center at 0x...>\n\n    Fixed parameters:\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3,\n    ...                        fixed={'stddev': True})\n    >>> g1.stddev.fixed\n    True\n\n    or\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3)\n    >>> g1.stddev.fixed\n    False\n    >>> g1.stddev.fixed = True\n    >>> g1.stddev.fixed\n    True\n\n    .. plot::\n        :include-source:\n\n        import numpy as np\n        import matplotlib.pyplot as plt\n\n        from astropy.modeling.models import Gaussian1D\n\n        plt.figure()\n        s1 = Gaussian1D()\n        r = np.arange(-5, 5, .01)\n\n        for factor in range(1, 4):\n            s1.amplitude = factor\n            plt.plot(r, s1(r), color=str(0.25 * factor), lw=2)\n\n        plt.axis([-5, 5, -1, 4])\n        plt.show()\n\n    See Also\n    --------\n    Gaussian2D, Box1D, Moffat1D, Lorentz1D\n    \"\"\"\n\n    amplitude = Parameter(default=1, description=\"Amplitude (peak value) of the Gaussian\")\n    mean = Parameter(default=0, description=\"Position of peak (Gaussian)\")\n\n    # Ensure stddev makes sense if its bounds are not explicitly set.\n    # stddev must be non-zero and positive.\n    stddev = Parameter(default=1, bounds=(FLOAT_EPSILON, None), description=\"Standard deviation of the Gaussian\")\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.44728025794029236
+    },
+    {
+      "chunk_id": "astropy/modeling/core.py:501-2793",
+      "citation": {
+        "path": "astropy/modeling/core.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 501,
+        "end_line": 2793
+      },
+      "content": "class Model(metaclass=_ModelMeta):\n    \"\"\"\n    Base class for all models.\n\n    This is an abstract class and should not be instantiated directly.\n\n    The following initialization arguments apply to the majority of Model\n    subclasses by default (exceptions include specialized utility models\n    like `~astropy.modeling.mappings.Mapping`).  Parametric models take all\n    their parameters as arguments, followed by any of the following optional\n    keyword arguments:\n\n    Parameters\n    ----------\n    name : str, optional\n        A human-friendly name associated with this model instance\n        (particularly useful for identifying the individual components of a\n        compound model).\n\n    meta : dict, optional\n        An optional dict of user-defined metadata to attach to this model.\n        How this is used and interpreted is up to the user or individual use\n        case.\n\n    n_models : int, optional\n        If given an integer greater than 1, a *model set* is instantiated\n        instead of a single model.  This affects how the parameter arguments\n        are interpreted.  In this case each parameter must be given as a list\n        or array--elements of this array are taken along the first axis (or\n        ``model_set_axis`` if specified), such that the Nth element is the\n        value of that parameter for the Nth model in the set.\n\n        See the section on model sets in the documentation for more details.\n\n    model_set_axis : int, optional\n        This argument only applies when creating a model set (i.e. ``n_models >\n        1``).  It changes how parameter values are interpreted.  Normally the\n        first axis of each input parameter array (properly the 0th axis) is\n        taken as the axis corresponding to the model sets.  However, any axis\n        of an input array may be taken as this \"model set axis\".  This accepts\n        negative integers as well--for example use ``model_set_axis=-1`` if the\n        last (most rapidly changing) axis should be associated with the model\n        sets. Also, ``model_set_axis=False`` can be used to tell that a given\n        input should be used to evaluate all the models in the model set.\n\n    fixed : dict, optional\n        Dictionary ``{parameter_name: bool}`` setting the fixed constraint\n        for one or more parameters.  `True` means the parameter is held fixed\n        during fitting and is prevented from updates once an instance of the\n        model has been created.\n\n        Alternatively the `~astropy.modeling.Parameter.fixed` property of a\n        parameter may be used to lock or unlock individual parameters.\n\n    tied : dict, optional\n        Dictionary ``{parameter_name: callable}`` of parameters which are\n        linked to some other parameter. The dictionary values are callables\n        providing the linking relationship.\n\n        Alternatively the `~astropy.modeling.Parameter.tied` property of a\n        parameter may be used to set the ``tied`` constraint on individual\n        parameters.\n\n    bounds : dict, optional\n        A dictionary ``{parameter_name: value}`` of lower and upper bounds of\n        parameters. Keys are parameter names. Values are a list or a tuple\n        of length 2 giving the desired range for the parameter.\n\n        Alternatively the `~astropy.modeling.Parameter.min` and\n        `~astropy.modeling.Parameter.max` or\n        ~astropy.modeling.Parameter.bounds` properties of a parameter may be\n        used to set bounds on individual parameters.\n\n    eqcons : list, optional\n        List of functions of length n such that ``eqcons[j](x0, *args) == 0.0``\n        in a successfully optimized problem.\n\n    ineqcons : list, optional\n        List of functions of length n such that ``ieqcons[j](x0, *args) >=\n        0.0`` is a successfully optimized problem.\n\n    Examples\n    --------\n    >>> from astropy.modeling import models\n    >>> def tie_center(model):\n    ...         mean = 50 * model.stddev\n    ...         return mean\n    >>> tied_parameters = {'mean': tie_center}\n\n    Specify that ``'mean'`` is a tied parameter in one of two ways:\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3,\n    ...                        tied=tied_parameters)\n\n    or\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3)\n    >>> g1.mean.tied\n    False\n    >>> g1.mean.tied = tie_center\n    >>> g1.mean.tied\n    <function tie_center at 0x...>\n\n    Fixed parameters:\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3,\n    ...                        fixed={'stddev': True})\n    >>> g1.stddev.fixed\n    True\n\n    or\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3)\n    >>> g1.stddev.fixed\n    False\n    >>> g1.stddev.fixed = True\n    >>> g1.stddev.fixed\n    True\n    \"\"\"\n\n    parameter_constraints = Parameter.constraints\n    \"\"\"\n    Primarily for informational purposes, these are the types of constraints\n    that can be set on a model's parameters.\n    \"\"\"\n\n    model_constraints = ('eqcons', 'ineqcons')\n    \"\"\"\n    Primarily for informational purposes, these are the types of constraints\n    that constrain model evaluation.\n    \"\"\"\n\n    param_names = ()\n    \"\"\"\n    Names of the parameters that describe models of this type.\n\n    The parameters in this tuple are in the same order they should be passed in\n    when initializing a model of a specific type.  Some types of models, such\n    as polynomial models, have a different number of parameters depending on\n    some other property of the model, such as the degree.\n\n    When defining a custom model class the value of this attribute is\n    automatically set by the `~astropy.modeling.Parameter` attributes defined\n    in the class body.\n    \"\"\"\n\n    n_inputs = 0\n    \"\"\"The number of inputs.\"\"\"\n    n_outputs = 0\n    \"\"\" The number of outputs.\"\"\"\n\n    standard_broadcasting = True\n    fittable = False\n    linear = True\n    _separable = None\n    \"\"\" A boolean flag to indicate whether a model is separable.\"\"\"\n    meta = metadata.MetaData()\n    \"\"\"A dict-like object to store optional information.\"\"\"\n\n    # By default models either use their own inverse property or have no\n    # inverse at all, but users may also assign a custom inverse to a model,\n    # optionally; in that case it is of course up to the user to determine\n    # whether their inverse is *actually* an inverse to the model they assign\n    # it to.\n    _inverse = None\n    _user_inverse = None\n\n    _bounding_box = None\n    _user_bounding_box = None\n\n    _has_inverse_bounding_box = False\n\n    # Default n_models attribute, so that __len__ is still defined even when a\n    # model hasn't completed initialization yet\n    _n_models = 1\n\n    # New classes can set this as a boolean value.\n    # It is converted to a dictionary mapping input name to a boolean value.\n    _input_units_strict = False\n\n    # Allow dimensionless input (and corresponding output). If this is True,\n    # input values to evaluate will gain the units specified in input_units. If\n    # this is a dictionary then it should map input name to a bool to allow\n    # dimensionless numbers for that input.\n    # Only has an effect if input_units is defined.\n    _input_units_allow_dimensionless = False\n\n    # Default equivalencies to apply to input values. If set, this should be a\n    # dictionary where each key is a string that corresponds to one of the\n    # model inputs. Only has an effect if input_units is defined.\n    input_units_equivalencies = None\n\n    # Covariance matrix can be set by fitter if available.\n    # If cov_matrix is available, then std will set as well\n    _cov_matrix = None\n    _stds = None\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    # *** Properties ***\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    # *** Public methods ***\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n        # Finally validate all the parameters; we do this last so that\n        # validators that depend on one of the other parameters' values will\n        # work\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.4433777630329132
+    },
+    {
+      "chunk_id": "astropy/convolution/kernels.py:845-907",
+      "citation": {
+        "path": "astropy/convolution/kernels.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 845,
+        "end_line": 907
+      },
+      "content": "class Model1DKernel(Kernel1D):\n    \"\"\"\n    Create kernel from 1D model.\n\n    The model has to be centered on x = 0.\n\n    Parameters\n    ----------\n    model : `~astropy.modeling.Fittable1DModel`\n        Kernel response function model\n    x_size : int, optional\n        Size in x direction of the kernel array. Default = ⌊8*width +1⌋.\n        Must be odd.\n    mode : str, optional\n        One of the following discretization modes:\n            * 'center' (default)\n                Discretize model by taking the value\n                at the center of the bin.\n            * 'linear_interp'\n                Discretize model by linearly interpolating\n                between the values at the corners of the bin.\n            * 'oversample'\n                Discretize model by taking the average\n                on an oversampled grid.\n            * 'integrate'\n                Discretize model by integrating the\n                model over the bin.\n    factor : number, optional\n        Factor of oversampling. Default factor = 10.\n\n    Raises\n    ------\n    TypeError\n        If model is not an instance of `~astropy.modeling.Fittable1DModel`\n\n    See also\n    --------\n    Model2DKernel : Create kernel from `~astropy.modeling.Fittable2DModel`\n    CustomKernel : Create kernel from list or array\n\n    Examples\n    --------\n    Define a Gaussian1D model:\n\n        >>> from astropy.modeling.models import Gaussian1D\n        >>> from astropy.convolution.kernels import Model1DKernel\n        >>> gauss = Gaussian1D(1, 0, 2)\n\n    And create a custom one dimensional kernel from it:\n\n        >>> gauss_kernel = Model1DKernel(gauss, x_size=9)\n\n    This kernel can now be used like a usual Astropy kernel.\n    \"\"\"\n    _separable = False\n    _is_bool = False\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.40850377082824707
+    },
+    {
+      "chunk_id": "astropy/modeling/projections.py:1440-1572",
+      "citation": {
+        "path": "astropy/modeling/projections.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1440,
+        "end_line": 1572
+      },
+      "content": "class AffineTransformation2D(Model):\n    \"\"\"\n    Perform an affine transformation in 2 dimensions.\n\n    Parameters\n    ----------\n    matrix : array\n        A 2x2 matrix specifying the linear transformation to apply to the\n        inputs\n\n    translation : array\n        A 2D vector (given as either a 2x1 or 1x2 array) specifying a\n        translation to apply to the inputs\n\n    \"\"\"\n    n_inputs = 2\n    n_outputs = 2\n\n    standard_broadcasting = False\n\n    _separable = False\n\n    matrix = Parameter(default=[[1.0, 0.0], [0.0, 1.0]])\n    translation = Parameter(default=[0.0, 0.0])\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.40582290291786194
+    },
+    {
+      "chunk_id": "astropy/convolution/kernels.py:910-976",
+      "citation": {
+        "path": "astropy/convolution/kernels.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 910,
+        "end_line": 976
+      },
+      "content": "class Model2DKernel(Kernel2D):\n    \"\"\"\n    Create kernel from 2D model.\n\n    The model has to be centered on x = 0 and y = 0.\n\n    Parameters\n    ----------\n    model : `~astropy.modeling.Fittable2DModel`\n        Kernel response function model\n    x_size : int, optional\n        Size in x direction of the kernel array. Default = ⌊8*width +1⌋.\n        Must be odd.\n    y_size : int, optional\n        Size in y direction of the kernel array. Default = ⌊8*width +1⌋.\n    mode : str, optional\n        One of the following discretization modes:\n            * 'center' (default)\n                Discretize model by taking the value\n                at the center of the bin.\n            * 'linear_interp'\n                Discretize model by performing a bilinear interpolation\n                between the values at the corners of the bin.\n            * 'oversample'\n                Discretize model by taking the average\n                on an oversampled grid.\n            * 'integrate'\n                Discretize model by integrating the\n                model over the bin.\n    factor : number, optional\n        Factor of oversampling. Default factor = 10.\n\n    Raises\n    ------\n    TypeError\n        If model is not an instance of `~astropy.modeling.Fittable2DModel`\n\n    See also\n    --------\n    Model1DKernel : Create kernel from `~astropy.modeling.Fittable1DModel`\n    CustomKernel : Create kernel from list or array\n\n    Examples\n    --------\n    Define a Gaussian2D model:\n\n        >>> from astropy.modeling.models import Gaussian2D\n        >>> from astropy.convolution.kernels import Model2DKernel\n        >>> gauss = Gaussian2D(1, 0, 0, 2, 2)\n\n    And create a custom two dimensional kernel from it:\n\n        >>> gauss_kernel = Model2DKernel(gauss, x_size=9)\n\n    This kernel can now be used like a usual astropy kernel.\n\n    \"\"\"\n    _is_bool = False\n    _separable = False\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.39917176961898804
+    },
+    {
+      "chunk_id": "astropy/wcs/wcs.py:722-789",
+      "citation": {
+        "path": "astropy/wcs/wcs.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 722,
+        "end_line": 789
+      },
+      "content": "def calc_footprint(self, header=None, undistort=True, axes=None, center=True):\n    \"\"\"\n    Calculates the footprint of the image on the sky.\n\n    A footprint is defined as the positions of the corners of the\n    image on the sky after all available distortions have been\n    applied.\n\n    Parameters\n    ----------\n    header : `~astropy.io.fits.Header` object, optional\n        Used to get ``NAXIS1`` and ``NAXIS2``\n        header and axes are mutually exclusive, alternative ways\n        to provide the same information.\n\n    undistort : bool, optional\n        If `True`, take SIP and distortion lookup table into\n        account\n\n    axes : (int, int), optional\n        If provided, use the given sequence as the shape of the\n        image.  Otherwise, use the ``NAXIS1`` and ``NAXIS2``\n        keywords from the header that was used to create this\n        `WCS` object.\n\n    center : bool, optional\n        If `True` use the center of the pixel, otherwise use the corner.\n\n    Returns\n    -------\n    coord : (4, 2) array of (*x*, *y*) coordinates.\n        The order is clockwise starting with the bottom left corner.\n    \"\"\"\n    if axes is not None:\n        naxis1, naxis2 = axes\n    else:\n        if header is None:\n            try:\n                # classes that inherit from WCS and define naxis1/2\n                # do not require a header parameter\n                naxis1, naxis2 = self.pixel_shape\n            except (AttributeError, TypeError):\n                warnings.warn(\n                    \"Need a valid header in order to calculate footprint\\n\", AstropyUserWarning)\n                return None\n        else:\n            naxis1 = header.get('NAXIS1', None)\n            naxis2 = header.get('NAXIS2', None)\n\n    if naxis1 is None or naxis2 is None:\n        raise ValueError(\n                \"Image size could not be determined.\")\n\n    if center:\n        corners = np.array([[1, 1],\n                            [1, naxis2],\n                            [naxis1, naxis2],\n                            [naxis1, 1]], dtype=np.float64)\n    else:\n        corners = np.array([[0.5, 0.5],\n                            [0.5, naxis2 + 0.5],\n                            [naxis1 + 0.5, naxis2 + 0.5],\n                            [naxis1 + 0.5, 0.5]], dtype=np.float64)\n\n    if undistort:\n        return self.all_pix2world(corners, 1)\n    else:\n        return self.wcs_pix2world(corners, 1)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3958369493484497
+    },
+    {
+      "chunk_id": "astropy/convolution/kernels.py:94-168",
+      "citation": {
+        "path": "astropy/convolution/kernels.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 94,
+        "end_line": 168
+      },
+      "content": "class Gaussian2DKernel(Kernel2D):\n    \"\"\"\n    2D Gaussian filter kernel.\n\n    The Gaussian filter is a filter with great smoothing properties. It is\n    isotropic and does not produce artifacts.\n\n    The generated kernel is normalized so that it integrates to 1.\n\n    Parameters\n    ----------\n    x_stddev : float\n        Standard deviation of the Gaussian in x before rotating by theta.\n    y_stddev : float\n        Standard deviation of the Gaussian in y before rotating by theta.\n    theta : float or `~astropy.units.Quantity` ['angle']\n        Rotation angle. If passed as a float, it is assumed to be in radians.\n        The rotation angle increases counterclockwise.\n    x_size : int, optional\n        Size in x direction of the kernel array. Default = ⌊8*stddev + 1⌋.\n    y_size : int, optional\n        Size in y direction of the kernel array. Default = ⌊8*stddev + 1⌋.\n    mode : str, optional\n        One of the following discretization modes:\n            * 'center' (default)\n                Discretize model by taking the value\n                at the center of the bin.\n            * 'linear_interp'\n                Discretize model by performing a bilinear interpolation\n                between the values at the corners of the bin.\n            * 'oversample'\n                Discretize model by taking the average\n                on an oversampled grid.\n            * 'integrate'\n                Discretize model by integrating the\n                model over the bin.\n    factor : number, optional\n        Factor of oversampling. Default factor = 10.\n\n\n    See Also\n    --------\n    Box2DKernel, Tophat2DKernel, RickerWavelet2DKernel, Ring2DKernel,\n    TrapezoidDisk2DKernel, AiryDisk2DKernel, Moffat2DKernel\n\n    Examples\n    --------\n    Kernel response:\n\n     .. plot::\n        :include-source:\n\n        import matplotlib.pyplot as plt\n        from astropy.convolution import Gaussian2DKernel\n        gaussian_2D_kernel = Gaussian2DKernel(10)\n        plt.imshow(gaussian_2D_kernel, interpolation='none', origin='lower')\n        plt.xlabel('x [pixels]')\n        plt.ylabel('y [pixels]')\n        plt.colorbar()\n        plt.show()\n\n    \"\"\"\n    _separable = True\n    _is_bool = False\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3933001160621643
+    },
+    {
+      "chunk_id": "astropy/coordinates/angles.py:27-498",
+      "citation": {
+        "path": "astropy/coordinates/angles.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 27,
+        "end_line": 498
+      },
+      "content": "class Angle(u.SpecificTypeQuantity):\n    \"\"\"\n    One or more angular value(s) with units equivalent to radians or degrees.\n\n    An angle can be specified either as an array, scalar, tuple (see\n    below), string, `~astropy.units.Quantity` or another\n    :class:`~astropy.coordinates.Angle`.\n\n    The input parser is flexible and supports a variety of formats.\n    The examples below illustrate common ways of initializing an `Angle`\n    object. First some imports::\n\n      >>> from astropy.coordinates import Angle\n      >>> from astropy import units as u\n\n    The angle values can now be provided::\n\n      >>> Angle('10.2345d')\n      <Angle 10.2345 deg>\n      >>> Angle(['10.2345d', '-20d'])\n      <Angle [ 10.2345, -20.    ] deg>\n      >>> Angle('1:2:30.43 degrees')\n      <Angle 1.04178611 deg>\n      >>> Angle('1 2 0 hours')\n      <Angle 1.03333333 hourangle>\n      >>> Angle(np.arange(1, 8), unit=u.deg)\n      <Angle [1., 2., 3., 4., 5., 6., 7.] deg>\n      >>> Angle('1°2′3″')\n      <Angle 1.03416667 deg>\n      >>> Angle('1°2′3″N')\n      <Angle 1.03416667 deg>\n      >>> Angle('1d2m3.4s')\n      <Angle 1.03427778 deg>\n      >>> Angle('1d2m3.4sS')\n      <Angle -1.03427778 deg>\n      >>> Angle('-1h2m3s')\n      <Angle -1.03416667 hourangle>\n      >>> Angle('-1h2m3sE')\n      <Angle -1.03416667 hourangle>\n      >>> Angle('-1h2.5m')\n      <Angle -1.04166667 hourangle>\n      >>> Angle('-1h2.5mW')\n      <Angle 1.04166667 hourangle>\n      >>> Angle('-1:2.5', unit=u.deg)\n      <Angle -1.04166667 deg>\n      >>> Angle((10, 11, 12), unit='hourangle')  # (h, m, s)\n      <Angle 10.18666667 hourangle>\n      >>> Angle((-1, 2, 3), unit=u.deg)  # (d, m, s)\n      <Angle -1.03416667 deg>\n      >>> Angle(10.2345 * u.deg)\n      <Angle 10.2345 deg>\n      >>> Angle(Angle(10.2345 * u.deg))\n      <Angle 10.2345 deg>\n\n    Parameters\n    ----------\n    angle : `~numpy.array`, scalar, `~astropy.units.Quantity`, :class:`~astropy.coordinates.Angle`\n        The angle value. If a tuple, will be interpreted as ``(h, m,\n        s)`` or ``(d, m, s)`` depending on ``unit``. If a string, it\n        will be interpreted following the rules described above.\n\n        If ``angle`` is a sequence or array of strings, the resulting\n        values will be in the given ``unit``, or if `None` is provided,\n        the unit will be taken from the first given value.\n\n    unit : unit-like, optional\n        The unit of the value specified for the angle.  This may be\n        any string that `~astropy.units.Unit` understands, but it is\n        better to give an actual unit object.  Must be an angular\n        unit.\n\n    dtype : `~numpy.dtype`, optional\n        See `~astropy.units.Quantity`.\n\n    copy : bool, optional\n        See `~astropy.units.Quantity`.\n\n    Raises\n    ------\n    `~astropy.units.UnitsError`\n        If a unit is not provided or it is not an angular unit.\n    \"\"\"\n    _equivalent_unit = u.radian\n    _include_easy_conversion_members = True\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.38761627674102783
+    },
+    {
+      "chunk_id": "astropy/modeling/polynomial.py:522-626",
+      "citation": {
+        "path": "astropy/modeling/polynomial.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 522,
+        "end_line": 626
+      },
+      "content": "class Hermite1D(_PolyDomainWindow1D):\n    r\"\"\"\n    Univariate Hermite series.\n\n    It is defined as:\n\n    .. math::\n\n        P(x) = \\sum_{i=0}^{i=n}C_{i} * H_{i}(x)\n\n    where ``H_i(x)`` is the corresponding Hermite polynomial (\"Physicist's kind\").\n\n    For explanation of ``domain``, and ``window`` see\n    :ref:`Notes regarding usage of domain and window <domain-window-note>`.\n\n    Parameters\n    ----------\n    degree : int\n        degree of the series\n    domain : tuple or None, optional\n    window : tuple or None, optional\n        If None, it is set to (-1, 1)\n        Fitters will remap the domain to this window\n    **params : dict\n        keyword : value pairs, representing parameter_name: value\n\n    Notes\n    -----\n\n    This model does not support the use of units/quantities, because each term\n    in the sum of Hermite polynomials is a polynomial in x - since the\n    coefficients within each Hermite polynomial are fixed, we can't use\n    quantities for x since the units would not be compatible. For example, the\n    third Hermite polynomial (H2) is 4x^2-2, but if x was specified with units,\n    4x^2 and -2 would have incompatible units.\n    \"\"\"\n    n_inputs = 1\n    n_outputs = 1\n\n    _separable = True\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3820776343345642
+    },
+    {
+      "chunk_id": "astropy/modeling/polynomial.py:760-864",
+      "citation": {
+        "path": "astropy/modeling/polynomial.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 760,
+        "end_line": 864
+      },
+      "content": "class Legendre1D(_PolyDomainWindow1D):\n    r\"\"\"\n    Univariate Legendre series.\n\n    It is defined as:\n\n    .. math::\n\n        P(x) = \\sum_{i=0}^{i=n}C_{i} * L_{i}(x)\n\n    where ``L_i(x)`` is the corresponding Legendre polynomial.\n\n    For explanation of ``domain``, and ``window`` see\n    :ref:`Notes regarding usage of domain and window <domain-window-note>`.\n\n    Parameters\n    ----------\n    degree : int\n        degree of the series\n    domain : tuple or None, optional\n    window : tuple or None, optional\n        If None, it is set to (-1, 1)\n        Fitters will remap the domain to this window\n    **params : dict\n        keyword: value pairs, representing parameter_name: value\n\n\n    Notes\n    -----\n\n    This model does not support the use of units/quantities, because each term\n    in the sum of Legendre polynomials is a polynomial in x - since the\n    coefficients within each Legendre polynomial are fixed, we can't use\n    quantities for x since the units would not be compatible. For example, the\n    third Legendre polynomial (P2) is 1.5x^2-0.5, but if x was specified with\n    units, 1.5x^2 and -0.5 would have incompatible units.\n    \"\"\"\n\n    n_inputs = 1\n    n_outputs = 1\n\n    _separable = True\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3772450089454651
+    },
+    {
+      "chunk_id": "astropy/modeling/polynomial.py:415-519",
+      "citation": {
+        "path": "astropy/modeling/polynomial.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 415,
+        "end_line": 519
+      },
+      "content": "class Chebyshev1D(_PolyDomainWindow1D):\n    r\"\"\"\n    Univariate Chebyshev series.\n\n    It is defined as:\n\n    .. math::\n\n        P(x) = \\sum_{i=0}^{i=n}C_{i} * T_{i}(x)\n\n    where ``T_i(x)`` is the corresponding Chebyshev polynomial of the 1st kind.\n\n    For explanation of ```domain``, and ``window`` see\n    :ref:`Notes regarding usage of domain and window <domain-window-note>`.\n\n    Parameters\n    ----------\n    degree : int\n        degree of the series\n    domain : tuple or None, optional\n    window : tuple or None, optional\n        If None, it is set to (-1, 1)\n        Fitters will remap the domain to this window.\n    **params : dict\n        keyword : value pairs, representing parameter_name: value\n\n    Notes\n    -----\n\n    This model does not support the use of units/quantities, because each term\n    in the sum of Chebyshev polynomials is a polynomial in x - since the\n    coefficients within each Chebyshev polynomial are fixed, we can't use\n    quantities for x since the units would not be compatible. For example, the\n    third Chebyshev polynomial (T2) is 2x^2-1, but if x was specified with\n    units, 2x^2 and -1 would have incompatible units.\n    \"\"\"\n    n_inputs = 1\n    n_outputs = 1\n\n    _separable = True\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3746106028556824
+    },
+    {
+      "chunk_id": "astropy/modeling/functional_models.py:1719-1792",
+      "citation": {
+        "path": "astropy/modeling/functional_models.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1719,
+        "end_line": 1792
+      },
+      "content": "class Const1D(Fittable1DModel):\n    \"\"\"\n    One dimensional Constant model.\n\n    Parameters\n    ----------\n    amplitude : float\n        Value of the constant function\n\n    See Also\n    --------\n    Const2D\n\n    Notes\n    -----\n    Model formula:\n\n        .. math:: f(x) = A\n\n    Examples\n    --------\n    .. plot::\n        :include-source:\n\n        import numpy as np\n        import matplotlib.pyplot as plt\n\n        from astropy.modeling.models import Const1D\n\n        plt.figure()\n        s1 = Const1D()\n        r = np.arange(-5, 5, .01)\n\n        for factor in range(1, 4):\n            s1.amplitude = factor\n            plt.plot(r, s1(r), color=str(0.25 * factor), lw=2)\n\n        plt.axis([-5, 5, -1, 4])\n        plt.show()\n    \"\"\"\n\n    amplitude = Parameter(default=1, description=\"Value of the constant function\")\n    linear = True\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3740696310997009
+    },
+    {
+      "chunk_id": "astropy/modeling/polynomial.py:867-971",
+      "citation": {
+        "path": "astropy/modeling/polynomial.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 867,
+        "end_line": 971
+      },
+      "content": "class Polynomial1D(_PolyDomainWindow1D):\n    r\"\"\"\n    1D Polynomial model.\n\n    It is defined as:\n\n    .. math::\n\n        P = \\sum_{i=0}^{i=n}C_{i} * x^{i}\n\n    For explanation of ``domain``, and ``window`` see\n    :ref:`Notes regarding usage of domain and window <domain-window-note>`.\n\n    Parameters\n    ----------\n    degree : int\n        degree of the series\n    domain : tuple or None, optional\n        If None, it is set to (-1, 1)\n    window : tuple or None, optional\n        If None, it is set to (-1, 1)\n        Fitters will remap the domain to this window\n    **params : dict\n        keyword: value pairs, representing parameter_name: value\n\n    \"\"\"\n\n    n_inputs = 1\n    n_outputs = 1\n\n    _separable = True\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.37401726841926575
+    },
+    {
+      "chunk_id": "astropy/modeling/tabular.py:263-320",
+      "citation": {
+        "path": "astropy/modeling/tabular.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 263,
+        "end_line": 320
+      },
+      "content": "def tabular_model(dim, name=None):\n    \"\"\"\n    Make a ``Tabular`` model where ``n_inputs`` is\n    based on the dimension of the lookup_table.\n\n    This model has to be further initialized and when evaluated\n    returns the interpolated values.\n\n    Parameters\n    ----------\n    dim : int\n        Dimensions of the lookup table.\n    name : str\n        Name for the class.\n\n    Examples\n    --------\n    >>> table = np.array([[3., 0., 0.],\n    ...                   [0., 2., 0.],\n    ...                   [0., 0., 0.]])\n\n    >>> tab = tabular_model(2, name='Tabular2D')\n    >>> print(tab)\n    <class 'astropy.modeling.tabular.Tabular2D'>\n    Name: Tabular2D\n    N_inputs: 2\n    N_outputs: 1\n\n    >>> points = ([1, 2, 3], [1, 2, 3])\n\n    Setting fill_value to None, allows extrapolation.\n    >>> m = tab(points, lookup_table=table, name='my_table',\n    ...         bounds_error=False, fill_value=None, method='nearest')\n\n    >>> xinterp = [0, 1, 1.5, 2.72, 3.14]\n    >>> m(xinterp, xinterp)  # doctest: +FLOAT_CMP\n    array([3., 3., 3., 0., 0.])\n\n    \"\"\"\n    if dim < 1:\n        raise ValueError('Lookup table must have at least one dimension.')\n\n    table = np.zeros([2] * dim)\n    members = {'lookup_table': table, 'n_inputs': dim, 'n_outputs': 1}\n\n    if dim == 1:\n        members['_separable'] = True\n    else:\n        members['_separable'] = False\n\n    if name is None:\n        model_id = _Tabular._id\n        _Tabular._id += 1\n        name = f'Tabular{model_id}'\n\n    model_class = type(str(name), (_Tabular,), members)\n    model_class.__module__ = 'astropy.modeling.tabular'\n    return model_class",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36999833583831787
+    },
+    {
+      "chunk_id": "astropy/nddata/blocks.py:159-208",
+      "citation": {
+        "path": "astropy/nddata/blocks.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 159,
+        "end_line": 208
+      },
+      "content": "@support_nddata\ndef block_replicate(data, block_size, conserve_sum=True):\n    \"\"\"\n    Upsample a data array by block replication.\n\n    Parameters\n    ----------\n    data : array-like\n        The data to be block replicated.\n\n    block_size : int or array-like (int)\n        The integer block size along each axis.  If ``block_size`` is a\n        scalar and ``data`` has more than one dimension, then\n        ``block_size`` will be used for for every axis.\n\n    conserve_sum : bool, optional\n        If `True` (the default) then the sum of the output\n        block-replicated data will equal the sum of the input ``data``.\n\n    Returns\n    -------\n    output : array-like\n        The block-replicated data.\n\n    Examples\n    --------\n    >>> import numpy as np\n    >>> from astropy.nddata import block_replicate\n    >>> data = np.array([[0., 1.], [2., 3.]])\n    >>> block_replicate(data, 2)  # doctest: +FLOAT_CMP\n    array([[0.  , 0.  , 0.25, 0.25],\n           [0.  , 0.  , 0.25, 0.25],\n           [0.5 , 0.5 , 0.75, 0.75],\n           [0.5 , 0.5 , 0.75, 0.75]])\n\n    >>> block_replicate(data, 2, conserve_sum=False)  # doctest: +FLOAT_CMP\n    array([[0., 0., 1., 1.],\n           [0., 0., 1., 1.],\n           [2., 2., 3., 3.],\n           [2., 2., 3., 3.]])\n    \"\"\"\n\n    data, block_size = _process_block_inputs(data, block_size)\n    for i in range(data.ndim):\n        data = np.repeat(data, block_size[i], axis=i)\n\n    if conserve_sum:\n        data = data / float(np.prod(block_size))\n\n    return data",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3694373369216919
+    },
+    {
+      "chunk_id": "astropy/modeling/tabular.py:38-260",
+      "citation": {
+        "path": "astropy/modeling/tabular.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 38,
+        "end_line": 260
+      },
+      "content": "class _Tabular(Model):\n    \"\"\"\n    Returns an interpolated lookup table value.\n\n    Parameters\n    ----------\n    points : tuple of ndarray of float, optional\n        The points defining the regular grid in n dimensions.\n        ndarray must have shapes (m1, ), ..., (mn, ),\n    lookup_table : array-like\n        The data on a regular grid in n dimensions.\n        Must have shapes (m1, ..., mn, ...)\n    method : str, optional\n        The method of interpolation to perform. Supported are \"linear\" and\n        \"nearest\", and \"splinef2d\". \"splinef2d\" is only supported for\n        2-dimensional data. Default is \"linear\".\n    bounds_error : bool, optional\n        If True, when interpolated values are requested outside of the\n        domain of the input data, a ValueError is raised.\n        If False, then ``fill_value`` is used.\n    fill_value : float or `~astropy.units.Quantity`, optional\n        If provided, the value to use for points outside of the\n        interpolation domain. If None, values outside\n        the domain are extrapolated.  Extrapolation is not supported by method\n        \"splinef2d\". If Quantity is given, it will be converted to the unit of\n        ``lookup_table``, if applicable.\n\n    Returns\n    -------\n    value : ndarray\n        Interpolated values at input coordinates.\n\n    Raises\n    ------\n    ImportError\n        Scipy is not installed.\n\n    Notes\n    -----\n    Uses `scipy.interpolate.interpn`.\n\n    \"\"\"\n\n    linear = False\n    fittable = False\n\n    standard_broadcasting = False\n\n    _is_dynamic = True\n\n    _id = 0\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36790165305137634
+    },
+    {
+      "chunk_id": "astropy/coordinates/matrix_utilities.py:41-101",
+      "citation": {
+        "path": "astropy/coordinates/matrix_utilities.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 41,
+        "end_line": 101
+      },
+      "content": "def rotation_matrix(angle, axis='z', unit=None):\n    \"\"\"\n    Generate matrices for rotation by some angle around some axis.\n\n    Parameters\n    ----------\n    angle : angle-like\n        The amount of rotation the matrices should represent.  Can be an array.\n    axis : str or array-like\n        Either ``'x'``, ``'y'``, ``'z'``, or a (x,y,z) specifying the axis to\n        rotate about. If ``'x'``, ``'y'``, or ``'z'``, the rotation sense is\n        counterclockwise looking down the + axis (e.g. positive rotations obey\n        left-hand-rule).  If given as an array, the last dimension should be 3;\n        it will be broadcast against ``angle``.\n    unit : unit-like, optional\n        If ``angle`` does not have associated units, they are in this\n        unit.  If neither are provided, it is assumed to be degrees.\n\n    Returns\n    -------\n    rmat : `numpy.matrix`\n        A unitary rotation matrix.\n    \"\"\"\n    if isinstance(angle, u.Quantity):\n        angle = angle.to_value(u.radian)\n    else:\n        if unit is None:\n            angle = np.deg2rad(angle)\n        else:\n            angle = u.Unit(unit).to(u.rad, angle)\n\n    s = np.sin(angle)\n    c = np.cos(angle)\n\n    # use optimized implementations for x/y/z\n    try:\n        i = 'xyz'.index(axis)\n    except TypeError:\n        axis = np.asarray(axis)\n        axis = axis / np.sqrt((axis * axis).sum(axis=-1, keepdims=True))\n        R = (axis[..., np.newaxis] * axis[..., np.newaxis, :] *\n             (1. - c)[..., np.newaxis, np.newaxis])\n\n        for i in range(0, 3):\n            R[..., i, i] += c\n            a1 = (i + 1) % 3\n            a2 = (i + 2) % 3\n            R[..., a1, a2] += axis[..., i] * s\n            R[..., a2, a1] -= axis[..., i] * s\n\n    else:\n        a1 = (i + 1) % 3\n        a2 = (i + 2) % 3\n        R = np.zeros(getattr(angle, 'shape', ()) + (3, 3))\n        R[..., i, i] = 1.\n        R[..., a1, a1] = c\n        R[..., a1, a2] = s\n        R[..., a2, a1] = -s\n        R[..., a2, a2] = c\n\n    return R",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36717092990875244
+    },
+    {
+      "chunk_id": "astropy/timeseries/periodograms/lombscargle/core.py:30-704",
+      "citation": {
+        "path": "astropy/timeseries/periodograms/lombscargle/core.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 30,
+        "end_line": 704
+      },
+      "content": "class LombScargle(BasePeriodogram):\n    \"\"\"Compute the Lomb-Scargle Periodogram.\n\n    This implementations here are based on code presented in [1]_ and [2]_;\n    if you use this functionality in an academic application, citation of\n    those works would be appreciated.\n\n    Parameters\n    ----------\n    t : array-like or `~astropy.units.Quantity` ['time']\n        sequence of observation times\n    y : array-like or `~astropy.units.Quantity`\n        sequence of observations associated with times t\n    dy : float, array-like, or `~astropy.units.Quantity`, optional\n        error or sequence of observational errors associated with times t\n    fit_mean : bool, optional\n        if True, include a constant offset as part of the model at each\n        frequency. This can lead to more accurate results, especially in the\n        case of incomplete phase coverage.\n    center_data : bool, optional\n        if True, pre-center the data by subtracting the weighted mean\n        of the input data. This is especially important if fit_mean = False\n    nterms : int, optional\n        number of terms to use in the Fourier fit\n    normalization : {'standard', 'model', 'log', 'psd'}, optional\n        Normalization to use for the periodogram.\n\n    Examples\n    --------\n    Generate noisy periodic data:\n\n    >>> rand = np.random.default_rng(42)\n    >>> t = 100 * rand.random(100)\n    >>> y = np.sin(2 * np.pi * t) + rand.standard_normal(100)\n\n    Compute the Lomb-Scargle periodogram on an automatically-determined\n    frequency grid & find the frequency of max power:\n\n    >>> frequency, power = LombScargle(t, y).autopower()\n    >>> frequency[np.argmax(power)]  # doctest: +FLOAT_CMP\n    1.0007641728995051\n\n    Compute the Lomb-Scargle periodogram at a user-specified frequency grid:\n\n    >>> freq = np.arange(0.8, 1.3, 0.1)\n    >>> LombScargle(t, y).power(freq)  # doctest: +FLOAT_CMP\n    array([0.0792948 , 0.01778874, 0.25328167, 0.01064157, 0.01471387])\n\n    If the inputs are astropy Quantities with units, the units will be\n    validated and the outputs will also be Quantities with appropriate units:\n\n    >>> from astropy import units as u\n    >>> t = t * u.s\n    >>> y = y * u.mag\n    >>> frequency, power = LombScargle(t, y).autopower()\n    >>> frequency.unit\n    Unit(\"1 / s\")\n    >>> power.unit\n    Unit(dimensionless)\n\n    Note here that the Lomb-Scargle power is always a unitless quantity,\n    because it is related to the :math:`\\\\chi^2` of the best-fit periodic\n    model at each frequency.\n\n    References\n    ----------\n    .. [1] Vanderplas, J., Connolly, A. Ivezic, Z. & Gray, A. *Introduction to\n        astroML: Machine learning for astrophysics*. Proceedings of the\n        Conference on Intelligent Data Understanding (2012)\n    .. [2] VanderPlas, J. & Ivezic, Z. *Periodograms for Multiband Astronomical\n        Time Series*. ApJ 812.1:18 (2015)\n    \"\"\"\n    available_methods = available_methods()\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36679837107658386
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 11.709409400005825
+}
