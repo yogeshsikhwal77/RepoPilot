@@ -1,0 +1,50 @@
+# RepoPilot MCP Server Configuration and Tool Scopes
+# Enforces least-privilege scoping across agent lifecycle stages
+
+servers:
+  github:
+    name: "github"
+    description: "GitHub API operations: issue fetching, commit inspection, draft PR creation"
+    scope:
+      - "get_issue"
+      - "list_issues"
+      - "search_issues"
+      - "get_file_contents"
+      - "get_commit"
+      - "create_draft_pr"
+    write_tools:
+      - "create_draft_pr"
+
+  fs:
+    name: "fs"
+    description: "Read-only workspace file access"
+    scope:
+      - "read_file"
+      - "list_directory"
+      - "search_files"
+    write_tools: []
+
+  sandbox:
+    name: "sandbox"
+    description: "Isolated container test execution"
+    scope:
+      - "run_tests"
+      - "run_command"
+    write_tools:
+      - "run_tests"
+      - "run_command"
+
+# Stage permissions: Write tools stay off until the Verifier stage
+stage_permissions:
+  planning:
+    allow_write: false
+  retrieval:
+    allow_write: false
+  navigation:
+    allow_write: false
+  coding:
+    allow_write: false
+  testing:
+    allow_write: true  # Can run tests in sandbox
+  verification:
+    allow_write: true  # Can create draft PR
