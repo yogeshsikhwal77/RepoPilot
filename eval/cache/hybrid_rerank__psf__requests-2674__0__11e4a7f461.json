@@ -1,0 +1,272 @@
+{
+  "task_id": "psf__requests-2674",
+  "config": "hybrid_rerank",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:95-101",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 95,
+        "end_line": 101
+      },
+      "content": "class TimeoutError(HTTPError):\n    \"\"\" Raised when a socket timeout error occurs.\n\n    Catching this error will catch both :exc:`ReadTimeoutErrors\n    <ReadTimeoutError>` and :exc:`ConnectTimeoutErrors <ConnectTimeoutError>`.\n    \"\"\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.61057
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:41-43",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 41,
+        "end_line": 43
+      },
+      "content": "class ProxyError(HTTPError):\n    \"Raised when the connection to a proxy fails.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.600426
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:46-48",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 46,
+        "end_line": 48
+      },
+      "content": "class DecodeError(HTTPError):\n    \"Raised when automatic decoding based on Content-Type fails.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.595264
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:90-92",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 90,
+        "end_line": 92
+      },
+      "content": "class TimeoutStateError(HTTPError):\n    \"\"\" Raised when passing an invalid state to a timeout \"\"\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.490162
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:111-113",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 111,
+        "end_line": 113
+      },
+      "content": "class ConnectTimeoutError(TimeoutError):\n    \"Raised when a socket timeout occurs while connecting to a server\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.48264
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:104-106",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 104,
+        "end_line": 106
+      },
+      "content": "class ReadTimeoutError(TimeoutError, RequestError):\n    \"Raised when a socket timeout occurs while receiving data from a server\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.471597
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:25-33",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 25,
+        "end_line": 33
+      },
+      "content": "class RequestError(PoolError):\n    \"Base exception for PoolErrors that have associated URLs.\"\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.416505
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:51-53",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 51,
+        "end_line": 53
+      },
+      "content": "class ProtocolError(HTTPError):\n    \"Raised when something unexpected happens mid-request/response.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.403483
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/poolmanager.py:192-276",
+      "citation": {
+        "path": "requests/packages/urllib3/poolmanager.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 192,
+        "end_line": 276
+      },
+      "content": "class ProxyManager(PoolManager):\n    \"\"\"\n    Behaves just like :class:`PoolManager`, but sends all requests through\n    the defined proxy, using the CONNECT method for HTTPS URLs.\n\n    :param proxy_url:\n        The URL of the proxy to be used.\n\n    :param proxy_headers:\n        A dictionary contaning headers that will be sent to the proxy. In case\n        of HTTP they are being sent with each request, while in the\n        HTTPS/CONNECT case they are sent only once. Could be used for proxy\n        authentication.\n\n    Example:\n        >>> proxy = urllib3.ProxyManager('http://localhost:3128/')\n        >>> r1 = proxy.request('GET', 'http://google.com/')\n        >>> r2 = proxy.request('GET', 'http://httpbin.org/')\n        >>> len(proxy.pools)\n        1\n        >>> r3 = proxy.request('GET', 'https://httpbin.org/')\n        >>> r4 = proxy.request('GET', 'https://twitter.com/')\n        >>> len(proxy.pools)\n        3\n\n    \"\"\"\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.401428
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:14-22",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 14,
+        "end_line": 22
+      },
+      "content": "class PoolError(HTTPError):\n    \"Base exception for errors caused within a pool.\"\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.398962
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/util/timeout.py:104-136",
+      "citation": {
+        "path": "requests/packages/urllib3/util/timeout.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 104,
+        "end_line": 136
+      },
+      "content": "@classmethod\ndef _validate_timeout(cls, value, name):\n    \"\"\" Check that a timeout attribute is valid.\n\n    :param value: The timeout value to validate\n    :param name: The name of the timeout attribute to validate. This is\n        used to specify in error messages.\n    :return: The validated and casted version of the given value.\n    :raises ValueError: If the type is not an integer or a float, or if it\n        is a numeric value less than zero.\n    \"\"\"\n    if value is _Default:\n        return cls.DEFAULT_TIMEOUT\n\n    if value is None or value is cls.DEFAULT_TIMEOUT:\n        return value\n\n    try:\n        float(value)\n    except (TypeError, ValueError):\n        raise ValueError(\"Timeout value %s was %s, but it must be an \"\n                         \"int or float.\" % (name, value))\n\n    try:\n        if value < 0:\n            raise ValueError(\"Attempted to set %s timeout to %s, but the \"\n                             \"timeout cannot be set to a value less \"\n                             \"than 0.\" % (name, value))\n    except TypeError:  # Python 3\n        raise ValueError(\"Timeout value %s was %s, but it must be an \"\n                         \"int or float.\" % (name, value))\n\n    return value",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.386042
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:167-169",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 167,
+        "end_line": 169
+      },
+      "content": "class ResponseNotChunked(ProtocolError, ValueError):\n    \"Response needs to be chunked in order to read it as chunks.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.373699
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/util/timeout.py:180-191",
+      "citation": {
+        "path": "requests/packages/urllib3/util/timeout.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 180,
+        "end_line": 191
+      },
+      "content": "def get_connect_duration(self):\n    \"\"\" Gets the time elapsed since the call to :meth:`start_connect`.\n\n    :return: Elapsed time.\n    :rtype: float\n    :raises urllib3.exceptions.TimeoutStateError: if you attempt\n        to get duration for a timer that hasn't been started.\n    \"\"\"\n    if self._start_connect is None:\n        raise TimeoutStateError(\"Can't get connect duration for timer \"\n                                \"that has not started.\")\n    return current_time() - self._start_connect",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.37218
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:116-118",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 116,
+        "end_line": 118
+      },
+      "content": "class EmptyPoolError(PoolError):\n    \"Raised when a pool runs out of connections and no more are allowed.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.371904
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/util/timeout.py:211-240",
+      "citation": {
+        "path": "requests/packages/urllib3/util/timeout.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 211,
+        "end_line": 240
+      },
+      "content": "@property\ndef read_timeout(self):\n    \"\"\" Get the value for the read timeout.\n\n    This assumes some time has elapsed in the connection timeout and\n    computes the read timeout appropriately.\n\n    If self.total is set, the read timeout is dependent on the amount of\n    time taken by the connect timeout. If the connection time has not been\n    established, a :exc:`~urllib3.exceptions.TimeoutStateError` will be\n    raised.\n\n    :return: Value to use for the read timeout.\n    :rtype: int, float, :attr:`Timeout.DEFAULT_TIMEOUT` or None\n    :raises urllib3.exceptions.TimeoutStateError: If :meth:`start_connect`\n        has not yet been called on this object.\n    \"\"\"\n    if (self.total is not None and\n        self.total is not self.DEFAULT_TIMEOUT and\n        self._read is not None and\n        self._read is not self.DEFAULT_TIMEOUT):\n        # In case the connect timeout has not yet been established.\n        if self._start_connect is None:\n            return self._read\n        return max(0, min(self.total - self.get_connect_duration(),\n                          self._read))\n    elif self.total is not None and self.total is not self.DEFAULT_TIMEOUT:\n        return max(0, self.total - self.get_connect_duration())\n    else:\n        return self._read",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.367108
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:131-138",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 131,
+        "end_line": 138
+      },
+      "content": "class LocationParseError(LocationValueError):\n    \"Raised when get_host or similar fails to parse the URL input.\"\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.360309
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:62-78",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 62,
+        "end_line": 78
+      },
+      "content": "class MaxRetryError(RequestError):\n    \"\"\"Raised when the maximum number of retries is exceeded.\n\n    :param pool: The connection pool\n    :type pool: :class:`~urllib3.connectionpool.HTTPConnectionPool`\n    :param string url: The requested Url\n    :param exceptions.Exception reason: The underlying error\n\n    \"\"\"\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.358515
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:126-128",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 126,
+        "end_line": 128
+      },
+      "content": "class LocationValueError(ValueError, HTTPError):\n    \"Raised when there is something wrong with a given URL input.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.356113
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:81-87",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 81,
+        "end_line": 87
+      },
+      "content": "class HostChangedError(RequestError):\n    \"Raised when an existing pool gets a request for a foreign host.\"\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.350502
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:121-123",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 121,
+        "end_line": 123
+      },
+      "content": "class ClosedPoolError(PoolError):\n    \"Raised when a request enters a pool after the pool has been closed.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.346271
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 293.3083514000027
+}
