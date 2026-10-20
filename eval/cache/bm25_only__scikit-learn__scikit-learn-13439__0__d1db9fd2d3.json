@@ -1,0 +1,272 @@
+{
+  "task_id": "scikit-learn__scikit-learn-13439",
+  "config": "bm25_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "sklearn/pipeline.py:29-562",
+      "citation": {
+        "path": "sklearn/pipeline.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 29,
+        "end_line": 562
+      },
+      "content": "class Pipeline(_BaseComposition):\n    \"\"\"Pipeline of transforms with a final estimator.\n\n    Sequentially apply a list of transforms and a final estimator.\n    Intermediate steps of the pipeline must be 'transforms', that is, they\n    must implement fit and transform methods.\n    The final estimator only needs to implement fit.\n    The transformers in the pipeline can be cached using ``memory`` argument.\n\n    The purpose of the pipeline is to assemble several steps that can be\n    cross-validated together while setting different parameters.\n    For this, it enables setting parameters of the various steps using their\n    names and the parameter name separated by a '__', as in the example below.\n    A step's estimator may be replaced entirely by setting the parameter\n    with its name to another estimator, or a transformer removed by setting\n    it to 'passthrough' or ``None``.\n\n    Read more in the :ref:`User Guide <pipeline>`.\n\n    Parameters\n    ----------\n    steps : list\n        List of (name, transform) tuples (implementing fit/transform) that are\n        chained, in the order in which they are chained, with the last object\n        an estimator.\n\n    memory : None, str or object with the joblib.Memory interface, optional\n        Used to cache the fitted transformers of the pipeline. By default,\n        no caching is performed. If a string is given, it is the path to\n        the caching directory. Enabling caching triggers a clone of\n        the transformers before fitting. Therefore, the transformer\n        instance given to the pipeline cannot be inspected\n        directly. Use the attribute ``named_steps`` or ``steps`` to\n        inspect estimators within the pipeline. Caching the\n        transformers is advantageous when fitting is time consuming.\n\n    Attributes\n    ----------\n    named_steps : bunch object, a dictionary with attribute access\n        Read-only attribute to access any step parameter by user given name.\n        Keys are step names and values are steps parameters.\n\n    See also\n    --------\n    sklearn.pipeline.make_pipeline : convenience function for simplified\n        pipeline construction.\n\n    Examples\n    --------\n    >>> from sklearn import svm\n    >>> from sklearn.datasets import samples_generator\n    >>> from sklearn.feature_selection import SelectKBest\n    >>> from sklearn.feature_selection import f_regression\n    >>> from sklearn.pipeline import Pipeline\n    >>> # generate some data to play with\n    >>> X, y = samples_generator.make_classification(\n    ...     n_informative=5, n_redundant=0, random_state=42)\n    >>> # ANOVA SVM-C\n    >>> anova_filter = SelectKBest(f_regression, k=5)\n    >>> clf = svm.SVC(kernel='linear')\n    >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])\n    >>> # You can set the parameters using the names issued\n    >>> # For instance, fit using a k of 10 in the SelectKBest\n    >>> # and a parameter 'C' of the svm\n    >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)\n    ...                      # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE\n    Pipeline(memory=None,\n             steps=[('anova', SelectKBest(...)),\n                    ('svc', SVC(...))])\n    >>> prediction = anova_svm.predict(X)\n    >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS\n    0.83\n    >>> # getting the selected features chosen by anova_filter\n    >>> anova_svm['anova'].get_support()\n    ... # doctest: +NORMALIZE_WHITESPACE\n    array([False, False,  True,  True, False, False,  True,  True, False,\n           True, False,  True,  True, False,  True, False,  True,  True,\n           False, False])\n    >>> # Another way to get selected features chosen by anova_filter\n    >>> anova_svm.named_steps.anova.get_support()\n    ... # doctest: +NORMALIZE_WHITESPACE\n    array([False, False,  True,  True, False, False,  True,  True, False,\n           True, False,  True,  True, False,  True, False,  True,  True,\n           False, False])\n    >>> # Indexing can also be used to extract a sub-pipeline.\n    >>> sub_pipeline = anova_svm[:1]\n    >>> sub_pipeline  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE\n    Pipeline(memory=None, steps=[('anova', ...)])\n    >>> coef = anova_svm[-1].coef_\n    >>> anova_svm['svc'] is anova_svm[-1]\n    True\n    >>> coef.shape\n    (1, 10)\n    >>> sub_pipeline.inverse_transform(coef).shape\n    (1, 20)\n    \"\"\"\n\n    # BaseEstimator interface\n    _required_parameters = ['steps']\n\n\n\n\n\n\n\n\n\n\n    # Estimator interface\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 318.6119456900211
+    },
+    {
+      "chunk_id": "sklearn/tests/test_pipeline.py:236-251",
+      "citation": {
+        "path": "sklearn/tests/test_pipeline.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 236,
+        "end_line": 251
+      },
+      "content": "@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22\n@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22\ndef test_pipeline_methods_anova():\n    # Test the various methods of the pipeline (anova).\n    iris = load_iris()\n    X = iris.data\n    y = iris.target\n    # Test with Anova + LogisticRegression\n    clf = LogisticRegression()\n    filter1 = SelectKBest(f_classif, k=2)\n    pipe = Pipeline([('anova', filter1), ('logistic', clf)])\n    pipe.fit(X, y)\n    pipe.predict(X)\n    pipe.predict_proba(X)\n    pipe.predict_log_proba(X)\n    pipe.score(X, y)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 223.95481406163987
+    },
+    {
+      "chunk_id": "sklearn/tests/test_pipeline.py:157-221",
+      "citation": {
+        "path": "sklearn/tests/test_pipeline.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 157,
+        "end_line": 221
+      },
+      "content": "def test_pipeline_init():\n    # Test the various init parameters of the pipeline.\n    assert_raises(TypeError, Pipeline)\n    # Check that we can't instantiate pipelines with objects without fit\n    # method\n    assert_raises_regex(TypeError,\n                        'Last step of Pipeline should implement fit '\n                        'or be the string \\'passthrough\\''\n                        '.*NoFit.*',\n                        Pipeline, [('clf', NoFit())])\n    # Smoke test with only an estimator\n    clf = NoTrans()\n    pipe = Pipeline([('svc', clf)])\n    assert_equal(pipe.get_params(deep=True),\n                 dict(svc__a=None, svc__b=None, svc=clf,\n                      **pipe.get_params(deep=False)))\n\n    # Check that params are set\n    pipe.set_params(svc__a=0.1)\n    assert_equal(clf.a, 0.1)\n    assert_equal(clf.b, None)\n    # Smoke test the repr:\n    repr(pipe)\n\n    # Test with two objects\n    clf = SVC()\n    filter1 = SelectKBest(f_classif)\n    pipe = Pipeline([('anova', filter1), ('svc', clf)])\n\n    # Check that we can't instantiate with non-transformers on the way\n    # Note that NoTrans implements fit, but not transform\n    assert_raises_regex(TypeError,\n                        'All intermediate steps should be transformers'\n                        '.*\\\\bNoTrans\\\\b.*',\n                        Pipeline, [('t', NoTrans()), ('svc', clf)])\n\n    # Check that params are set\n    pipe.set_params(svc__C=0.1)\n    assert_equal(clf.C, 0.1)\n    # Smoke test the repr:\n    repr(pipe)\n\n    # Check that params are not set when naming them wrong\n    assert_raises(ValueError, pipe.set_params, anova__C=0.1)\n\n    # Test clone\n    pipe2 = assert_no_warnings(clone, pipe)\n    assert not pipe.named_steps['svc'] is pipe2.named_steps['svc']\n\n    # Check that apart from estimators, the parameters are the same\n    params = pipe.get_params(deep=True)\n    params2 = pipe2.get_params(deep=True)\n\n    for x in pipe.get_params(deep=False):\n        params.pop(x)\n\n    for x in pipe2.get_params(deep=False):\n        params2.pop(x)\n\n    # Remove estimators that where copied\n    params.pop('svc')\n    params.pop('anova')\n    params2.pop('svc')\n    params2.pop('anova')\n    assert_equal(params, params2)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 210.74724973320147
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:451-530",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 451,
+        "end_line": 530
+      },
+      "content": "class SelectKBest(_BaseFilter):\n    \"\"\"Select features according to the k highest scores.\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues) or a single array with scores.\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    k : int or \"all\", optional, default=10\n        Number of top features to select.\n        The \"all\" option bypasses selection, for use in a parameter search.\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores, None if `score_func` returned only scores.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_digits\n    >>> from sklearn.feature_selection import SelectKBest, chi2\n    >>> X, y = load_digits(return_X_y=True)\n    >>> X.shape\n    (1797, 64)\n    >>> X_new = SelectKBest(chi2, k=20).fit_transform(X, y)\n    >>> X_new.shape\n    (1797, 20)\n\n    Notes\n    -----\n    Ties between features with equal scores will be broken in an unspecified\n    way.\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    mutual_info_classif: Mutual information for a discrete target.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    f_regression: F-value between label/feature for regression tasks.\n    mutual_info_regression: Mutual information for a continuous target.\n    SelectPercentile: Select features based on percentile of the highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    SelectFwe: Select features based on family-wise error rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 188.41926990921783
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:338-354",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 338,
+        "end_line": 354
+      },
+      "content": "def test_select_kbest_regression():\n    # Test whether the relative univariate feature selection\n    # gets the correct items in a simple regression problem\n    # with the k best heuristic\n    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,\n                           shuffle=False, random_state=0, noise=10)\n\n    univariate_filter = SelectKBest(f_regression, k=5)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    assert_best_scores_kept(univariate_filter)\n    X_r2 = GenericUnivariateSelect(\n        f_regression, mode='k_best', param=5).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.zeros(20)\n    gtruth[:5] = 1\n    assert_array_equal(support, gtruth)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 185.60469337937937
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:205-223",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 205,
+        "end_line": 223
+      },
+      "content": "def test_select_kbest_classif():\n    # Test whether the relative univariate feature selection\n    # gets the correct items in a simple classification problem\n    # with the k best heuristic\n    X, y = make_classification(n_samples=200, n_features=20,\n                               n_informative=3, n_redundant=2,\n                               n_repeated=0, n_classes=8,\n                               n_clusters_per_class=1, flip_y=0.0,\n                               class_sep=10, shuffle=False, random_state=0)\n\n    univariate_filter = SelectKBest(f_classif, k=5)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    X_r2 = GenericUnivariateSelect(\n        f_classif, mode='k_best', param=5).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.zeros(20)\n    gtruth[:5] = 1\n    assert_array_equal(support, gtruth)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 181.4477990193503
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:667-721",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 667,
+        "end_line": 721
+      },
+      "content": "class SelectFwe(_BaseFilter):\n    \"\"\"Filter: Select the p-values corresponding to Family-wise error rate\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues).\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    alpha : float, optional\n        The highest uncorrected p-value for features to keep.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_breast_cancer\n    >>> from sklearn.feature_selection import SelectFwe, chi2\n    >>> X, y = load_breast_cancer(return_X_y=True)\n    >>> X.shape\n    (569, 30)\n    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)\n    >>> X_new.shape\n    (569, 15)\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores.\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    f_regression: F-value between label/feature for regression tasks.\n    SelectPercentile: Select features based on percentile of the highest scores.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 181.20239147942712
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:533-592",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 533,
+        "end_line": 592
+      },
+      "content": "class SelectFpr(_BaseFilter):\n    \"\"\"Filter: Select the pvalues below alpha based on a FPR test.\n\n    FPR test stands for False Positive Rate test. It controls the total\n    amount of false detections.\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues).\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    alpha : float, optional\n        The highest p-value for features to be kept.\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_breast_cancer\n    >>> from sklearn.feature_selection import SelectFpr, chi2\n    >>> X, y = load_breast_cancer(return_X_y=True)\n    >>> X.shape\n    (569, 30)\n    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)\n    >>> X_new.shape\n    (569, 16)\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    mutual_info_classif:\n    f_regression: F-value between label/feature for regression tasks.\n    mutual_info_regression: Mutual information between features and the target.\n    SelectPercentile: Select features based on percentile of the highest scores.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    SelectFwe: Select features based on family-wise error rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 176.69450716288563
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:368-448",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 368,
+        "end_line": 448
+      },
+      "content": "class SelectPercentile(_BaseFilter):\n    \"\"\"Select features according to a percentile of the highest scores.\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues) or a single array with scores.\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    percentile : int, optional, default=10\n        Percent of features to keep.\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores, None if `score_func` returned only scores.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_digits\n    >>> from sklearn.feature_selection import SelectPercentile, chi2\n    >>> X, y = load_digits(return_X_y=True)\n    >>> X.shape\n    (1797, 64)\n    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)\n    >>> X_new.shape\n    (1797, 7)\n\n    Notes\n    -----\n    Ties between features with equal scores will be broken in an unspecified\n    way.\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    mutual_info_classif: Mutual information for a discrete target.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    f_regression: F-value between label/feature for regression tasks.\n    mutual_info_regression: Mutual information for a continuous target.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    SelectFwe: Select features based on family-wise error rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 173.72160622167317
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:595-664",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 595,
+        "end_line": 664
+      },
+      "content": "class SelectFdr(_BaseFilter):\n    \"\"\"Filter: Select the p-values for an estimated false discovery rate\n\n    This uses the Benjamini-Hochberg procedure. ``alpha`` is an upper bound\n    on the expected false discovery rate.\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues).\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    alpha : float, optional\n        The highest uncorrected p-value for features to keep.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_breast_cancer\n    >>> from sklearn.feature_selection import SelectFdr, chi2\n    >>> X, y = load_breast_cancer(return_X_y=True)\n    >>> X.shape\n    (569, 30)\n    >>> X_new = SelectFdr(chi2, alpha=0.01).fit_transform(X, y)\n    >>> X_new.shape\n    (569, 16)\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores.\n\n    References\n    ----------\n    https://en.wikipedia.org/wiki/False_discovery_rate\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    mutual_info_classif: Mutual information for a discrete target.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    f_regression: F-value between label/feature for regression tasks.\n    mutual_info_regression: Mutual information for a contnuous target.\n    SelectPercentile: Select features based on percentile of the highest scores.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFwe: Select features based on family-wise error rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 173.46638120091274
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:730-819",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 730,
+        "end_line": 819
+      },
+      "content": "class GenericUnivariateSelect(_BaseFilter):\n    \"\"\"Univariate feature selector with configurable strategy.\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues). For modes 'percentile' or 'kbest' it can return\n        a single array scores.\n\n    mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}\n        Feature selection mode.\n\n    param : float or int depending on the feature selection mode\n        Parameter of the corresponding mode.\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores, None if `score_func` returned scores only.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_breast_cancer\n    >>> from sklearn.feature_selection import GenericUnivariateSelect, chi2\n    >>> X, y = load_breast_cancer(return_X_y=True)\n    >>> X.shape\n    (569, 30)\n    >>> transformer = GenericUnivariateSelect(chi2, 'k_best', param=20)\n    >>> X_new = transformer.fit_transform(X, y)\n    >>> X_new.shape\n    (569, 20)\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    mutual_info_classif: Mutual information for a discrete target.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    f_regression: F-value between label/feature for regression tasks.\n    mutual_info_regression: Mutual information for a continuous target.\n    SelectPercentile: Select features based on percentile of the highest scores.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    SelectFwe: Select features based on family-wise error rate.\n    \"\"\"\n\n    _selection_modes = {'percentile': SelectPercentile,\n                        'k_best': SelectKBest,\n                        'fpr': SelectFpr,\n                        'fdr': SelectFdr,\n                        'fwe': SelectFwe}\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 170.4789843973398
+    },
+    {
+      "chunk_id": "sklearn/linear_model/tests/test_coordinate_descent.py:175-190",
+      "citation": {
+        "path": "sklearn/linear_model/tests/test_coordinate_descent.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 175,
+        "end_line": 190
+      },
+      "content": "def test_lasso_cv_with_some_model_selection():\n    from sklearn.pipeline import make_pipeline\n    from sklearn.preprocessing import StandardScaler\n    from sklearn.model_selection import StratifiedKFold\n    from sklearn import datasets\n    from sklearn.linear_model import LassoCV\n\n    diabetes = datasets.load_diabetes()\n    X = diabetes.data\n    y = diabetes.target\n\n    pipe = make_pipeline(\n        StandardScaler(),\n        LassoCV(cv=StratifiedKFold(n_splits=5))\n    )\n    pipe.fit(X, y)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 166.70408907836716
+    },
+    {
+      "chunk_id": "sklearn/utils/_show_versions.py:71-96",
+      "citation": {
+        "path": "sklearn/utils/_show_versions.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 71,
+        "end_line": 96
+      },
+      "content": "def _get_blas_info():\n    \"\"\"Information on system BLAS\n\n    Uses the `scikit-learn` builtin method\n    :func:`sklearn._build_utils.get_blas_info` which may fail from time to time\n\n    Returns\n    -------\n    blas_info: dict\n        system BLAS information\n\n    \"\"\"\n    from .._build_utils import get_blas_info\n\n    cblas_libs, blas_dict = get_blas_info()\n\n    macros = ['{key}={val}'.format(key=a, val=b)\n              for (a, b) in blas_dict.get('define_macros', [])]\n\n    blas_blob = [\n        ('macros', ', '.join(macros)),\n        ('lib_dirs', ':'.join(blas_dict.get('library_dirs', ''))),\n        ('cblas_libs', ', '.join(cblas_libs)),\n    ]\n\n    return dict(blas_blob)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 165.91991492210994
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:551-561",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 551,
+        "end_line": 561
+      },
+      "content": "def test_nans():\n    # Assert that SelectKBest and SelectPercentile can handle NaNs.\n    # First feature has zero variance to confuse f_classif (ANOVA) and\n    # make it return a NaN.\n    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]\n    y = [1, 0, 1]\n\n    for select in (SelectKBest(f_classif, 2),\n                   SelectPercentile(f_classif, percentile=67)):\n        ignore_warnings(select.fit)(X, y)\n        assert_array_equal(select.get_support(indices=True), np.array([1, 2]))",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 159.7402167010843
+    },
+    {
+      "chunk_id": "sklearn/feature_extraction/dict_vectorizer.py:318-364",
+      "citation": {
+        "path": "sklearn/feature_extraction/dict_vectorizer.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 318,
+        "end_line": 364
+      },
+      "content": "def restrict(self, support, indices=False):\n    \"\"\"Restrict the features to those in support using feature selection.\n\n    This function modifies the estimator in-place.\n\n    Parameters\n    ----------\n    support : array-like\n        Boolean mask or list of indices (as returned by the get_support\n        member of feature selectors).\n    indices : boolean, optional\n        Whether support is a list of indices.\n\n    Returns\n    -------\n    self\n\n    Examples\n    --------\n    >>> from sklearn.feature_extraction import DictVectorizer\n    >>> from sklearn.feature_selection import SelectKBest, chi2\n    >>> v = DictVectorizer()\n    >>> D = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]\n    >>> X = v.fit_transform(D)\n    >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])\n    >>> v.get_feature_names()\n    ['bar', 'baz', 'foo']\n    >>> v.restrict(support.get_support()) # doctest: +ELLIPSIS\n    ...                                   # doctest: +NORMALIZE_WHITESPACE\n    DictVectorizer(dtype=..., separator='=', sort=True,\n            sparse=True)\n    >>> v.get_feature_names()\n    ['bar', 'foo']\n    \"\"\"\n    if not indices:\n        support = np.where(support)[0]\n\n    names = self.feature_names_\n    new_vocab = {}\n    for i in support:\n        new_vocab[names[i]] = len(new_vocab)\n\n    self.vocabulary_ = new_vocab\n    self.feature_names_ = [f for f, i in sorted(new_vocab.items(),\n                                                key=itemgetter(1))]\n\n    return self",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 157.59345221622235
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:614-641",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 614,
+        "end_line": 641
+      },
+      "content": "def test_mutual_info_classif():\n    X, y = make_classification(n_samples=100, n_features=5,\n                               n_informative=1, n_redundant=1,\n                               n_repeated=0, n_classes=2,\n                               n_clusters_per_class=1, flip_y=0.0,\n                               class_sep=10, shuffle=False, random_state=0)\n\n    # Test in KBest mode.\n    univariate_filter = SelectKBest(mutual_info_classif, k=2)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    X_r2 = GenericUnivariateSelect(\n        mutual_info_classif, mode='k_best', param=2).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.zeros(5)\n    gtruth[:2] = 1\n    assert_array_equal(support, gtruth)\n\n    # Test in Percentile mode.\n    univariate_filter = SelectPercentile(mutual_info_classif, percentile=40)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    X_r2 = GenericUnivariateSelect(\n        mutual_info_classif, mode='percentile', param=40).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.zeros(5)\n    gtruth[:2] = 1\n    assert_array_equal(support, gtruth)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 156.82992674887072
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:453-469",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 453,
+        "end_line": 469
+      },
+      "content": "def test_select_fwe_regression():\n    # Test whether the relative univariate feature selection\n    # gets the correct items in a simple regression problem\n    # with the fwe heuristic\n    X, y = make_regression(n_samples=200, n_features=20,\n                           n_informative=5, shuffle=False, random_state=0)\n\n    univariate_filter = SelectFwe(f_regression, alpha=0.01)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    X_r2 = GenericUnivariateSelect(\n        f_regression, mode='fwe', param=0.01).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.zeros(20)\n    gtruth[:5] = 1\n    assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))\n    assert_less(np.sum(support[5:] == 1), 2)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 153.79053574272118
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:357-374",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 357,
+        "end_line": 374
+      },
+      "content": "def test_select_heuristics_regression():\n    # Test whether the relative univariate feature selection\n    # gets the correct items in a simple regression problem\n    # with the fpr, fdr or fwe heuristics\n    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,\n                           shuffle=False, random_state=0, noise=10)\n\n    univariate_filter = SelectFpr(f_regression, alpha=0.01)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    gtruth = np.zeros(20)\n    gtruth[:5] = 1\n    for mode in ['fdr', 'fpr', 'fwe']:\n        X_r2 = GenericUnivariateSelect(\n            f_regression, mode=mode, param=0.01).fit(X, y).transform(X)\n        assert_array_equal(X_r, X_r2)\n        support = univariate_filter.get_support()\n        assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))\n        assert_less(np.sum(support[5:] == 1), 3)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 152.78742003736906
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:309-323",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 309,
+        "end_line": 323
+      },
+      "content": "def test_select_percentile_regression_full():\n    # Test whether the relative univariate feature selection\n    # selects all features when '100%' is asked.\n    X, y = make_regression(n_samples=200, n_features=20,\n                           n_informative=5, shuffle=False, random_state=0)\n\n    univariate_filter = SelectPercentile(f_regression, percentile=100)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    assert_best_scores_kept(univariate_filter)\n    X_r2 = GenericUnivariateSelect(\n        f_regression, mode='percentile', param=100).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.ones(20)\n    assert_array_equal(support, gtruth)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 149.84531551813137
+    },
+    {
+      "chunk_id": "sklearn/utils/tests/test_pprint.py:217-303",
+      "citation": {
+        "path": "sklearn/utils/tests/test_pprint.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 217,
+        "end_line": 303
+      },
+      "content": "def test_n_max_elements_to_show():\n\n    n_max_elements_to_show = 30\n    pp = _EstimatorPrettyPrinter(\n        compact=True, indent=1, indent_at_name=True,\n        n_max_elements_to_show=n_max_elements_to_show\n    )\n\n    # No ellipsis\n    vocabulary = {i: i for i in range(n_max_elements_to_show)}\n    vectorizer = CountVectorizer(vocabulary=vocabulary)\n\n    expected = r\"\"\"\nCountVectorizer(analyzer='word', binary=False, decode_error='strict',\n                dtype=<class 'numpy.int64'>, encoding='utf-8', input='content',\n                lowercase=True, max_df=1.0, max_features=None, min_df=1,\n                ngram_range=(1, 1), preprocessor=None, stop_words=None,\n                strip_accents=None, token_pattern='(?u)\\\\b\\\\w\\\\w+\\\\b',\n                tokenizer=None,\n                vocabulary={0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7,\n                            8: 8, 9: 9, 10: 10, 11: 11, 12: 12, 13: 13, 14: 14,\n                            15: 15, 16: 16, 17: 17, 18: 18, 19: 19, 20: 20,\n                            21: 21, 22: 22, 23: 23, 24: 24, 25: 25, 26: 26,\n                            27: 27, 28: 28, 29: 29})\"\"\"\n\n    expected = expected[1:]  # remove first \\n\n    assert  pp.pformat(vectorizer) == expected\n\n    # Now with ellipsis\n    vocabulary = {i: i for i in range(n_max_elements_to_show + 1)}\n    vectorizer = CountVectorizer(vocabulary=vocabulary)\n\n    expected = r\"\"\"\nCountVectorizer(analyzer='word', binary=False, decode_error='strict',\n                dtype=<class 'numpy.int64'>, encoding='utf-8', input='content',\n                lowercase=True, max_df=1.0, max_features=None, min_df=1,\n                ngram_range=(1, 1), preprocessor=None, stop_words=None,\n                strip_accents=None, token_pattern='(?u)\\\\b\\\\w\\\\w+\\\\b',\n                tokenizer=None,\n                vocabulary={0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7,\n                            8: 8, 9: 9, 10: 10, 11: 11, 12: 12, 13: 13, 14: 14,\n                            15: 15, 16: 16, 17: 17, 18: 18, 19: 19, 20: 20,\n                            21: 21, 22: 22, 23: 23, 24: 24, 25: 25, 26: 26,\n                            27: 27, 28: 28, 29: 29, ...})\"\"\"\n\n    expected = expected[1:]  # remove first \\n\n    assert  pp.pformat(vectorizer) == expected\n\n    # Also test with lists\n    param_grid = {'C': list(range(n_max_elements_to_show))}\n    gs = GridSearchCV(SVC(), param_grid)\n    expected = \"\"\"\nGridSearchCV(cv='warn', error_score='raise-deprecating',\n             estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,\n                           decision_function_shape='ovr', degree=3,\n                           gamma='auto_deprecated', kernel='rbf', max_iter=-1,\n                           probability=False, random_state=None, shrinking=True,\n                           tol=0.001, verbose=False),\n             iid='warn', n_jobs=None,\n             param_grid={'C': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,\n                               15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,\n                               27, 28, 29]},\n             pre_dispatch='2*n_jobs', refit=True, return_train_score=False,\n             scoring=None, verbose=0)\"\"\"\n\n    expected = expected[1:]  # remove first \\n\n    assert  pp.pformat(gs) == expected\n\n    # Now with ellipsis\n    param_grid = {'C': list(range(n_max_elements_to_show + 1))}\n    gs = GridSearchCV(SVC(), param_grid)\n    expected = \"\"\"\nGridSearchCV(cv='warn', error_score='raise-deprecating',\n             estimator=SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,\n                           decision_function_shape='ovr', degree=3,\n                           gamma='auto_deprecated', kernel='rbf', max_iter=-1,\n                           probability=False, random_state=None, shrinking=True,\n                           tol=0.001, verbose=False),\n             iid='warn', n_jobs=None,\n             param_grid={'C': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,\n                               15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,\n                               27, 28, 29, ...]},\n             pre_dispatch='2*n_jobs', refit=True, return_train_score=False,\n             scoring=None, verbose=0)\"\"\"\n\n    expected = expected[1:]  # remove first \\n\n    assert  pp.pformat(gs) == expected",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 148.6821402341135
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 74.79194950000965
+}

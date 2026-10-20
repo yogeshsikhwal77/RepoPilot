@@ -1,0 +1,272 @@
+{
+  "task_id": "sympy__sympy-14774",
+  "config": "hybrid_rerank",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "sympy/printing/latex.py:2212-2345",
+      "citation": {
+        "path": "sympy/printing/latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 2212,
+        "end_line": 2345
+      },
+      "content": "def latex(expr, **settings):\n    r\"\"\"\n    Convert the given expression to LaTeX representation.\n\n    >>> from sympy import latex, pi, sin, asin, Integral, Matrix, Rational, log\n    >>> from sympy.abc import x, y, mu, r, tau\n\n    >>> print(latex((2*tau)**Rational(7,2)))\n    8 \\sqrt{2} \\tau^{\\frac{7}{2}}\n\n    Not using a print statement for printing, results in double backslashes for\n    latex commands since that's the way Python escapes backslashes in strings.\n\n    >>> latex((2*tau)**Rational(7,2))\n    '8 \\\\sqrt{2} \\\\tau^{\\\\frac{7}{2}}'\n\n    order: Any of the supported monomial orderings (currently \"lex\", \"grlex\", or\n    \"grevlex\"), \"old\", and \"none\". This parameter does nothing for Mul objects.\n    Setting order to \"old\" uses the compatibility ordering for Add defined in\n    Printer. For very large expressions, set the 'order' keyword to 'none' if\n    speed is a concern.\n\n    mode: Specifies how the generated code will be delimited. 'mode' can be one\n    of 'plain', 'inline', 'equation' or 'equation*'.  If 'mode' is set to\n    'plain', then the resulting code will not be delimited at all (this is the\n    default). If 'mode' is set to 'inline' then inline LaTeX $ $ will be used.\n    If 'mode' is set to 'equation' or 'equation*', the resulting code will be\n    enclosed in the 'equation' or 'equation*' environment (remember to import\n    'amsmath' for 'equation*'), unless the 'itex' option is set. In the latter\n    case, the ``$$ $$`` syntax is used.\n\n    >>> print(latex((2*mu)**Rational(7,2), mode='plain'))\n    8 \\sqrt{2} \\mu^{\\frac{7}{2}}\n\n    >>> print(latex((2*tau)**Rational(7,2), mode='inline'))\n    $8 \\sqrt{2} \\tau^{7 / 2}$\n\n    >>> print(latex((2*mu)**Rational(7,2), mode='equation*'))\n    \\begin{equation*}8 \\sqrt{2} \\mu^{\\frac{7}{2}}\\end{equation*}\n\n    >>> print(latex((2*mu)**Rational(7,2), mode='equation'))\n    \\begin{equation}8 \\sqrt{2} \\mu^{\\frac{7}{2}}\\end{equation}\n\n    itex: Specifies if itex-specific syntax is used, including emitting ``$$ $$``.\n\n    >>> print(latex((2*mu)**Rational(7,2), mode='equation', itex=True))\n    $$8 \\sqrt{2} \\mu^{\\frac{7}{2}}$$\n\n    fold_frac_powers: Emit \"^{p/q}\" instead of \"^{\\frac{p}{q}}\" for fractional\n    powers.\n\n    >>> print(latex((2*tau)**Rational(7,2), fold_frac_powers=True))\n    8 \\sqrt{2} \\tau^{7/2}\n\n    fold_func_brackets: Fold function brackets where applicable.\n\n    >>> print(latex((2*tau)**sin(Rational(7,2))))\n    \\left(2 \\tau\\right)^{\\sin{\\left (\\frac{7}{2} \\right )}}\n    >>> print(latex((2*tau)**sin(Rational(7,2)), fold_func_brackets = True))\n    \\left(2 \\tau\\right)^{\\sin {\\frac{7}{2}}}\n\n    fold_short_frac: Emit \"p / q\" instead of \"\\frac{p}{q}\" when the\n    denominator is simple enough (at most two terms and no powers).\n    The default value is `True` for inline mode, False otherwise.\n\n    >>> print(latex(3*x**2/y))\n    \\frac{3 x^{2}}{y}\n    >>> print(latex(3*x**2/y, fold_short_frac=True))\n    3 x^{2} / y\n\n    long_frac_ratio: The allowed ratio of the width of the numerator to the\n    width of the denominator before we start breaking off long fractions.\n    If None (the default value), long fractions are not broken up.\n\n    >>> print(latex(Integral(r, r)/2/pi, long_frac_ratio=2))\n    \\frac{\\int r\\, dr}{2 \\pi}\n    >>> print(latex(Integral(r, r)/2/pi, long_frac_ratio=0))\n    \\frac{1}{2 \\pi} \\int r\\, dr\n\n    mul_symbol: The symbol to use for multiplication. Can be one of None,\n    \"ldot\", \"dot\", or \"times\".\n\n    >>> print(latex((2*tau)**sin(Rational(7,2)), mul_symbol=\"times\"))\n    \\left(2 \\times \\tau\\right)^{\\sin{\\left (\\frac{7}{2} \\right )}}\n\n    inv_trig_style: How inverse trig functions should be displayed. Can be one\n    of \"abbreviated\", \"full\", or \"power\". Defaults to \"abbreviated\".\n\n    >>> print(latex(asin(Rational(7,2))))\n    \\operatorname{asin}{\\left (\\frac{7}{2} \\right )}\n    >>> print(latex(asin(Rational(7,2)), inv_trig_style=\"full\"))\n    \\arcsin{\\left (\\frac{7}{2} \\right )}\n    >>> print(latex(asin(Rational(7,2)), inv_trig_style=\"power\"))\n    \\sin^{-1}{\\left (\\frac{7}{2} \\right )}\n\n    mat_str: Which matrix environment string to emit. \"smallmatrix\", \"matrix\",\n    \"array\", etc. Defaults to \"smallmatrix\" for inline mode, \"matrix\" for\n    matrices of no more than 10 columns, and \"array\" otherwise.\n\n    >>> print(latex(Matrix(2, 1, [x, y])))\n    \\left[\\begin{matrix}x\\\\y\\end{matrix}\\right]\n\n    >>> print(latex(Matrix(2, 1, [x, y]), mat_str = \"array\"))\n    \\left[\\begin{array}{c}x\\\\y\\end{array}\\right]\n\n    mat_delim: The delimiter to wrap around matrices. Can be one of \"[\", \"(\",\n    or the empty string. Defaults to \"[\".\n\n    >>> print(latex(Matrix(2, 1, [x, y]), mat_delim=\"(\"))\n    \\left(\\begin{matrix}x\\\\y\\end{matrix}\\right)\n\n    symbol_names: Dictionary of symbols and the custom strings they should be\n    emitted as.\n\n    >>> print(latex(x**2, symbol_names={x:'x_i'}))\n    x_i^{2}\n\n    ``latex`` also supports the builtin container types list, tuple, and\n    dictionary.\n\n    >>> print(latex([2/x, y], mode='inline'))\n    $\\left [ 2 / x, \\quad y\\right ]$\n\n    ln_notation: If set to ``True`` \"\\ln\" is used instead of default \"\\log\"\n\n    >>> print(latex(log(10)))\n    \\log{\\left (10 \\right )}\n\n    >>> print(latex(log(10), ln_notation=True))\n    \\ln{\\left (10 \\right )}\n\n    \"\"\"\n\n    return LatexPrinter(settings).doprint(expr)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.772627
+    },
+    {
+      "chunk_id": "sympy/printing/latex.py:715-782",
+      "citation": {
+        "path": "sympy/printing/latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 715,
+        "end_line": 782
+      },
+      "content": "def _print_Function(self, expr, exp=None):\n    r'''\n    Render functions to LaTeX, handling functions that LaTeX knows about\n    e.g., sin, cos, ... by using the proper LaTeX command (\\sin, \\cos, ...).\n    For single-letter function names, render them as regular LaTeX math\n    symbols. For multi-letter function names that LaTeX does not know\n    about, (e.g., Li, sech) use \\operatorname{} so that the function name\n    is rendered in Roman font and LaTeX handles spacing properly.\n\n    expr is the expression involving the function\n    exp is an exponent\n    '''\n    func = expr.func.__name__\n    if hasattr(self, '_print_' + func) and \\\n        not isinstance(expr.func, UndefinedFunction):\n        return getattr(self, '_print_' + func)(expr, exp)\n    else:\n        args = [ str(self._print(arg)) for arg in expr.args ]\n        # How inverse trig functions should be displayed, formats are:\n        # abbreviated: asin, full: arcsin, power: sin^-1\n        inv_trig_style = self._settings['inv_trig_style']\n        # If we are dealing with a power-style inverse trig function\n        inv_trig_power_case = False\n        # If it is applicable to fold the argument brackets\n        can_fold_brackets = self._settings['fold_func_brackets'] and \\\n            len(args) == 1 and \\\n            not self._needs_function_brackets(expr.args[0])\n\n        inv_trig_table = [\"asin\", \"acos\", \"atan\", \"acot\"]\n\n        # If the function is an inverse trig function, handle the style\n        if func in inv_trig_table:\n            if inv_trig_style == \"abbreviated\":\n                func = func\n            elif inv_trig_style == \"full\":\n                func = \"arc\" + func[1:]\n            elif inv_trig_style == \"power\":\n                func = func[1:]\n                inv_trig_power_case = True\n\n                # Can never fold brackets if we're raised to a power\n                if exp is not None:\n                    can_fold_brackets = False\n\n        if inv_trig_power_case:\n            if func in accepted_latex_functions:\n                name = r\"\\%s^{-1}\" % func\n            else:\n                name = r\"\\operatorname{%s}^{-1}\" % func\n        elif exp is not None:\n            name = r'%s^{%s}' % (self._hprint_Function(func), exp)\n        else:\n            name = self._hprint_Function(func)\n\n        if can_fold_brackets:\n            if func in accepted_latex_functions:\n                # Wrap argument safely to avoid parse-time conflicts\n                # with the function name itself\n                name += r\" {%s}\"\n            else:\n                name += r\"%s\"\n        else:\n            name += r\"{\\left (%s \\right )}\"\n\n        if inv_trig_power_case and exp is not None:\n            name += r\"^{%s}\" % exp\n\n        return name % \",\".join(args)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.620506
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:2564-2688",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 2564,
+        "end_line": 2688
+      },
+      "content": "class asec(InverseTrigonometricFunction):\n    r\"\"\"\n    The inverse secant function.\n\n    Returns the arc secant of x (measured in radians).\n\n    Notes\n    =====\n\n    ``asec(x)`` will evaluate automatically in the cases\n    ``oo``, ``-oo``, ``0``, ``1``, ``-1``.\n\n    ``asec(x)`` has branch cut in the interval [-1, 1]. For complex arguments,\n    it can be defined [4]_ as\n\n    .. math::\n        sec^{-1}(z) = -i*(log(\\sqrt{1 - z^2} + 1) / z)\n\n    At ``x = 0``, for positive branch cut, the limit evaluates to ``zoo``. For\n    negative branch cut, the limit\n\n    .. math::\n        \\lim_{z \\to 0}-i*(log(-\\sqrt{1 - z^2} + 1) / z)\n\n    simplifies to :math:`-i*log(z/2 + O(z^3))` which ultimately evaluates to\n    ``zoo``.\n\n    As ``asex(x)`` = ``asec(1/x)``, a similar argument can be given for\n    ``acos(x)``.\n\n    Examples\n    ========\n\n    >>> from sympy import asec, oo, pi\n    >>> asec(1)\n    0\n    >>> asec(-1)\n    pi\n\n    See Also\n    ========\n\n    sin, csc, cos, sec, tan, cot\n    asin, acsc, acos, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Inverse_trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.23\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/ArcSec\n    .. [4] http://reference.wolfram.com/language/ref/ArcSec.html\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.540946
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:1867-2045",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 1867,
+        "end_line": 2045
+      },
+      "content": "class asin(InverseTrigonometricFunction):\n    \"\"\"\n    The inverse sine function.\n\n    Returns the arcsine of x in radians.\n\n    Notes\n    =====\n\n    asin(x) will evaluate automatically in the cases oo, -oo, 0, 1,\n    -1 and for some instances when the result is a rational multiple\n    of pi (see the eval class method).\n\n    Examples\n    ========\n\n    >>> from sympy import asin, oo, pi\n    >>> asin(1)\n    pi/2\n    >>> asin(-1)\n    -pi/2\n\n    See Also\n    ========\n\n    sin, csc, cos, sec, tan, cot\n    acsc, acos, asec, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Inverse_trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.23\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/ArcSin\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.540469
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:2048-2218",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 2048,
+        "end_line": 2218
+      },
+      "content": "class acos(InverseTrigonometricFunction):\n    \"\"\"\n    The inverse cosine function.\n\n    Returns the arc cosine of x (measured in radians).\n\n    Notes\n    =====\n\n    ``acos(x)`` will evaluate automatically in the cases\n    ``oo``, ``-oo``, ``0``, ``1``, ``-1``.\n\n    ``acos(zoo)`` evaluates to ``zoo``\n    (see note in :py:class`sympy.functions.elementary.trigonometric.asec`)\n\n    Examples\n    ========\n\n    >>> from sympy import acos, oo, pi\n    >>> acos(1)\n    0\n    >>> acos(0)\n    pi/2\n    >>> acos(oo)\n    oo*I\n\n    See Also\n    ========\n\n    sin, csc, cos, sec, tan, cot\n    asin, acsc, asec, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Inverse_trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.23\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/ArcCos\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.531042
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:200-475",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 200,
+        "end_line": 475
+      },
+      "content": "class sin(TrigonometricFunction):\n    \"\"\"\n    The sine function.\n\n    Returns the sine of x (measured in radians).\n\n    Notes\n    =====\n\n    This function will evaluate automatically in the\n    case x/pi is some rational number [4]_.  For example,\n    if x is a multiple of pi, pi/2, pi/3, pi/4 and pi/6.\n\n    Examples\n    ========\n\n    >>> from sympy import sin, pi\n    >>> from sympy.abc import x\n    >>> sin(x**2).diff(x)\n    2*x*cos(x**2)\n    >>> sin(1).diff(x)\n    0\n    >>> sin(pi)\n    0\n    >>> sin(pi/2)\n    1\n    >>> sin(pi/6)\n    1/2\n    >>> sin(pi/12)\n    -sqrt(2)/4 + sqrt(6)/4\n\n\n    See Also\n    ========\n\n    csc, cos, sec, tan, cot\n    asin, acsc, acos, asec, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.14\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/Sin\n    .. [4] http://mathworld.wolfram.com/TrigonometryAngles.html\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.529473
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:2691-2794",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 2691,
+        "end_line": 2794
+      },
+      "content": "class acsc(InverseTrigonometricFunction):\n    \"\"\"\n    The inverse cosecant function.\n\n    Returns the arc cosecant of x (measured in radians).\n\n    Notes\n    =====\n\n    acsc(x) will evaluate automatically in the cases\n    oo, -oo, 0, 1, -1.\n\n    Examples\n    ========\n\n    >>> from sympy import acsc, oo, pi\n    >>> acsc(1)\n    pi/2\n    >>> acsc(-1)\n    -pi/2\n\n    See Also\n    ========\n\n    sin, csc, cos, sec, tan, cot\n    asin, acos, asec, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Inverse_trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.23\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/ArcCsc\n    \"\"\"\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.522443
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:2221-2395",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 2221,
+        "end_line": 2395
+      },
+      "content": "class atan(InverseTrigonometricFunction):\n    \"\"\"\n    The inverse tangent function.\n\n    Returns the arc tangent of x (measured in radians).\n\n    Notes\n    =====\n\n    atan(x) will evaluate automatically in the cases\n    oo, -oo, 0, 1, -1.\n\n    Examples\n    ========\n\n    >>> from sympy import atan, oo, pi\n    >>> atan(0)\n    0\n    >>> atan(1)\n    pi/4\n    >>> atan(oo)\n    pi/2\n\n    See Also\n    ========\n\n    sin, csc, cos, sec, tan, cot\n    asin, acsc, acos, asec, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Inverse_trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.23\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/ArcTan\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.519792
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:1612-1689",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 1612,
+        "end_line": 1689
+      },
+      "content": "class sec(ReciprocalTrigonometricFunction):\n    \"\"\"\n    The secant function.\n\n    Returns the secant of x (measured in radians).\n\n    Notes\n    =====\n\n    See :func:`sin` for notes about automatic evaluation.\n\n    Examples\n    ========\n\n    >>> from sympy import sec\n    >>> from sympy.abc import x\n    >>> sec(x**2).diff(x)\n    2*x*tan(x**2)*sec(x**2)\n    >>> sec(1).diff(x)\n    0\n\n    See Also\n    ========\n\n    sin, csc, cos, tan, cot\n    asin, acsc, acos, asec, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.14\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/Sec\n    \"\"\"\n\n    _reciprocal_of = cos\n    _is_even = True\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.519637
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:1692-1770",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 1692,
+        "end_line": 1770
+      },
+      "content": "class csc(ReciprocalTrigonometricFunction):\n    \"\"\"\n    The cosecant function.\n\n    Returns the cosecant of x (measured in radians).\n\n    Notes\n    =====\n\n    See :func:`sin` for notes about automatic evaluation.\n\n    Examples\n    ========\n\n    >>> from sympy import csc\n    >>> from sympy.abc import x\n    >>> csc(x**2).diff(x)\n    -2*x*cot(x**2)*csc(x**2)\n    >>> csc(1).diff(x)\n    0\n\n    See Also\n    ========\n\n    sin, cos, sec, tan, cot\n    asin, acsc, acos, asec, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.14\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/Csc\n    \"\"\"\n\n    _reciprocal_of = sin\n    _is_odd = True\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.519487
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:1203-1492",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 1203,
+        "end_line": 1492
+      },
+      "content": "class cot(TrigonometricFunction):\n    \"\"\"\n    The cotangent function.\n\n    Returns the cotangent of x (measured in radians).\n\n    Notes\n    =====\n\n    See :func:`sin` for notes about automatic evaluation.\n\n    Examples\n    ========\n\n    >>> from sympy import cot, pi\n    >>> from sympy.abc import x\n    >>> cot(x**2).diff(x)\n    2*x*(-cot(x**2)**2 - 1)\n    >>> cot(1).diff(x)\n    0\n    >>> cot(pi/12)\n    sqrt(3) + 2\n\n    See Also\n    ========\n\n    sin, csc, cos, sec, tan\n    asin, acsc, acos, asec, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.14\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/Cot\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.51934
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:905-1200",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 905,
+        "end_line": 1200
+      },
+      "content": "class tan(TrigonometricFunction):\n    \"\"\"\n    The tangent function.\n\n    Returns the tangent of x (measured in radians).\n\n    Notes\n    =====\n\n    See :func:`sin` for notes about automatic evaluation.\n\n    Examples\n    ========\n\n    >>> from sympy import tan, pi\n    >>> from sympy.abc import x\n    >>> tan(x**2).diff(x)\n    2*x*(tan(x**2)**2 + 1)\n    >>> tan(1).diff(x)\n    0\n    >>> tan(pi/8).expand()\n    -1 + sqrt(2)\n\n    See Also\n    ========\n\n    sin, csc, cos, sec, cot\n    asin, acsc, acos, asec, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.14\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/Tan\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.519196
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:478-902",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 478,
+        "end_line": 902
+      },
+      "content": "class cos(TrigonometricFunction):\n    \"\"\"\n    The cosine function.\n\n    Returns the cosine of x (measured in radians).\n\n    Notes\n    =====\n\n    See :func:`sin` for notes about automatic evaluation.\n\n    Examples\n    ========\n\n    >>> from sympy import cos, pi\n    >>> from sympy.abc import x\n    >>> cos(x**2).diff(x)\n    -2*x*sin(x**2)\n    >>> cos(1).diff(x)\n    0\n    >>> cos(pi)\n    -1\n    >>> cos(pi/2)\n    0\n    >>> cos(2*pi/3)\n    -1/2\n    >>> cos(pi/12)\n    sqrt(2)/4 + sqrt(6)/4\n\n    See Also\n    ========\n\n    sin, csc, sec, tan, cot\n    asin, acsc, acos, asec, atan, acot, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.14\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/Cos\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.51892
+    },
+    {
+      "chunk_id": "sympy/integrals/rubi/utility_function.py:737-742",
+      "citation": {
+        "path": "sympy/integrals/rubi/utility_function.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 737,
+        "end_line": 742
+      },
+      "content": "def InverseTrigQ(u):\n    if AtomQ(u):\n        x = u\n    else:\n        x = Head(u)\n    return MemberQ([asin, acos, atan, acot, asec, acsc], x)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.514435
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/trigonometric.py:2398-2561",
+      "citation": {
+        "path": "sympy/functions/elementary/trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 2398,
+        "end_line": 2561
+      },
+      "content": "class acot(InverseTrigonometricFunction):\n    \"\"\"\n    The inverse cotangent function.\n\n    Returns the arc cotangent of x (measured in radians).\n\n    See Also\n    ========\n\n    sin, csc, cos, sec, tan, cot\n    asin, acsc, acos, asec, atan, atan2\n\n    References\n    ==========\n\n    .. [1] http://en.wikipedia.org/wiki/Inverse_trigonometric_functions\n    .. [2] http://dlmf.nist.gov/4.23\n    .. [3] http://functions.wolfram.com/ElementaryFunctions/ArcCot\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.509533
+    },
+    {
+      "chunk_id": "sympy/physics/vector/printing.py:48-120",
+      "citation": {
+        "path": "sympy/physics/vector/printing.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 48,
+        "end_line": 120
+      },
+      "content": "def _print_Function(self, expr, exp=None):\n    from sympy.physics.vector.functions import dynamicsymbols\n    func = expr.func.__name__\n    t = dynamicsymbols._t\n\n    if hasattr(self, '_print_' + func) and \\\n        not isinstance(type(expr), UndefinedFunction):\n        return getattr(self, '_print_' + func)(expr, exp)\n    elif isinstance(type(expr), UndefinedFunction) and (expr.args == (t,)):\n\n        name, supers, subs = split_super_sub(func)\n        name = translate(name)\n        supers = [translate(sup) for sup in supers]\n        subs = [translate(sub) for sub in subs]\n\n        if len(supers) != 0:\n            supers = r\"^{%s}\" % \"\".join(supers)\n        else:\n            supers = r\"\"\n\n        if len(subs) != 0:\n            subs = r\"_{%s}\" % \"\".join(subs)\n        else:\n            subs = r\"\"\n\n        if exp:\n            supers += r\"^{%s}\" % self._print(exp)\n\n        return r\"%s\" % (name + supers + subs)\n    else:\n        args = [str(self._print(arg)) for arg in expr.args]\n        # How inverse trig functions should be displayed, formats are:\n        # abbreviated: asin, full: arcsin, power: sin^-1\n        inv_trig_style = self._settings['inv_trig_style']\n        # If we are dealing with a power-style inverse trig function\n        inv_trig_power_case = False\n        # If it is applicable to fold the argument brackets\n        can_fold_brackets = self._settings['fold_func_brackets'] and \\\n            len(args) == 1 and \\\n            not self._needs_function_brackets(expr.args[0])\n\n        inv_trig_table = [\"asin\", \"acos\", \"atan\", \"acot\"]\n\n        # If the function is an inverse trig function, handle the style\n        if func in inv_trig_table:\n            if inv_trig_style == \"abbreviated\":\n                func = func\n            elif inv_trig_style == \"full\":\n                func = \"arc\" + func[1:]\n            elif inv_trig_style == \"power\":\n                func = func[1:]\n                inv_trig_power_case = True\n\n                # Can never fold brackets if we're raised to a power\n                if exp is not None:\n                    can_fold_brackets = False\n\n        if inv_trig_power_case:\n            name = r\"\\operatorname{%s}^{-1}\" % func\n        elif exp is not None:\n            name = r\"\\operatorname{%s}^{%s}\" % (func, exp)\n        else:\n            name = r\"\\operatorname{%s}\" % func\n\n        if can_fold_brackets:\n            name += r\"%s\"\n        else:\n            name += r\"\\left(%s\\right)\"\n\n        if inv_trig_power_case and exp is not None:\n            name += r\"^{%s}\" % exp\n\n        return name % \",\".join(args)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.474462
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:250-460",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 250,
+        "end_line": 460
+      },
+      "content": "def test_latex_functions():\n    assert latex(exp(x)) == \"e^{x}\"\n    assert latex(exp(1) + exp(2)) == \"e + e^{2}\"\n\n    f = Function('f')\n    assert latex(f(x)) == r'f{\\left (x \\right )}'\n    assert latex(f) == r'f'\n\n    g = Function('g')\n    assert latex(g(x, y)) == r'g{\\left (x,y \\right )}'\n    assert latex(g) == r'g'\n\n    h = Function('h')\n    assert latex(h(x, y, z)) == r'h{\\left (x,y,z \\right )}'\n    assert latex(h) == r'h'\n\n    Li = Function('Li')\n    assert latex(Li) == r'\\operatorname{Li}'\n    assert latex(Li(x)) == r'\\operatorname{Li}{\\left (x \\right )}'\n\n    mybeta = Function('beta')\n    # not to be confused with the beta function\n    assert latex(mybeta(x, y, z)) == r\"\\beta{\\left (x,y,z \\right )}\"\n    assert latex(beta(x, y)) == r'\\operatorname{B}\\left(x, y\\right)'\n    assert latex(mybeta(x)) == r\"\\beta{\\left (x \\right )}\"\n    assert latex(mybeta) == r\"\\beta\"\n\n    g = Function('gamma')\n    # not to be confused with the gamma function\n    assert latex(g(x, y, z)) == r\"\\gamma{\\left (x,y,z \\right )}\"\n    assert latex(g(x)) == r\"\\gamma{\\left (x \\right )}\"\n    assert latex(g) == r\"\\gamma\"\n\n    a1 = Function('a_1')\n\n    assert latex(a1) == r\"\\operatorname{a_{1}}\"\n    assert latex(a1(x)) == r\"\\operatorname{a_{1}}{\\left (x \\right )}\"\n\n    # issue 5868\n    omega1 = Function('omega1')\n    assert latex(omega1) == r\"\\omega_{1}\"\n    assert latex(omega1(x)) == r\"\\omega_{1}{\\left (x \\right )}\"\n\n    assert latex(sin(x)) == r\"\\sin{\\left (x \\right )}\"\n    assert latex(sin(x), fold_func_brackets=True) == r\"\\sin {x}\"\n    assert latex(sin(2*x**2), fold_func_brackets=True) == \\\n        r\"\\sin {2 x^{2}}\"\n    assert latex(sin(x**2), fold_func_brackets=True) == \\\n        r\"\\sin {x^{2}}\"\n\n    assert latex(asin(x)**2) == r\"\\operatorname{asin}^{2}{\\left (x \\right )}\"\n    assert latex(asin(x)**2, inv_trig_style=\"full\") == \\\n        r\"\\arcsin^{2}{\\left (x \\right )}\"\n    assert latex(asin(x)**2, inv_trig_style=\"power\") == \\\n        r\"\\sin^{-1}{\\left (x \\right )}^{2}\"\n    assert latex(asin(x**2), inv_trig_style=\"power\",\n                 fold_func_brackets=True) == \\\n        r\"\\sin^{-1} {x^{2}}\"\n\n    assert latex(factorial(k)) == r\"k!\"\n    assert latex(factorial(-k)) == r\"\\left(- k\\right)!\"\n\n    assert latex(subfactorial(k)) == r\"!k\"\n    assert latex(subfactorial(-k)) == r\"!\\left(- k\\right)\"\n\n    assert latex(factorial2(k)) == r\"k!!\"\n    assert latex(factorial2(-k)) == r\"\\left(- k\\right)!!\"\n\n    assert latex(binomial(2, k)) == r\"{\\binom{2}{k}}\"\n\n    assert latex(FallingFactorial(3, k)) == r\"{\\left(3\\right)}_{k}\"\n    assert latex(RisingFactorial(3, k)) == r\"{3}^{\\left(k\\right)}\"\n\n    assert latex(floor(x)) == r\"\\lfloor{x}\\rfloor\"\n    assert latex(ceiling(x)) == r\"\\lceil{x}\\rceil\"\n    assert latex(Min(x, 2, x**3)) == r\"\\min\\left(2, x, x^{3}\\right)\"\n    assert latex(Min(x, y)**2) == r\"\\min\\left(x, y\\right)^{2}\"\n    assert latex(Max(x, 2, x**3)) == r\"\\max\\left(2, x, x^{3}\\right)\"\n    assert latex(Max(x, y)**2) == r\"\\max\\left(x, y\\right)^{2}\"\n    assert latex(Abs(x)) == r\"\\left|{x}\\right|\"\n    assert latex(re(x)) == r\"\\Re{\\left(x\\right)}\"\n    assert latex(re(x + y)) == r\"\\Re{\\left(x\\right)} + \\Re{\\left(y\\right)}\"\n    assert latex(im(x)) == r\"\\Im{x}\"\n    assert latex(conjugate(x)) == r\"\\overline{x}\"\n    assert latex(gamma(x)) == r\"\\Gamma\\left(x\\right)\"\n    w = Wild('w')\n    assert latex(gamma(w)) == r\"\\Gamma\\left(w\\right)\"\n    assert latex(Order(x)) == r\"O\\left(x\\right)\"\n    assert latex(Order(x, x)) == r\"O\\left(x\\right)\"\n    assert latex(Order(x, (x, 0))) == r\"O\\left(x\\right)\"\n    assert latex(Order(x, (x, oo))) == r\"O\\left(x; x\\rightarrow \\infty\\right)\"\n    assert latex(Order(x - y, (x, y))) == r\"O\\left(x - y; x\\rightarrow y\\right)\"\n    assert latex(Order(x, x, y)) == r\"O\\left(x; \\left ( x, \\quad y\\right )\\rightarrow \\left ( 0, \\quad 0\\right )\\right)\"\n    assert latex(Order(x, x, y)) == r\"O\\left(x; \\left ( x, \\quad y\\right )\\rightarrow \\left ( 0, \\quad 0\\right )\\right)\"\n    assert latex(Order(x, (x, oo), (y, oo))) == r\"O\\left(x; \\left ( x, \\quad y\\right )\\rightarrow \\left ( \\infty, \\quad \\infty\\right )\\right)\"\n    assert latex(lowergamma(x, y)) == r'\\gamma\\left(x, y\\right)'\n    assert latex(uppergamma(x, y)) == r'\\Gamma\\left(x, y\\right)'\n\n    assert latex(cot(x)) == r'\\cot{\\left (x \\right )}'\n    assert latex(coth(x)) == r'\\coth{\\left (x \\right )}'\n    assert latex(re(x)) == r'\\Re{\\left(x\\right)}'\n    assert latex(im(x)) == r'\\Im{x}'\n    assert latex(root(x, y)) == r'x^{\\frac{1}{y}}'\n    assert latex(arg(x)) == r'\\arg{\\left (x \\right )}'\n    assert latex(zeta(x)) == r'\\zeta\\left(x\\right)'\n\n    assert latex(zeta(x)) == r\"\\zeta\\left(x\\right)\"\n    assert latex(zeta(x)**2) == r\"\\zeta^{2}\\left(x\\right)\"\n    assert latex(zeta(x, y)) == r\"\\zeta\\left(x, y\\right)\"\n    assert latex(zeta(x, y)**2) == r\"\\zeta^{2}\\left(x, y\\right)\"\n    assert latex(dirichlet_eta(x)) == r\"\\eta\\left(x\\right)\"\n    assert latex(dirichlet_eta(x)**2) == r\"\\eta^{2}\\left(x\\right)\"\n    assert latex(polylog(x, y)) == r\"\\operatorname{Li}_{x}\\left(y\\right)\"\n    assert latex(\n        polylog(x, y)**2) == r\"\\operatorname{Li}_{x}^{2}\\left(y\\right)\"\n    assert latex(lerchphi(x, y, n)) == r\"\\Phi\\left(x, y, n\\right)\"\n    assert latex(lerchphi(x, y, n)**2) == r\"\\Phi^{2}\\left(x, y, n\\right)\"\n\n    assert latex(elliptic_k(z)) == r\"K\\left(z\\right)\"\n    assert latex(elliptic_k(z)**2) == r\"K^{2}\\left(z\\right)\"\n    assert latex(elliptic_f(x, y)) == r\"F\\left(x\\middle| y\\right)\"\n    assert latex(elliptic_f(x, y)**2) == r\"F^{2}\\left(x\\middle| y\\right)\"\n    assert latex(elliptic_e(x, y)) == r\"E\\left(x\\middle| y\\right)\"\n    assert latex(elliptic_e(x, y)**2) == r\"E^{2}\\left(x\\middle| y\\right)\"\n    assert latex(elliptic_e(z)) == r\"E\\left(z\\right)\"\n    assert latex(elliptic_e(z)**2) == r\"E^{2}\\left(z\\right)\"\n    assert latex(elliptic_pi(x, y, z)) == r\"\\Pi\\left(x; y\\middle| z\\right)\"\n    assert latex(elliptic_pi(x, y, z)**2) == \\\n        r\"\\Pi^{2}\\left(x; y\\middle| z\\right)\"\n    assert latex(elliptic_pi(x, y)) == r\"\\Pi\\left(x\\middle| y\\right)\"\n    assert latex(elliptic_pi(x, y)**2) == r\"\\Pi^{2}\\left(x\\middle| y\\right)\"\n\n    assert latex(Ei(x)) == r'\\operatorname{Ei}{\\left (x \\right )}'\n    assert latex(Ei(x)**2) == r'\\operatorname{Ei}^{2}{\\left (x \\right )}'\n    assert latex(expint(x, y)**2) == r'\\operatorname{E}_{x}^{2}\\left(y\\right)'\n    assert latex(Shi(x)**2) == r'\\operatorname{Shi}^{2}{\\left (x \\right )}'\n    assert latex(Si(x)**2) == r'\\operatorname{Si}^{2}{\\left (x \\right )}'\n    assert latex(Ci(x)**2) == r'\\operatorname{Ci}^{2}{\\left (x \\right )}'\n    assert latex(Chi(x)**2) == r'\\operatorname{Chi}^{2}\\left(x\\right)'\n    assert latex(Chi(x)) == r'\\operatorname{Chi}\\left(x\\right)'\n    assert latex(\n        jacobi(n, a, b, x)) == r'P_{n}^{\\left(a,b\\right)}\\left(x\\right)'\n    assert latex(jacobi(n, a, b, x)**2) == r'\\left(P_{n}^{\\left(a,b\\right)}\\left(x\\right)\\right)^{2}'\n    assert latex(\n        gegenbauer(n, a, x)) == r'C_{n}^{\\left(a\\right)}\\left(x\\right)'\n    assert latex(gegenbauer(n, a, x)**2) == r'\\left(C_{n}^{\\left(a\\right)}\\left(x\\right)\\right)^{2}'\n    assert latex(chebyshevt(n, x)) == r'T_{n}\\left(x\\right)'\n    assert latex(\n        chebyshevt(n, x)**2) == r'\\left(T_{n}\\left(x\\right)\\right)^{2}'\n    assert latex(chebyshevu(n, x)) == r'U_{n}\\left(x\\right)'\n    assert latex(\n        chebyshevu(n, x)**2) == r'\\left(U_{n}\\left(x\\right)\\right)^{2}'\n    assert latex(legendre(n, x)) == r'P_{n}\\left(x\\right)'\n    assert latex(legendre(n, x)**2) == r'\\left(P_{n}\\left(x\\right)\\right)^{2}'\n    assert latex(\n        assoc_legendre(n, a, x)) == r'P_{n}^{\\left(a\\right)}\\left(x\\right)'\n    assert latex(assoc_legendre(n, a, x)**2) == r'\\left(P_{n}^{\\left(a\\right)}\\left(x\\right)\\right)^{2}'\n    assert latex(laguerre(n, x)) == r'L_{n}\\left(x\\right)'\n    assert latex(laguerre(n, x)**2) == r'\\left(L_{n}\\left(x\\right)\\right)^{2}'\n    assert latex(\n        assoc_laguerre(n, a, x)) == r'L_{n}^{\\left(a\\right)}\\left(x\\right)'\n    assert latex(assoc_laguerre(n, a, x)**2) == r'\\left(L_{n}^{\\left(a\\right)}\\left(x\\right)\\right)^{2}'\n    assert latex(hermite(n, x)) == r'H_{n}\\left(x\\right)'\n    assert latex(hermite(n, x)**2) == r'\\left(H_{n}\\left(x\\right)\\right)^{2}'\n\n    theta = Symbol(\"theta\", real=True)\n    phi = Symbol(\"phi\", real=True)\n    assert latex(Ynm(n,m,theta,phi)) == r'Y_{n}^{m}\\left(\\theta,\\phi\\right)'\n    assert latex(Ynm(n, m, theta, phi)**3) == r'\\left(Y_{n}^{m}\\left(\\theta,\\phi\\right)\\right)^{3}'\n    assert latex(Znm(n,m,theta,phi)) == r'Z_{n}^{m}\\left(\\theta,\\phi\\right)'\n    assert latex(Znm(n, m, theta, phi)**3) == r'\\left(Z_{n}^{m}\\left(\\theta,\\phi\\right)\\right)^{3}'\n\n    # Test latex printing of function names with \"_\"\n    assert latex(\n        polar_lift(0)) == r\"\\operatorname{polar\\_lift}{\\left (0 \\right )}\"\n    assert latex(polar_lift(\n        0)**3) == r\"\\operatorname{polar\\_lift}^{3}{\\left (0 \\right )}\"\n\n    assert latex(totient(n)) == r'\\phi\\left(n\\right)'\n    assert latex(totient(n) ** 2) == r'\\left(\\phi\\left(n\\right)\\right)^{2}'\n\n    assert latex(reduced_totient(n)) == r'\\lambda\\left(n\\right)'\n    assert latex(reduced_totient(n) ** 2) == r'\\left(\\lambda\\left(n\\right)\\right)^{2}'\n\n    assert latex(divisor_sigma(x)) == r\"\\sigma\\left(x\\right)\"\n    assert latex(divisor_sigma(x)**2) == r\"\\sigma^{2}\\left(x\\right)\"\n    assert latex(divisor_sigma(x, y)) == r\"\\sigma_y\\left(x\\right)\"\n    assert latex(divisor_sigma(x, y)**2) == r\"\\sigma^{2}_y\\left(x\\right)\"\n\n    assert latex(udivisor_sigma(x)) == r\"\\sigma^*\\left(x\\right)\"\n    assert latex(udivisor_sigma(x)**2) == r\"\\sigma^*^{2}\\left(x\\right)\"\n    assert latex(udivisor_sigma(x, y)) == r\"\\sigma^*_y\\left(x\\right)\"\n    assert latex(udivisor_sigma(x, y)**2) == r\"\\sigma^*^{2}_y\\left(x\\right)\"\n\n    assert latex(primenu(n)) == r'\\nu\\left(n\\right)'\n    assert latex(primenu(n) ** 2) == r'\\left(\\nu\\left(n\\right)\\right)^{2}'\n\n    assert latex(primeomega(n)) == r'\\Omega\\left(n\\right)'\n    assert latex(primeomega(n) ** 2) == r'\\left(\\Omega\\left(n\\right)\\right)^{2}'\n\n    assert latex(Mod(x, 7)) == r'x\\bmod{7}'\n    assert latex(Mod(x + 1, 7)) == r'\\left(x + 1\\right)\\bmod{7}'\n    assert latex(Mod(2 * x, 7)) == r'2 x\\bmod{7}'\n    assert latex(Mod(x, 7) + 1) == r'\\left(x\\bmod{7}\\right) + 1'\n    assert latex(2 * Mod(x, 7)) == r'2 \\left(x\\bmod{7}\\right)'\n\n    # some unknown function name should get rendered with \\operatorname\n    fjlkd = Function('fjlkd')\n    assert latex(fjlkd(x)) == r'\\operatorname{fjlkd}{\\left (x \\right )}'\n    # even when it is referred to without an argument\n    assert latex(fjlkd) == r'\\operatorname{fjlkd}'",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.348341
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:1165-1167",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 1165,
+        "end_line": 1167
+      },
+      "content": "def test_latex_ComplexRootOf():\n    assert latex(rootof(x**5 + x + 3, 0)) == \\\n        r\"\\operatorname{CRootOf} {\\left(x^{5} + x + 3, 0\\right)}\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.305573
+    },
+    {
+      "chunk_id": "sympy/integrals/rubi/tests/test_utility_function.py:355-358",
+      "citation": {
+        "path": "sympy/integrals/rubi/tests/test_utility_function.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 355,
+        "end_line": 358
+      },
+      "content": "def test_InverseTrigQ():\n    assert InverseTrigQ(acot(x))\n    assert InverseTrigQ(asec(x))\n    assert not InverseTrigQ(acsc(x) + asec(x))",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.303282
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:825-836",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 825,
+        "end_line": 836
+      },
+      "content": "def test_latex_limits():\n    assert latex(Limit(x, x, oo)) == r\"\\lim_{x \\to \\infty} x\"\n\n    # issue 8175\n    f = Function('f')\n    assert latex(Limit(f(x), x, 0)) == r\"\\lim_{x \\to 0^+} f{\\left (x \\right )}\"\n    assert latex(Limit(f(x), x, 0, \"-\")) == r\"\\lim_{x \\to 0^-} f{\\left (x \\right )}\"\n\n    # issue #10806\n    assert latex(Limit(f(x), x, 0)**2) == r\"\\left(\\lim_{x \\to 0^+} f{\\left (x \\right )}\\right)^{2}\"\n    # bi-directional limit\n    assert latex(Limit(f(x), x, 0, dir='+-')) == r\"\\lim_{x \\to 0} f{\\left (x \\right )}\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.280704
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 1178.357061200004
+}

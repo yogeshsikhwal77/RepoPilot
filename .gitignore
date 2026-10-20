@@ -87,15 +87,6 @@ redis_data/
 qdrant_data/
 docker-compose.override.yml
 
-# ==========================================
-# Evaluations & sandbox
-# ==========================================
-# KEEP in git: eval/cache/ (cached model outputs so anyone can re-check the table)
-# KEEP in git: eval/reports/results.md, ablation_table.md, failure_cases.csv
-# IGNORE only the bulky raw run dumps:
-eval/reports/raw/
-eval/reports/*.tmp
-
 # Temporary files created by the sandbox runner
 sandbox_tmp/
 sandbox_workspace/
@@ -131,3 +122,15 @@ Desktop.ini
 .idea/
 *.swp
 *.swo
+
+# ==========================================
+# Evaluations & sandbox
+# ==========================================
+eval/.repos/
+
+# KEEP in git: eval/cache/ (cached model outputs so anyone can re-check the table)
+# KEEP in git: eval/reports/results.md, ablation_table.md, failure_cases.csv
+# IGNORE only the bulky raw run dumps:
+eval/reports/raw/
+eval/reports/*.tmp
+eval/reports/*.jsonl

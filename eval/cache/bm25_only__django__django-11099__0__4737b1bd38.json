@@ -1,0 +1,272 @@
+{
+  "task_id": "django__django-11099",
+  "config": "bm25_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "django/contrib/auth/validators.py:8-15",
+      "citation": {
+        "path": "django/contrib/auth/validators.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 8,
+        "end_line": 15
+      },
+      "content": "@deconstructible\nclass ASCIIUsernameValidator(validators.RegexValidator):\n    regex = r'^[\\w.@+-]+$'\n    message = _(\n        'Enter a valid username. This value may contain only English letters, '\n        'numbers, and @/./+/-/_ characters.'\n    )\n    flags = re.ASCII",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 198.58619417310905
+    },
+    {
+      "chunk_id": "django/contrib/auth/validators.py:18-25",
+      "citation": {
+        "path": "django/contrib/auth/validators.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 18,
+        "end_line": 25
+      },
+      "content": "@deconstructible\nclass UnicodeUsernameValidator(validators.RegexValidator):\n    regex = r'^[\\w.@+-]+$'\n    message = _(\n        'Enter a valid username. This value may contain only letters, '\n        'numbers, and @/./+/-/_ characters.'\n    )\n    flags = 0",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 197.30056506196166
+    },
+    {
+      "chunk_id": "tests/auth_tests/test_validators.py:235-249",
+      "citation": {
+        "path": "tests/auth_tests/test_validators.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 235,
+        "end_line": 249
+      },
+      "content": "def test_unicode_validator(self):\n    valid_usernames = ['joe', 'René', 'ᴮᴵᴳᴮᴵᴿᴰ', 'أحمد']\n    invalid_usernames = [\n        \"o'connell\", \"عبد ال\",\n        \"zerowidth\\u200Bspace\", \"nonbreaking\\u00A0space\",\n        \"en\\u2013dash\",\n    ]\n    v = validators.UnicodeUsernameValidator()\n    for valid in valid_usernames:\n        with self.subTest(valid=valid):\n            v(valid)\n    for invalid in invalid_usernames:\n        with self.subTest(invalid=invalid):\n            with self.assertRaises(ValidationError):\n                v(invalid)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 152.34470072714288
+    },
+    {
+      "chunk_id": "tests/auth_tests/test_validators.py:251-261",
+      "citation": {
+        "path": "tests/auth_tests/test_validators.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 251,
+        "end_line": 261
+      },
+      "content": "def test_ascii_validator(self):\n    valid_usernames = ['glenn', 'GLEnN', 'jean-marc']\n    invalid_usernames = [\"o'connell\", 'Éric', 'jean marc', \"أحمد\"]\n    v = validators.ASCIIUsernameValidator()\n    for valid in valid_usernames:\n        with self.subTest(valid=valid):\n            v(valid)\n    for invalid in invalid_usernames:\n        with self.subTest(invalid=invalid):\n            with self.assertRaises(ValidationError):\n                v(invalid)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 149.33418699711638
+    },
+    {
+      "chunk_id": "tests/migrations/test_writer.py:396-440",
+      "citation": {
+        "path": "tests/migrations/test_writer.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 396,
+        "end_line": 440
+      },
+      "content": "def test_serialize_class_based_validators(self):\n    \"\"\"\n    Ticket #22943: Test serialization of class-based validators, including\n    compiled regexes.\n    \"\"\"\n    validator = RegexValidator(message=\"hello\")\n    string = MigrationWriter.serialize(validator)[0]\n    self.assertEqual(string, \"django.core.validators.RegexValidator(message='hello')\")\n    self.serialize_round_trip(validator)\n\n    # Test with a compiled regex.\n    validator = RegexValidator(regex=re.compile(r'^\\w+$'))\n    string = MigrationWriter.serialize(validator)[0]\n    self.assertEqual(string, \"django.core.validators.RegexValidator(regex=re.compile('^\\\\\\\\w+$'))\")\n    self.serialize_round_trip(validator)\n\n    # Test a string regex with flag\n    validator = RegexValidator(r'^[0-9]+$', flags=re.S)\n    string = MigrationWriter.serialize(validator)[0]\n    self.assertEqual(string, \"django.core.validators.RegexValidator('^[0-9]+$', flags=re.RegexFlag(16))\")\n    self.serialize_round_trip(validator)\n\n    # Test message and code\n    validator = RegexValidator('^[-a-zA-Z0-9_]+$', 'Invalid', 'invalid')\n    string = MigrationWriter.serialize(validator)[0]\n    self.assertEqual(string, \"django.core.validators.RegexValidator('^[-a-zA-Z0-9_]+$', 'Invalid', 'invalid')\")\n    self.serialize_round_trip(validator)\n\n    # Test with a subclass.\n    validator = EmailValidator(message=\"hello\")\n    string = MigrationWriter.serialize(validator)[0]\n    self.assertEqual(string, \"django.core.validators.EmailValidator(message='hello')\")\n    self.serialize_round_trip(validator)\n\n    validator = deconstructible(path=\"migrations.test_writer.EmailValidator\")(EmailValidator)(message=\"hello\")\n    string = MigrationWriter.serialize(validator)[0]\n    self.assertEqual(string, \"migrations.test_writer.EmailValidator(message='hello')\")\n\n    validator = deconstructible(path=\"custom.EmailValidator\")(EmailValidator)(message=\"hello\")\n    with self.assertRaisesMessage(ImportError, \"No module named 'custom'\"):\n        MigrationWriter.serialize(validator)\n\n    validator = deconstructible(path=\"django.core.validators.EmailValidator2\")(EmailValidator)(message=\"hello\")\n    with self.assertRaisesMessage(ValueError, \"Could not find object EmailValidator2 in django.core.validators.\"):\n        MigrationWriter.serialize(validator)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 146.60178923454976
+    },
+    {
+      "chunk_id": "tests/validators/tests.py:359-389",
+      "citation": {
+        "path": "tests/validators/tests.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 359,
+        "end_line": 389
+      },
+      "content": "def test_regex_equality(self):\n    self.assertEqual(\n        RegexValidator(r'^(?:[a-z0-9\\.\\-]*)://'),\n        RegexValidator(r'^(?:[a-z0-9\\.\\-]*)://'),\n    )\n    self.assertNotEqual(\n        RegexValidator(r'^(?:[a-z0-9\\.\\-]*)://'),\n        RegexValidator(r'^(?:[0-9\\.\\-]*)://'),\n    )\n    self.assertEqual(\n        RegexValidator(r'^(?:[a-z0-9\\.\\-]*)://', \"oh noes\", \"invalid\"),\n        RegexValidator(r'^(?:[a-z0-9\\.\\-]*)://', \"oh noes\", \"invalid\"),\n    )\n    self.assertNotEqual(\n        RegexValidator(r'^(?:[a-z0-9\\.\\-]*)://', \"oh\", \"invalid\"),\n        RegexValidator(r'^(?:[a-z0-9\\.\\-]*)://', \"oh noes\", \"invalid\"),\n    )\n    self.assertNotEqual(\n        RegexValidator(r'^(?:[a-z0-9\\.\\-]*)://', \"oh noes\", \"invalid\"),\n        RegexValidator(r'^(?:[a-z0-9\\.\\-]*)://'),\n    )\n\n    self.assertNotEqual(\n        RegexValidator('', flags=re.IGNORECASE),\n        RegexValidator(''),\n    )\n\n    self.assertNotEqual(\n        RegexValidator(''),\n        RegexValidator('', inverse_match=True),\n    )",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 141.90755976207717
+    },
+    {
+      "chunk_id": "django/contrib/auth/password_validation.py:118-157",
+      "citation": {
+        "path": "django/contrib/auth/password_validation.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 118,
+        "end_line": 157
+      },
+      "content": "class UserAttributeSimilarityValidator:\n    \"\"\"\n    Validate whether the password is sufficiently different from the user's\n    attributes.\n\n    If no specific attributes are provided, look at a sensible list of\n    defaults. Attributes that don't exist are ignored. Comparison is made to\n    not only the full attribute value, but also its components, so that, for\n    example, a password is validated against either part of an email address,\n    as well as the full address.\n    \"\"\"\n    DEFAULT_USER_ATTRIBUTES = ('username', 'first_name', 'last_name', 'email')\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 130.1826720813551
+    },
+    {
+      "chunk_id": "django/contrib/auth/migrations/0008_alter_user_username_max_length.py:5-24",
+      "citation": {
+        "path": "django/contrib/auth/migrations/0008_alter_user_username_max_length.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 5,
+        "end_line": 24
+      },
+      "content": "class Migration(migrations.Migration):\n\n    dependencies = [\n        ('auth', '0007_alter_validators_add_error_messages'),\n    ]\n\n    operations = [\n        migrations.AlterField(\n            model_name='user',\n            name='username',\n            field=models.CharField(\n                error_messages={'unique': 'A user with that username already exists.'},\n                help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.',\n                max_length=150,\n                unique=True,\n                validators=[validators.UnicodeUsernameValidator()],\n                verbose_name='username',\n            ),\n        ),\n    ]",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 127.64176743613677
+    },
+    {
+      "chunk_id": "django/contrib/auth/migrations/0007_alter_validators_add_error_messages.py:5-24",
+      "citation": {
+        "path": "django/contrib/auth/migrations/0007_alter_validators_add_error_messages.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 5,
+        "end_line": 24
+      },
+      "content": "class Migration(migrations.Migration):\n\n    dependencies = [\n        ('auth', '0006_require_contenttypes_0002'),\n    ]\n\n    operations = [\n        migrations.AlterField(\n            model_name='user',\n            name='username',\n            field=models.CharField(\n                error_messages={'unique': 'A user with that username already exists.'},\n                help_text='Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only.',\n                max_length=30,\n                unique=True,\n                validators=[validators.UnicodeUsernameValidator()],\n                verbose_name='username',\n            ),\n        ),\n    ]",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 126.84293154405964
+    },
+    {
+      "chunk_id": "tests/forms_tests/tests/test_validators.py:11-37",
+      "citation": {
+        "path": "tests/forms_tests/tests/test_validators.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 11,
+        "end_line": 37
+      },
+      "content": "class UserForm(forms.Form):\n    full_name = forms.CharField(\n        max_length=50,\n        validators=[\n            validators.validate_integer,\n            validators.validate_email,\n        ]\n    )\n    string = forms.CharField(\n        max_length=50,\n        validators=[\n            validators.RegexValidator(\n                regex='^[a-zA-Z]*$',\n                message=\"Letters only.\",\n            )\n        ]\n    )\n    ignore_case_string = forms.CharField(\n        max_length=50,\n        validators=[\n            validators.RegexValidator(\n                regex='^[a-z]*$',\n                message=\"Letters only.\",\n                flags=re.IGNORECASE,\n            )\n        ]\n    )",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 126.50409616751892
+    },
+    {
+      "chunk_id": "django/core/validators.py:73-149",
+      "citation": {
+        "path": "django/core/validators.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 73,
+        "end_line": 149
+      },
+      "content": "@deconstructible\nclass URLValidator(RegexValidator):\n    ul = '\\u00a1-\\uffff'  # unicode letters range (must not be a raw string)\n\n    # IP patterns\n    ipv4_re = r'(?:25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}'\n    ipv6_re = r'\\[[0-9a-f:\\.]+\\]'  # (simple regex, validated later)\n\n    # Host patterns\n    hostname_re = r'[a-z' + ul + r'0-9](?:[a-z' + ul + r'0-9-]{0,61}[a-z' + ul + r'0-9])?'\n    # Max length for domain name labels is 63 characters per RFC 1034 sec. 3.1\n    domain_re = r'(?:\\.(?!-)[a-z' + ul + r'0-9-]{1,63}(?<!-))*'\n    tld_re = (\n        r'\\.'                                # dot\n        r'(?!-)'                             # can't start with a dash\n        r'(?:[a-z' + ul + '-]{2,63}'         # domain label\n        r'|xn--[a-z0-9]{1,59})'              # or punycode label\n        r'(?<!-)'                            # can't end with a dash\n        r'\\.?'                               # may have a trailing dot\n    )\n    host_re = '(' + hostname_re + domain_re + tld_re + '|localhost)'\n\n    regex = _lazy_re_compile(\n        r'^(?:[a-z0-9\\.\\-\\+]*)://'  # scheme is validated separately\n        r'(?:[^\\s:@/]+(?::[^\\s:@/]*)?@)?'  # user:pass authentication\n        r'(?:' + ipv4_re + '|' + ipv6_re + '|' + host_re + ')'\n        r'(?::\\d{2,5})?'  # port\n        r'(?:[/?#][^\\s]*)?'  # resource path\n        r'\\Z', re.IGNORECASE)\n    message = _('Enter a valid URL.')\n    schemes = ['http', 'https', 'ftp', 'ftps']\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 126.17498854938013
+    },
+    {
+      "chunk_id": "django/contrib/auth/migrations/0004_alter_user_username_opts.py:5-23",
+      "citation": {
+        "path": "django/contrib/auth/migrations/0004_alter_user_username_opts.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 5,
+        "end_line": 23
+      },
+      "content": "class Migration(migrations.Migration):\n\n    dependencies = [\n        ('auth', '0003_alter_user_email_max_length'),\n    ]\n\n    # No database changes; modifies validators and error_messages (#13147).\n    operations = [\n        migrations.AlterField(\n            model_name='user',\n            name='username',\n            field=models.CharField(\n                error_messages={'unique': 'A user with that username already exists.'}, max_length=30,\n                validators=[validators.UnicodeUsernameValidator()],\n                help_text='Required. 30 characters or fewer. Letters, digits and @/./+/-/_ only.',\n                unique=True, verbose_name='username'\n            ),\n        ),\n    ]",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 125.73248000324563
+    },
+    {
+      "chunk_id": "tests/validators/tests.py:343-346",
+      "citation": {
+        "path": "tests/validators/tests.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 343,
+        "end_line": 346
+      },
+      "content": "def test_regex_validator_flags(self):\n    msg = 'If the flags are set, regex must be a regular expression string.'\n    with self.assertRaisesMessage(TypeError, msg):\n        RegexValidator(re.compile('a'), flags=re.IGNORECASE)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 123.47121722721404
+    },
+    {
+      "chunk_id": "django/contrib/auth/password_validation.py:54-63",
+      "citation": {
+        "path": "django/contrib/auth/password_validation.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 54,
+        "end_line": 63
+      },
+      "content": "def password_changed(password, user=None, password_validators=None):\n    \"\"\"\n    Inform all validators that have implemented a password_changed() method\n    that the password has been changed.\n    \"\"\"\n    if password_validators is None:\n        password_validators = get_default_password_validators()\n    for validator in password_validators:\n        password_changed = getattr(validator, 'password_changed', lambda *a: None)\n        password_changed(password, user)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 122.4101425183928
+    },
+    {
+      "chunk_id": "django/test/client.py:424-707",
+      "citation": {
+        "path": "django/test/client.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 424,
+        "end_line": 707
+      },
+      "content": "class Client(RequestFactory):\n    \"\"\"\n    A class that can act as a client for testing purposes.\n\n    It allows the user to compose GET and POST requests, and\n    obtain the response that the server gave to those requests.\n    The server Response objects are annotated with the details\n    of the contexts and templates that were rendered during the\n    process of serving the request.\n\n    Client objects are stateful - they will retain cookie (and\n    thus session) details for the lifetime of the Client instance.\n\n    This is not intended as a replacement for Twill/Selenium or\n    the like - it is here to allow testing against the\n    contexts and templates produced by a view, rather than the\n    HTML rendered to the end-user.\n    \"\"\"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 121.90897460086502
+    },
+    {
+      "chunk_id": "django/contrib/auth/backends.py:113-183",
+      "citation": {
+        "path": "django/contrib/auth/backends.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 113,
+        "end_line": 183
+      },
+      "content": "class RemoteUserBackend(ModelBackend):\n    \"\"\"\n    This backend is to be used in conjunction with the ``RemoteUserMiddleware``\n    found in the middleware module of this package, and is used when the server\n    is handling authentication outside of Django.\n\n    By default, the ``authenticate`` method creates ``User`` objects for\n    usernames that don't already exist in the database.  Subclasses can disable\n    this behavior by setting the ``create_unknown_user`` attribute to\n    ``False``.\n    \"\"\"\n\n    # Create a User object if not already in the database?\n    create_unknown_user = True\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 121.56344074262232
+    },
+    {
+      "chunk_id": "django/contrib/auth/models.py:285-350",
+      "citation": {
+        "path": "django/contrib/auth/models.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 285,
+        "end_line": 350
+      },
+      "content": "class AbstractUser(AbstractBaseUser, PermissionsMixin):\n    \"\"\"\n    An abstract base class implementing a fully featured User model with\n    admin-compliant permissions.\n\n    Username and password are required. Other fields are optional.\n    \"\"\"\n    username_validator = UnicodeUsernameValidator()\n\n    username = models.CharField(\n        _('username'),\n        max_length=150,\n        unique=True,\n        help_text=_('Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'),\n        validators=[username_validator],\n        error_messages={\n            'unique': _(\"A user with that username already exists.\"),\n        },\n    )\n    first_name = models.CharField(_('first name'), max_length=30, blank=True)\n    last_name = models.CharField(_('last name'), max_length=150, blank=True)\n    email = models.EmailField(_('email address'), blank=True)\n    is_staff = models.BooleanField(\n        _('staff status'),\n        default=False,\n        help_text=_('Designates whether the user can log into this admin site.'),\n    )\n    is_active = models.BooleanField(\n        _('active'),\n        default=True,\n        help_text=_(\n            'Designates whether this user should be treated as active. '\n            'Unselect this instead of deleting accounts.'\n        ),\n    )\n    date_joined = models.DateTimeField(_('date joined'), default=timezone.now)\n\n    objects = UserManager()\n\n    EMAIL_FIELD = 'email'\n    USERNAME_FIELD = 'username'\n    REQUIRED_FIELDS = ['email']\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 121.09843109292822
+    },
+    {
+      "chunk_id": "django/contrib/auth/middleware.py:27-110",
+      "citation": {
+        "path": "django/contrib/auth/middleware.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 27,
+        "end_line": 110
+      },
+      "content": "class RemoteUserMiddleware(MiddlewareMixin):\n    \"\"\"\n    Middleware for utilizing Web-server-provided authentication.\n\n    If request.user is not authenticated, then this middleware attempts to\n    authenticate the username passed in the ``REMOTE_USER`` request header.\n    If authentication is successful, the user is automatically logged in to\n    persist the user in the session.\n\n    The header used is configurable and defaults to ``REMOTE_USER``.  Subclass\n    this class and change the ``header`` attribute if you need to use a\n    different header.\n    \"\"\"\n\n    # Name of request header to grab username from.  This will be the key as\n    # used in the request.META dictionary, i.e. the normalization of headers to\n    # all uppercase and the addition of \"HTTP_\" prefix apply.\n    header = \"REMOTE_USER\"\n    force_logout_if_no_header = True\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 120.15280936670608
+    },
+    {
+      "chunk_id": "django/contrib/auth/management/__init__.py:104-145",
+      "citation": {
+        "path": "django/contrib/auth/management/__init__.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 104,
+        "end_line": 145
+      },
+      "content": "def get_default_username(check_db=True):\n    \"\"\"\n    Try to determine the current system user's username to use as a default.\n\n    :param check_db: If ``True``, requires that the username does not match an\n        existing ``auth.User`` (otherwise returns an empty string).\n    :returns: The username, or an empty string if no username can be\n        determined.\n    \"\"\"\n    # This file is used in apps.py, it should not trigger models import.\n    from django.contrib.auth import models as auth_app\n\n    # If the User model has been swapped out, we can't make any assumptions\n    # about the default user name.\n    if auth_app.User._meta.swapped:\n        return ''\n\n    default_username = get_system_username()\n    try:\n        default_username = (\n            unicodedata.normalize('NFKD', default_username)\n            .encode('ascii', 'ignore').decode('ascii')\n            .replace(' ', '').lower()\n        )\n    except UnicodeDecodeError:\n        return ''\n\n    # Run the username validator\n    try:\n        auth_app.User._meta.get_field('username').run_validators(default_username)\n    except exceptions.ValidationError:\n        return ''\n\n    # Don't return the default username if it is already taken.\n    if check_db and default_username:\n        try:\n            auth_app.User._default_manager.get(username=default_username)\n        except auth_app.User.DoesNotExist:\n            pass\n        else:\n            return ''\n    return default_username",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 119.77986598377518
+    },
+    {
+      "chunk_id": "tests/validators/tests.py:391-400",
+      "citation": {
+        "path": "tests/validators/tests.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 391,
+        "end_line": 400
+      },
+      "content": "def test_regex_equality_nocache(self):\n    pattern = r'^(?:[a-z0-9\\.\\-]*)://'\n    left = RegexValidator(pattern)\n    re.purge()\n    right = RegexValidator(pattern)\n\n    self.assertEqual(\n        left,\n        right,\n    )",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 119.00316124952167
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 131.9456918999931
+}

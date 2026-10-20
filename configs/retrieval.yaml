@@ -1,0 +1,18 @@
+retrieval:
+  initial_top_k: 30
+  final_top_k: 10
+  fusion_k: 60
+  weights:
+    bm25: 0.45
+    vector: 0.40
+    graph: 0.15
+
+graph:
+  max_hops: 2
+  include_imports: true
+
+reranker:
+  exact_symbol_boost: 0.35
+  path_match_boost: 0.20
+  call_distance_decay: 0.15
+  min_score_threshold: 0.05

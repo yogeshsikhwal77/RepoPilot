@@ -1,0 +1,25 @@
+{
+  "task_id": "django__django-11099",
+  "config": "dummy_gold",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "django/contrib/auth/validators.py:1-1",
+      "citation": {
+        "path": "django/contrib/auth/validators.py",
+        "commit": "d26b2424437dabeeca94d7900b37d2df4410da0c",
+        "start_line": 1,
+        "end_line": 1
+      },
+      "content": "",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 1.0
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 0.00005229999078437686
+}

@@ -1,0 +1,272 @@
+{
+  "task_id": "psf__requests-2674",
+  "config": "bm25_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:90-92",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 90,
+        "end_line": 92
+      },
+      "content": "class TimeoutStateError(HTTPError):\n    \"\"\" Raised when passing an invalid state to a timeout \"\"\"\n    pass",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 78.10579663617087
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/util/timeout.py:104-136",
+      "citation": {
+        "path": "requests/packages/urllib3/util/timeout.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 104,
+        "end_line": 136
+      },
+      "content": "@classmethod\ndef _validate_timeout(cls, value, name):\n    \"\"\" Check that a timeout attribute is valid.\n\n    :param value: The timeout value to validate\n    :param name: The name of the timeout attribute to validate. This is\n        used to specify in error messages.\n    :return: The validated and casted version of the given value.\n    :raises ValueError: If the type is not an integer or a float, or if it\n        is a numeric value less than zero.\n    \"\"\"\n    if value is _Default:\n        return cls.DEFAULT_TIMEOUT\n\n    if value is None or value is cls.DEFAULT_TIMEOUT:\n        return value\n\n    try:\n        float(value)\n    except (TypeError, ValueError):\n        raise ValueError(\"Timeout value %s was %s, but it must be an \"\n                         \"int or float.\" % (name, value))\n\n    try:\n        if value < 0:\n            raise ValueError(\"Attempted to set %s timeout to %s, but the \"\n                             \"timeout cannot be set to a value less \"\n                             \"than 0.\" % (name, value))\n    except TypeError:  # Python 3\n        raise ValueError(\"Timeout value %s was %s, but it must be an \"\n                         \"int or float.\" % (name, value))\n\n    return value",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 75.94251168580386
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:95-101",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 95,
+        "end_line": 101
+      },
+      "content": "class TimeoutError(HTTPError):\n    \"\"\" Raised when a socket timeout error occurs.\n\n    Catching this error will catch both :exc:`ReadTimeoutErrors\n    <ReadTimeoutError>` and :exc:`ConnectTimeoutErrors <ConnectTimeoutError>`.\n    \"\"\"\n    pass",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 72.70412470165948
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/connectionpool.py:210-246",
+      "citation": {
+        "path": "requests/packages/urllib3/connectionpool.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 210,
+        "end_line": 246
+      },
+      "content": "def _get_conn(self, timeout=None):\n    \"\"\"\n    Get a connection. Will return a pooled connection if one is available.\n\n    If no connections are available and :prop:`.block` is ``False``, then a\n    fresh connection is returned.\n\n    :param timeout:\n        Seconds to wait before giving up and raising\n        :class:`urllib3.exceptions.EmptyPoolError` if the pool is empty and\n        :prop:`.block` is ``True``.\n    \"\"\"\n    conn = None\n    try:\n        conn = self.pool.get(block=self.block, timeout=timeout)\n\n    except AttributeError:  # self.pool is None\n        raise ClosedPoolError(self, \"Pool is closed.\")\n\n    except Empty:\n        if self.block:\n            raise EmptyPoolError(self,\n                                 \"Pool reached maximum size and no more \"\n                                 \"connections are allowed.\")\n        pass  # Oh well, we'll create a new connection then\n\n    # If this is a persistent connection, check if it got disconnected\n    if conn and is_connection_dropped(conn):\n        log.info(\"Resetting dropped connection: %s\" % self.host)\n        conn.close()\n        if getattr(conn, 'auto_open', 1) == 0:\n            # This is a proxied connection that has been mutated by\n            # httplib._tunnel() and cannot be reused (since it would\n            # attempt to bypass the proxy)\n            conn = None\n\n    return conn or self._new_conn()",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 72.65060949093646
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:111-113",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 111,
+        "end_line": 113
+      },
+      "content": "class ConnectTimeoutError(TimeoutError):\n    \"Raised when a socket timeout occurs while connecting to a server\"\n    pass",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 71.06716182848834
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/connectionpool.py:300-315",
+      "citation": {
+        "path": "requests/packages/urllib3/connectionpool.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 300,
+        "end_line": 315
+      },
+      "content": "def _raise_timeout(self, err, url, timeout_value):\n    \"\"\"Is the error actually a timeout? Will raise a ReadTimeout or pass\"\"\"\n\n    if isinstance(err, SocketTimeout):\n        raise ReadTimeoutError(self, url, \"Read timed out. (read timeout=%s)\" % timeout_value)\n\n    # See the above comment about EAGAIN in Python 3. In Python 2 we have\n    # to specifically catch it and throw the timeout error\n    if hasattr(err, 'errno') and err.errno in _blocking_errnos:\n        raise ReadTimeoutError(self, url, \"Read timed out. (read timeout=%s)\" % timeout_value)\n\n    # Catch possible read timeouts thrown as SSL errors. If not the\n    # case, rethrow the original. We need to do this because of:\n    # http://bugs.python.org/issue10272\n    if 'timed out' in str(err) or 'did not complete (read)' in str(err):  # Python 2.6\n        raise ReadTimeoutError(self, url, \"Read timed out. (read timeout=%s)\" % timeout_value)",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 69.10262950918441
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:167-169",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 167,
+        "end_line": 169
+      },
+      "content": "class ResponseNotChunked(ProtocolError, ValueError):\n    \"Response needs to be chunked in order to read it as chunks.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 68.52476744412948
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/connectionpool.py:421-650",
+      "citation": {
+        "path": "requests/packages/urllib3/connectionpool.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 421,
+        "end_line": 650
+      },
+      "content": "def urlopen(self, method, url, body=None, headers=None, retries=None,\n            redirect=True, assert_same_host=True, timeout=_Default,\n            pool_timeout=None, release_conn=None, **response_kw):\n    \"\"\"\n    Get a connection from the pool and perform an HTTP request. This is the\n    lowest level call for making a request, so you'll need to specify all\n    the raw details.\n\n    .. note::\n\n       More commonly, it's appropriate to use a convenience method provided\n       by :class:`.RequestMethods`, such as :meth:`request`.\n\n    .. note::\n\n       `release_conn` will only behave as expected if\n       `preload_content=False` because we want to make\n       `preload_content=False` the default behaviour someday soon without\n       breaking backwards compatibility.\n\n    :param method:\n        HTTP request method (such as GET, POST, PUT, etc.)\n\n    :param body:\n        Data to send in the request body (useful for creating\n        POST requests, see HTTPConnectionPool.post_url for\n        more convenience).\n\n    :param headers:\n        Dictionary of custom headers to send, such as User-Agent,\n        If-None-Match, etc. If None, pool headers are used. If provided,\n        these headers completely replace any pool-specific headers.\n\n    :param retries:\n        Configure the number of retries to allow before raising a\n        :class:`~urllib3.exceptions.MaxRetryError` exception.\n\n        Pass ``None`` to retry until you receive a response. Pass a\n        :class:`~urllib3.util.retry.Retry` object for fine-grained control\n        over different types of retries.\n        Pass an integer number to retry connection errors that many times,\n        but no other types of errors. Pass zero to never retry.\n\n        If ``False``, then retries are disabled and any exception is raised\n        immediately. Also, instead of raising a MaxRetryError on redirects,\n        the redirect response will be returned.\n\n    :type retries: :class:`~urllib3.util.retry.Retry`, False, or an int.\n\n    :param redirect:\n        If True, automatically handle redirects (status codes 301, 302,\n        303, 307, 308). Each redirect counts as a retry. Disabling retries\n        will disable redirect, too.\n\n    :param assert_same_host:\n        If ``True``, will make sure that the host of the pool requests is\n        consistent else will raise HostChangedError. When False, you can\n        use the pool on an HTTP proxy and request foreign hosts.\n\n    :param timeout:\n        If specified, overrides the default timeout for this one\n        request. It may be a float (in seconds) or an instance of\n        :class:`urllib3.util.Timeout`.\n\n    :param pool_timeout:\n        If set and the pool is set to block=True, then this method will\n        block for ``pool_timeout`` seconds and raise EmptyPoolError if no\n        connection is available within the time period.\n\n    :param release_conn:\n        If False, then the urlopen call will not release the connection\n        back into the pool once a response is received (but will release if\n        you read the entire contents of the response such as when\n        `preload_content=True`). This is useful if you're not preloading\n        the response's content immediately. You will need to call\n        ``r.release_conn()`` on the response ``r`` to return the connection\n        back into the pool. If None, it takes the value of\n        ``response_kw.get('preload_content', True)``.\n\n    :param \\**response_kw:\n        Additional parameters are passed to\n        :meth:`urllib3.response.HTTPResponse.from_httplib`\n    \"\"\"\n    if headers is None:\n        headers = self.headers\n\n    if not isinstance(retries, Retry):\n        retries = Retry.from_int(retries, redirect=redirect, default=self.retries)\n\n    if release_conn is None:\n        release_conn = response_kw.get('preload_content', True)\n\n    # Check host\n    if assert_same_host and not self.is_same_host(url):\n        raise HostChangedError(self, url, retries)\n\n    conn = None\n\n    # Merge the proxy headers. Only do this in HTTP. We have to copy the\n    # headers dict so we can safely change it without those changes being\n    # reflected in anyone else's copy.\n    if self.scheme == 'http':\n        headers = headers.copy()\n        headers.update(self.proxy_headers)\n\n    # Must keep the exception bound to a separate variable or else Python 3\n    # complains about UnboundLocalError.\n    err = None\n\n    try:\n        # Request a connection from the queue.\n        timeout_obj = self._get_timeout(timeout)\n        conn = self._get_conn(timeout=pool_timeout)\n\n        conn.timeout = timeout_obj.connect_timeout\n\n        is_new_proxy_conn = self.proxy is not None and not getattr(conn, 'sock', None)\n        if is_new_proxy_conn:\n            self._prepare_proxy(conn)\n\n        # Make the request on the httplib connection object.\n        httplib_response = self._make_request(conn, method, url,\n                                              timeout=timeout_obj,\n                                              body=body, headers=headers)\n\n        # If we're going to release the connection in ``finally:``, then\n        # the request doesn't need to know about the connection. Otherwise\n        # it will also try to release it and we'll have a double-release\n        # mess.\n        response_conn = not release_conn and conn\n\n        # Import httplib's response into our own wrapper object\n        response = HTTPResponse.from_httplib(httplib_response,\n                                             pool=self,\n                                             connection=response_conn,\n                                             **response_kw)\n\n        # else:\n        #     The connection will be put back into the pool when\n        #     ``response.release_conn()`` is called (implicitly by\n        #     ``response.read()``)\n\n    except Empty:\n        # Timed out by queue.\n        raise EmptyPoolError(self, \"No pool connections are available.\")\n\n    except (BaseSSLError, CertificateError) as e:\n        # Close the connection. If a connection is reused on which there\n        # was a Certificate error, the next request will certainly raise\n        # another Certificate error.\n        if conn:\n            conn.close()\n            conn = None\n        raise SSLError(e)\n\n    except SSLError:\n        # Treat SSLError separately from BaseSSLError to preserve\n        # traceback.\n        if conn:\n            conn.close()\n            conn = None\n        raise\n\n    except (TimeoutError, HTTPException, SocketError, ConnectionError) as e:\n        if conn:\n            # Discard the connection for these exceptions. It will be\n            # be replaced during the next _get_conn() call.\n            conn.close()\n            conn = None\n\n        if isinstance(e, SocketError) and self.proxy:\n            e = ProxyError('Cannot connect to proxy.', e)\n        elif isinstance(e, (SocketError, HTTPException)):\n            e = ProtocolError('Connection aborted.', e)\n\n        retries = retries.increment(method, url, error=e, _pool=self,\n                                    _stacktrace=sys.exc_info()[2])\n        retries.sleep()\n\n        # Keep track of the error for the retry warning.\n        err = e\n\n    finally:\n        if release_conn:\n            # Put the connection back to be reused. If the connection is\n            # expired then it will be None, which will get replaced with a\n            # fresh connection during _get_conn.\n            self._put_conn(conn)\n\n    if not conn:\n        # Try again\n        log.warning(\"Retrying (%r) after connection \"\n                    \"broken by '%r': %s\" % (retries, err, url))\n        return self.urlopen(method, url, body, headers, retries,\n                            redirect, assert_same_host,\n                            timeout=timeout, pool_timeout=pool_timeout,\n                            release_conn=release_conn, **response_kw)\n\n    # Handle redirect?\n    redirect_location = redirect and response.get_redirect_location()\n    if redirect_location:\n        if response.status == 303:\n            method = 'GET'\n\n        try:\n            retries = retries.increment(method, url, response=response, _pool=self)\n        except MaxRetryError:\n            if retries.raise_on_redirect:\n                raise\n            return response\n\n        log.info(\"Redirecting %s -> %s\" % (url, redirect_location))\n        return self.urlopen(method, redirect_location, body, headers,\n                retries=retries, redirect=redirect,\n                assert_same_host=assert_same_host,\n                timeout=timeout, pool_timeout=pool_timeout,\n                release_conn=release_conn, **response_kw)\n\n    # Check if we should retry the HTTP response.\n    if retries.is_forced_retry(method, status_code=response.status):\n        retries = retries.increment(method, url, response=response, _pool=self)\n        retries.sleep()\n        log.info(\"Forced retry: %s\" % url)\n        return self.urlopen(method, url, body, headers,\n                retries=retries, redirect=redirect,\n                assert_same_host=assert_same_host,\n                timeout=timeout, pool_timeout=pool_timeout,\n                release_conn=release_conn, **response_kw)\n\n    return response",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 67.0051901030187
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/util/timeout.py:180-191",
+      "citation": {
+        "path": "requests/packages/urllib3/util/timeout.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 180,
+        "end_line": 191
+      },
+      "content": "def get_connect_duration(self):\n    \"\"\" Gets the time elapsed since the call to :meth:`start_connect`.\n\n    :return: Elapsed time.\n    :rtype: float\n    :raises urllib3.exceptions.TimeoutStateError: if you attempt\n        to get duration for a timer that hasn't been started.\n    \"\"\"\n    if self._start_connect is None:\n        raise TimeoutStateError(\"Can't get connect duration for timer \"\n                                \"that has not started.\")\n    return current_time() - self._start_connect",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 66.11716888669766
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/connectionpool.py:317-384",
+      "citation": {
+        "path": "requests/packages/urllib3/connectionpool.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 317,
+        "end_line": 384
+      },
+      "content": "def _make_request(self, conn, method, url, timeout=_Default,\n                  **httplib_request_kw):\n    \"\"\"\n    Perform a request on a given urllib connection object taken from our\n    pool.\n\n    :param conn:\n        a connection from one of our connection pools\n\n    :param timeout:\n        Socket timeout in seconds for the request. This can be a\n        float or integer, which will set the same timeout value for\n        the socket connect and the socket read, or an instance of\n        :class:`urllib3.util.Timeout`, which gives you more fine-grained\n        control over your timeouts.\n    \"\"\"\n    self.num_requests += 1\n\n    timeout_obj = self._get_timeout(timeout)\n    timeout_obj.start_connect()\n    conn.timeout = timeout_obj.connect_timeout\n\n    # Trigger any extra validation we need to do.\n    try:\n        self._validate_conn(conn)\n    except (SocketTimeout, BaseSSLError) as e:\n        # Py2 raises this as a BaseSSLError, Py3 raises it as socket timeout.\n        self._raise_timeout(err=e, url=url, timeout_value=conn.timeout)\n        raise\n\n    # conn.request() calls httplib.*.request, not the method in\n    # urllib3.request. It also calls makefile (recv) on the socket.\n    conn.request(method, url, **httplib_request_kw)\n\n    # Reset the timeout for the recv() on the socket\n    read_timeout = timeout_obj.read_timeout\n\n    # App Engine doesn't have a sock attr\n    if getattr(conn, 'sock', None):\n        # In Python 3 socket.py will catch EAGAIN and return None when you\n        # try and read into the file pointer created by http.client, which\n        # instead raises a BadStatusLine exception. Instead of catching\n        # the exception and assuming all BadStatusLine exceptions are read\n        # timeouts, check for a zero timeout before making the request.\n        if read_timeout == 0:\n            raise ReadTimeoutError(\n                self, url, \"Read timed out. (read timeout=%s)\" % read_timeout)\n        if read_timeout is Timeout.DEFAULT_TIMEOUT:\n            conn.sock.settimeout(socket.getdefaulttimeout())\n        else:  # None or a value\n            conn.sock.settimeout(read_timeout)\n\n    # Receive the response from the server\n    try:\n        try:  # Python 2.7, use buffering of HTTP responses\n            httplib_response = conn.getresponse(buffering=True)\n        except TypeError:  # Python 2.6 and older\n            httplib_response = conn.getresponse()\n    except (SocketTimeout, BaseSSLError, SocketError) as e:\n        self._raise_timeout(err=e, url=url, timeout_value=read_timeout)\n        raise\n\n    # AppEngine doesn't have a version attr.\n    http_version = getattr(conn, '_http_vsn_str', 'HTTP/?')\n    log.debug(\"\\\"%s %s %s\\\" %s %s\" % (method, url, http_version,\n                                      httplib_response.status,\n                                      httplib_response.length))\n    return httplib_response",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 66.01192975755785
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:46-48",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 46,
+        "end_line": 48
+      },
+      "content": "class DecodeError(HTTPError):\n    \"Raised when automatic decoding based on Content-Type fails.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 65.91015370910803
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:41-43",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 41,
+        "end_line": 43
+      },
+      "content": "class ProxyError(HTTPError):\n    \"Raised when the connection to a proxy fails.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 65.8218438359482
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:104-106",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 104,
+        "end_line": 106
+      },
+      "content": "class ReadTimeoutError(TimeoutError, RequestError):\n    \"Raised when a socket timeout occurs while receiving data from a server\"\n    pass",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 64.3029713882841
+    },
+    {
+      "chunk_id": "requests/adapters.py:302-322",
+      "citation": {
+        "path": "requests/adapters.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 302,
+        "end_line": 322
+      },
+      "content": "def proxy_headers(self, proxy):\n    \"\"\"Returns a dictionary of the headers to add to any request sent\n    through a proxy. This works with urllib3 magic to ensure that they are\n    correctly sent to the proxy, rather than in a tunnelled request if\n    CONNECT is being used.\n\n    This should not be called from user code, and is only exposed for use\n    when subclassing the\n    :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.\n\n    :param proxies: The url of the proxy being used for this request.\n    :param kwargs: Optional additional keyword arguments.\n    \"\"\"\n    headers = {}\n    username, password = get_auth_from_url(proxy)\n\n    if username and password:\n        headers['Proxy-Authorization'] = _basic_auth_str(username,\n                                                         password)\n\n    return headers",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 64.04047777398408
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:116-118",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 116,
+        "end_line": 118
+      },
+      "content": "class EmptyPoolError(PoolError):\n    \"Raised when a pool runs out of connections and no more are allowed.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 63.07028350822879
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/connectionpool.py:94-650",
+      "citation": {
+        "path": "requests/packages/urllib3/connectionpool.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 94,
+        "end_line": 650
+      },
+      "content": "class HTTPConnectionPool(ConnectionPool, RequestMethods):\n    \"\"\"\n    Thread-safe connection pool for one host.\n\n    :param host:\n        Host used for this HTTP Connection (e.g. \"localhost\"), passed into\n        :class:`httplib.HTTPConnection`.\n\n    :param port:\n        Port used for this HTTP Connection (None is equivalent to 80), passed\n        into :class:`httplib.HTTPConnection`.\n\n    :param strict:\n        Causes BadStatusLine to be raised if the status line can't be parsed\n        as a valid HTTP/1.0 or 1.1 status line, passed into\n        :class:`httplib.HTTPConnection`.\n\n        .. note::\n           Only works in Python 2. This parameter is ignored in Python 3.\n\n    :param timeout:\n        Socket timeout in seconds for each individual connection. This can\n        be a float or integer, which sets the timeout for the HTTP request,\n        or an instance of :class:`urllib3.util.Timeout` which gives you more\n        fine-grained control over request timeouts. After the constructor has\n        been parsed, this is always a `urllib3.util.Timeout` object.\n\n    :param maxsize:\n        Number of connections to save that can be reused. More than 1 is useful\n        in multithreaded situations. If ``block`` is set to false, more\n        connections will be created but they will not be saved once they've\n        been used.\n\n    :param block:\n        If set to True, no more than ``maxsize`` connections will be used at\n        a time. When no free connections are available, the call will block\n        until a connection has been released. This is a useful side effect for\n        particular multithreaded situations where one does not want to use more\n        than maxsize connections per host to prevent flooding.\n\n    :param headers:\n        Headers to include with all requests, unless other headers are given\n        explicitly.\n\n    :param retries:\n        Retry configuration to use by default with requests in this pool.\n\n    :param _proxy:\n        Parsed proxy URL, should not be used directly, instead, see\n        :class:`urllib3.connectionpool.ProxyManager`\"\n\n    :param _proxy_headers:\n        A dictionary with proxy headers, should not be used directly,\n        instead, see :class:`urllib3.connectionpool.ProxyManager`\"\n\n    :param \\**conn_kw:\n        Additional parameters are used to create fresh :class:`urllib3.connection.HTTPConnection`,\n        :class:`urllib3.connection.HTTPSConnection` instances.\n    \"\"\"\n\n    scheme = 'http'\n    ConnectionCls = HTTPConnection\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 62.211455544142915
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/response.py:68-466",
+      "citation": {
+        "path": "requests/packages/urllib3/response.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 68,
+        "end_line": 466
+      },
+      "content": "class HTTPResponse(io.IOBase):\n    \"\"\"\n    HTTP Response container.\n\n    Backwards-compatible to httplib's HTTPResponse but the response ``body`` is\n    loaded and decoded on-demand when the ``data`` property is accessed.  This\n    class is also compatible with the Python standard library's :mod:`io`\n    module, and can hence be treated as a readable object in the context of that\n    framework.\n\n    Extra parameters for behaviour not present in httplib.HTTPResponse:\n\n    :param preload_content:\n        If True, the response's body will be preloaded during construction.\n\n    :param decode_content:\n        If True, attempts to decode specific content-encoding's based on headers\n        (like 'gzip' and 'deflate') will be skipped and raw data will be used\n        instead.\n\n    :param original_response:\n        When this HTTPResponse wrapper is generated from an httplib.HTTPResponse\n        object, it's convenient to include the original for debug purposes. It's\n        otherwise unused.\n    \"\"\"\n\n    CONTENT_DECODERS = ['gzip', 'deflate']\n    REDIRECT_STATUSES = [301, 302, 303, 307, 308]\n\n\n\n\n\n\n\n\n\n\n\n    # Backwards-compatibility methods for httplib.HTTPResponse\n\n\n    # Overrides from io.IOBase\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 62.13204869836868
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/util/retry.py:17-281",
+      "citation": {
+        "path": "requests/packages/urllib3/util/retry.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 17,
+        "end_line": 281
+      },
+      "content": "class Retry(object):\n    \"\"\" Retry configuration.\n\n    Each retry attempt will create a new Retry object with updated values, so\n    they can be safely reused.\n\n    Retries can be defined as a default for a pool::\n\n        retries = Retry(connect=5, read=2, redirect=5)\n        http = PoolManager(retries=retries)\n        response = http.request('GET', 'http://example.com/')\n\n    Or per-request (which overrides the default for the pool)::\n\n        response = http.request('GET', 'http://example.com/', retries=Retry(10))\n\n    Retries can be disabled by passing ``False``::\n\n        response = http.request('GET', 'http://example.com/', retries=False)\n\n    Errors will be wrapped in :class:`~urllib3.exceptions.MaxRetryError` unless\n    retries are disabled, in which case the causing exception will be raised.\n\n    :param int total:\n        Total number of retries to allow. Takes precedence over other counts.\n\n        Set to ``None`` to remove this constraint and fall back on other\n        counts. It's a good idea to set this to some sensibly-high value to\n        account for unexpected edge cases and avoid infinite retry loops.\n\n        Set to ``0`` to fail on the first retry.\n\n        Set to ``False`` to disable and imply ``raise_on_redirect=False``.\n\n    :param int connect:\n        How many connection-related errors to retry on.\n\n        These are errors raised before the request is sent to the remote server,\n        which we assume has not triggered the server to process the request.\n\n        Set to ``0`` to fail on the first retry of this type.\n\n    :param int read:\n        How many times to retry on read errors.\n\n        These errors are raised after the request was sent to the server, so the\n        request may have side-effects.\n\n        Set to ``0`` to fail on the first retry of this type.\n\n    :param int redirect:\n        How many redirects to perform. Limit this to avoid infinite redirect\n        loops.\n\n        A redirect is a HTTP response with a status code 301, 302, 303, 307 or\n        308.\n\n        Set to ``0`` to fail on the first retry of this type.\n\n        Set to ``False`` to disable and imply ``raise_on_redirect=False``.\n\n    :param iterable method_whitelist:\n        Set of uppercased HTTP method verbs that we should retry on.\n\n        By default, we only retry on methods which are considered to be\n        indempotent (multiple requests with the same parameters end with the\n        same state). See :attr:`Retry.DEFAULT_METHOD_WHITELIST`.\n\n    :param iterable status_forcelist:\n        A set of HTTP status codes that we should force a retry on.\n\n        By default, this is disabled with ``None``.\n\n    :param float backoff_factor:\n        A backoff factor to apply between attempts. urllib3 will sleep for::\n\n            {backoff factor} * (2 ^ ({number of total retries} - 1))\n\n        seconds. If the backoff_factor is 0.1, then :func:`.sleep` will sleep\n        for [0.1s, 0.2s, 0.4s, ...] between retries. It will never be longer\n        than :attr:`Retry.MAX_BACKOFF`.\n\n        By default, backoff is disabled (set to 0).\n\n    :param bool raise_on_redirect: Whether, if the number of redirects is\n        exhausted, to raise a MaxRetryError, or to return a response with a\n        response code in the 3xx range.\n    \"\"\"\n\n    DEFAULT_METHOD_WHITELIST = frozenset([\n        'HEAD', 'GET', 'PUT', 'DELETE', 'OPTIONS', 'TRACE'])\n\n    #: Maximum backoff time.\n    BACKOFF_MAX = 120\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 62.08407750217324
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/util/timeout.py:169-178",
+      "citation": {
+        "path": "requests/packages/urllib3/util/timeout.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 169,
+        "end_line": 178
+      },
+      "content": "def start_connect(self):\n    \"\"\" Start the timeout clock, used during a connect() attempt\n\n    :raises urllib3.exceptions.TimeoutStateError: if you attempt\n        to start a timer that has been started already.\n    \"\"\"\n    if self._start_connect is not None:\n        raise TimeoutStateError(\"Timeout timer has already been started.\")\n    self._start_connect = current_time()\n    return self._start_connect",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 61.34470104248338
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:25-33",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 25,
+        "end_line": 33
+      },
+      "content": "class RequestError(PoolError):\n    \"Base exception for PoolErrors that have associated URLs.\"\n",
+      "source_type": "code",
+      "retrieval": "bm25",
+      "score": 61.0151646915572
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 0.6895285000064177
+}
