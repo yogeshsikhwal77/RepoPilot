@@ -1,0 +1,272 @@
+{
+  "task_id": "astropy__astropy-12907",
+  "config": "hybrid_rerank",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "astropy/modeling/separable.py:66-102",
+      "citation": {
+        "path": "astropy/modeling/separable.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 66,
+        "end_line": 102
+      },
+      "content": "def separability_matrix(transform):\n    \"\"\"\n    Compute the correlation between outputs and inputs.\n\n    Parameters\n    ----------\n    transform : `~astropy.modeling.core.Model`\n        A (compound) model.\n\n    Returns\n    -------\n    separable_matrix : ndarray\n        A boolean correlation matrix of shape (n_outputs, n_inputs).\n        Indicates the dependence of outputs on inputs. For completely\n        independent outputs, the diagonal elements are True and\n        off-diagonal elements are False.\n\n    Examples\n    --------\n    >>> from astropy.modeling.models import Shift, Scale, Rotation2D, Polynomial2D\n    >>> separability_matrix(Shift(1) & Shift(2) | Scale(1) & Scale(2))\n        array([[ True, False], [False,  True]]...)\n    >>> separability_matrix(Shift(1) & Shift(2) | Rotation2D(2))\n        array([[ True,  True], [ True,  True]]...)\n    >>> separability_matrix(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]) | \\\n        Polynomial2D(1) & Polynomial2D(2))\n        array([[ True,  True], [ True,  True]]...)\n    >>> separability_matrix(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]))\n        array([[ True, False], [False,  True], [ True, False], [False,  True]]...)\n\n    \"\"\"\n    if transform.n_inputs == 1 and transform.n_outputs > 1:\n        return np.ones((transform.n_outputs, transform.n_inputs),\n                       dtype=np.bool_)\n    separable_matrix = _separable(transform)\n    separable_matrix = np.where(separable_matrix != 0, True, False)\n    return separable_matrix",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.659573
+    },
+    {
+      "chunk_id": "astropy/modeling/core.py:501-2793",
+      "citation": {
+        "path": "astropy/modeling/core.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 501,
+        "end_line": 2793
+      },
+      "content": "class Model(metaclass=_ModelMeta):\n    \"\"\"\n    Base class for all models.\n\n    This is an abstract class and should not be instantiated directly.\n\n    The following initialization arguments apply to the majority of Model\n    subclasses by default (exceptions include specialized utility models\n    like `~astropy.modeling.mappings.Mapping`).  Parametric models take all\n    their parameters as arguments, followed by any of the following optional\n    keyword arguments:\n\n    Parameters\n    ----------\n    name : str, optional\n        A human-friendly name associated with this model instance\n        (particularly useful for identifying the individual components of a\n        compound model).\n\n    meta : dict, optional\n        An optional dict of user-defined metadata to attach to this model.\n        How this is used and interpreted is up to the user or individual use\n        case.\n\n    n_models : int, optional\n        If given an integer greater than 1, a *model set* is instantiated\n        instead of a single model.  This affects how the parameter arguments\n        are interpreted.  In this case each parameter must be given as a list\n        or array--elements of this array are taken along the first axis (or\n        ``model_set_axis`` if specified), such that the Nth element is the\n        value of that parameter for the Nth model in the set.\n\n        See the section on model sets in the documentation for more details.\n\n    model_set_axis : int, optional\n        This argument only applies when creating a model set (i.e. ``n_models >\n        1``).  It changes how parameter values are interpreted.  Normally the\n        first axis of each input parameter array (properly the 0th axis) is\n        taken as the axis corresponding to the model sets.  However, any axis\n        of an input array may be taken as this \"model set axis\".  This accepts\n        negative integers as well--for example use ``model_set_axis=-1`` if the\n        last (most rapidly changing) axis should be associated with the model\n        sets. Also, ``model_set_axis=False`` can be used to tell that a given\n        input should be used to evaluate all the models in the model set.\n\n    fixed : dict, optional\n        Dictionary ``{parameter_name: bool}`` setting the fixed constraint\n        for one or more parameters.  `True` means the parameter is held fixed\n        during fitting and is prevented from updates once an instance of the\n        model has been created.\n\n        Alternatively the `~astropy.modeling.Parameter.fixed` property of a\n        parameter may be used to lock or unlock individual parameters.\n\n    tied : dict, optional\n        Dictionary ``{parameter_name: callable}`` of parameters which are\n        linked to some other parameter. The dictionary values are callables\n        providing the linking relationship.\n\n        Alternatively the `~astropy.modeling.Parameter.tied` property of a\n        parameter may be used to set the ``tied`` constraint on individual\n        parameters.\n\n    bounds : dict, optional\n        A dictionary ``{parameter_name: value}`` of lower and upper bounds of\n        parameters. Keys are parameter names. Values are a list or a tuple\n        of length 2 giving the desired range for the parameter.\n\n        Alternatively the `~astropy.modeling.Parameter.min` and\n        `~astropy.modeling.Parameter.max` or\n        ~astropy.modeling.Parameter.bounds` properties of a parameter may be\n        used to set bounds on individual parameters.\n\n    eqcons : list, optional\n        List of functions of length n such that ``eqcons[j](x0, *args) == 0.0``\n        in a successfully optimized problem.\n\n    ineqcons : list, optional\n        List of functions of length n such that ``ieqcons[j](x0, *args) >=\n        0.0`` is a successfully optimized problem.\n\n    Examples\n    --------\n    >>> from astropy.modeling import models\n    >>> def tie_center(model):\n    ...         mean = 50 * model.stddev\n    ...         return mean\n    >>> tied_parameters = {'mean': tie_center}\n\n    Specify that ``'mean'`` is a tied parameter in one of two ways:\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3,\n    ...                        tied=tied_parameters)\n\n    or\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3)\n    >>> g1.mean.tied\n    False\n    >>> g1.mean.tied = tie_center\n    >>> g1.mean.tied\n    <function tie_center at 0x...>\n\n    Fixed parameters:\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3,\n    ...                        fixed={'stddev': True})\n    >>> g1.stddev.fixed\n    True\n\n    or\n\n    >>> g1 = models.Gaussian1D(amplitude=10, mean=5, stddev=.3)\n    >>> g1.stddev.fixed\n    False\n    >>> g1.stddev.fixed = True\n    >>> g1.stddev.fixed\n    True\n    \"\"\"\n\n    parameter_constraints = Parameter.constraints\n    \"\"\"\n    Primarily for informational purposes, these are the types of constraints\n    that can be set on a model's parameters.\n    \"\"\"\n\n    model_constraints = ('eqcons', 'ineqcons')\n    \"\"\"\n    Primarily for informational purposes, these are the types of constraints\n    that constrain model evaluation.\n    \"\"\"\n\n    param_names = ()\n    \"\"\"\n    Names of the parameters that describe models of this type.\n\n    The parameters in this tuple are in the same order they should be passed in\n    when initializing a model of a specific type.  Some types of models, such\n    as polynomial models, have a different number of parameters depending on\n    some other property of the model, such as the degree.\n\n    When defining a custom model class the value of this attribute is\n    automatically set by the `~astropy.modeling.Parameter` attributes defined\n    in the class body.\n    \"\"\"\n\n    n_inputs = 0\n    \"\"\"The number of inputs.\"\"\"\n    n_outputs = 0\n    \"\"\" The number of outputs.\"\"\"\n\n    standard_broadcasting = True\n    fittable = False\n    linear = True\n    _separable = None\n    \"\"\" A boolean flag to indicate whether a model is separable.\"\"\"\n    meta = metadata.MetaData()\n    \"\"\"A dict-like object to store optional information.\"\"\"\n\n    # By default models either use their own inverse property or have no\n    # inverse at all, but users may also assign a custom inverse to a model,\n    # optionally; in that case it is of course up to the user to determine\n    # whether their inverse is *actually* an inverse to the model they assign\n    # it to.\n    _inverse = None\n    _user_inverse = None\n\n    _bounding_box = None\n    _user_bounding_box = None\n\n    _has_inverse_bounding_box = False\n\n    # Default n_models attribute, so that __len__ is still defined even when a\n    # model hasn't completed initialization yet\n    _n_models = 1\n\n    # New classes can set this as a boolean value.\n    # It is converted to a dictionary mapping input name to a boolean value.\n    _input_units_strict = False\n\n    # Allow dimensionless input (and corresponding output). If this is True,\n    # input values to evaluate will gain the units specified in input_units. If\n    # this is a dictionary then it should map input name to a bool to allow\n    # dimensionless numbers for that input.\n    # Only has an effect if input_units is defined.\n    _input_units_allow_dimensionless = False\n\n    # Default equivalencies to apply to input values. If set, this should be a\n    # dictionary where each key is a string that corresponds to one of the\n    # model inputs. Only has an effect if input_units is defined.\n    input_units_equivalencies = None\n\n    # Covariance matrix can be set by fitter if available.\n    # If cov_matrix is available, then std will set as well\n    _cov_matrix = None\n    _stds = None\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    # *** Properties ***\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    # *** Public methods ***\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n        # Finally validate all the parameters; we do this last so that\n        # validators that depend on one of the other parameters' values will\n        # work\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.643069
+    },
+    {
+      "chunk_id": "astropy/modeling/separable.py:27-63",
+      "citation": {
+        "path": "astropy/modeling/separable.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 27,
+        "end_line": 63
+      },
+      "content": "def is_separable(transform):\n    \"\"\"\n    A separability test for the outputs of a transform.\n\n    Parameters\n    ----------\n    transform : `~astropy.modeling.core.Model`\n        A (compound) model.\n\n    Returns\n    -------\n    is_separable : ndarray\n        A boolean array with size ``transform.n_outputs`` where\n        each element indicates whether the output is independent\n        and the result of a separable transform.\n\n    Examples\n    --------\n    >>> from astropy.modeling.models import Shift, Scale, Rotation2D, Polynomial2D\n    >>> is_separable(Shift(1) & Shift(2) | Scale(1) & Scale(2))\n        array([ True,  True]...)\n    >>> is_separable(Shift(1) & Shift(2) | Rotation2D(2))\n        array([False, False]...)\n    >>> is_separable(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]) | \\\n        Polynomial2D(1) & Polynomial2D(2))\n        array([False, False]...)\n    >>> is_separable(Shift(1) & Shift(2) | Mapping([0, 1, 0, 1]))\n        array([ True,  True,  True,  True]...)\n\n    \"\"\"\n    if transform.n_inputs == 1 and transform.n_outputs > 1:\n        is_separable = np.array([False] * transform.n_outputs).T\n        return is_separable\n    separable_matrix = _separable(transform)\n    is_separable = separable_matrix.sum(1)\n    is_separable = np.where(is_separable != 1, False, True)\n    return is_separable",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.538806
+    },
+    {
+      "chunk_id": "astropy/modeling/functional_models.py:1327-1381",
+      "citation": {
+        "path": "astropy/modeling/functional_models.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1327,
+        "end_line": 1381
+      },
+      "content": "class Linear1D(Fittable1DModel):\n    \"\"\"\n    One dimensional Line model.\n\n    Parameters\n    ----------\n    slope : float\n        Slope of the straight line\n\n    intercept : float\n        Intercept of the straight line\n\n    See Also\n    --------\n    Const1D\n\n    Notes\n    -----\n    Model formula:\n\n        .. math:: f(x) = a x + b\n    \"\"\"\n    slope = Parameter(default=1, description=\"Slope of the straight line\")\n    intercept = Parameter(default=0, description=\"Intercept of the straight line\")\n    linear = True\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.513841
+    },
+    {
+      "chunk_id": "astropy/modeling/separable.py:290-311",
+      "citation": {
+        "path": "astropy/modeling/separable.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 290,
+        "end_line": 311
+      },
+      "content": "def _separable(transform):\n    \"\"\"\n    Calculate the separability of outputs.\n\n    Parameters\n    ----------\n    transform : `astropy.modeling.Model`\n        A transform (usually a compound model).\n\n    Returns :\n    is_separable : ndarray of dtype np.bool\n        An array of shape (transform.n_outputs,) of boolean type\n        Each element represents the separablity of the corresponding output.\n    \"\"\"\n    if (transform_matrix := transform._calculate_separability_matrix()) is not NotImplemented:\n        return transform_matrix\n    elif isinstance(transform, CompoundModel):\n        sepleft = _separable(transform.left)\n        sepright = _separable(transform.right)\n        return _operators[transform.op](sepleft, sepright)\n    elif isinstance(transform, Model):\n        return _coord_matrix(transform, 'left', transform.n_outputs)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.434349
+    },
+    {
+      "chunk_id": "astropy/modeling/core.py:808-815",
+      "citation": {
+        "path": "astropy/modeling/core.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 808,
+        "end_line": 815
+      },
+      "content": "def _calculate_separability_matrix(self):\n    \"\"\"\n    This is a hook which customises the behavior of modeling.separable.\n\n    This allows complex subclasses to customise the separability matrix.\n    If it returns `NotImplemented` the default behavior is used.\n    \"\"\"\n    return NotImplemented",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.395921
+    },
+    {
+      "chunk_id": "astropy/modeling/separable.py:171-216",
+      "citation": {
+        "path": "astropy/modeling/separable.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 171,
+        "end_line": 216
+      },
+      "content": "def _coord_matrix(model, pos, noutp):\n    \"\"\"\n    Create an array representing inputs and outputs of a simple model.\n\n    The array has a shape (noutp, model.n_inputs).\n\n    Parameters\n    ----------\n    model : `astropy.modeling.Model`\n        model\n    pos : str\n        Position of this model in the expression tree.\n        One of ['left', 'right'].\n    noutp : int\n        Number of outputs of the compound model of which the input model\n        is a left or right child.\n\n    \"\"\"\n    if isinstance(model, Mapping):\n        axes = []\n        for i in model.mapping:\n            axis = np.zeros((model.n_inputs,))\n            axis[i] = 1\n            axes.append(axis)\n        m = np.vstack(axes)\n        mat = np.zeros((noutp, model.n_inputs))\n        if pos == 'left':\n            mat[: model.n_outputs, :model.n_inputs] = m\n        else:\n            mat[-model.n_outputs:, -model.n_inputs:] = m\n        return mat\n    if not model.separable:\n        # this does not work for more than 2 coordinates\n        mat = np.zeros((noutp, model.n_inputs))\n        if pos == 'left':\n            mat[:model.n_outputs, : model.n_inputs] = 1\n        else:\n            mat[-model.n_outputs:, -model.n_inputs:] = 1\n    else:\n        mat = np.zeros((noutp, model.n_inputs))\n\n        for i in range(model.n_inputs):\n            mat[i, i] = 1\n        if pos == 'right':\n            mat = np.roll(mat, (noutp - model.n_outputs))\n    return mat",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.390814
+    },
+    {
+      "chunk_id": "astropy/modeling/core.py:2796-2814",
+      "citation": {
+        "path": "astropy/modeling/core.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 2796,
+        "end_line": 2814
+      },
+      "content": "class FittableModel(Model):\n    \"\"\"\n    Base class for models that can be fitted using the built-in fitting\n    algorithms.\n    \"\"\"\n\n    linear = False\n    # derivative with respect to parameters\n    fit_deriv = None\n    \"\"\"\n    Function (similar to the model's `~Model.evaluate`) to compute the\n    derivatives of the model with respect to its parameters, for use by fitting\n    algorithms.  In other words, this computes the Jacobian matrix with respect\n    to the model's parameters.\n    \"\"\"\n    # Flag that indicates if the model derivatives with respect to parameters\n    # are given in columns or rows\n    col_fit_deriv = True\n    fittable = True",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.369801
+    },
+    {
+      "chunk_id": "astropy/modeling/tabular.py:263-320",
+      "citation": {
+        "path": "astropy/modeling/tabular.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 263,
+        "end_line": 320
+      },
+      "content": "def tabular_model(dim, name=None):\n    \"\"\"\n    Make a ``Tabular`` model where ``n_inputs`` is\n    based on the dimension of the lookup_table.\n\n    This model has to be further initialized and when evaluated\n    returns the interpolated values.\n\n    Parameters\n    ----------\n    dim : int\n        Dimensions of the lookup table.\n    name : str\n        Name for the class.\n\n    Examples\n    --------\n    >>> table = np.array([[3., 0., 0.],\n    ...                   [0., 2., 0.],\n    ...                   [0., 0., 0.]])\n\n    >>> tab = tabular_model(2, name='Tabular2D')\n    >>> print(tab)\n    <class 'astropy.modeling.tabular.Tabular2D'>\n    Name: Tabular2D\n    N_inputs: 2\n    N_outputs: 1\n\n    >>> points = ([1, 2, 3], [1, 2, 3])\n\n    Setting fill_value to None, allows extrapolation.\n    >>> m = tab(points, lookup_table=table, name='my_table',\n    ...         bounds_error=False, fill_value=None, method='nearest')\n\n    >>> xinterp = [0, 1, 1.5, 2.72, 3.14]\n    >>> m(xinterp, xinterp)  # doctest: +FLOAT_CMP\n    array([3., 3., 3., 0., 0.])\n\n    \"\"\"\n    if dim < 1:\n        raise ValueError('Lookup table must have at least one dimension.')\n\n    table = np.zeros([2] * dim)\n    members = {'lookup_table': table, 'n_inputs': dim, 'n_outputs': 1}\n\n    if dim == 1:\n        members['_separable'] = True\n    else:\n        members['_separable'] = False\n\n    if name is None:\n        model_id = _Tabular._id\n        _Tabular._id += 1\n        name = f'Tabular{model_id}'\n\n    model_class = type(str(name), (_Tabular,), members)\n    model_class.__module__ = 'astropy.modeling.tabular'\n    return model_class",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.332886
+    },
+    {
+      "chunk_id": "astropy/modeling/fitting.py:372-379",
+      "citation": {
+        "path": "astropy/modeling/fitting.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 372,
+        "end_line": 379
+      },
+      "content": "@staticmethod\ndef _is_invertible(m):\n    \"\"\"Check if inverse of matrix can be obtained.\"\"\"\n    if m.shape[0] != m.shape[1]:\n        return False\n    if np.linalg.matrix_rank(m) < m.shape[0]:\n        return False\n    return True",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.305152
+    },
+    {
+      "chunk_id": "astropy/modeling/tests/test_models.py:1072-1073",
+      "citation": {
+        "path": "astropy/modeling/tests/test_models.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1072,
+        "end_line": 1073
+      },
+      "content": "def _calculate_separability_matrix(self):\n    return np.array([[0, ]])",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.304093
+    },
+    {
+      "chunk_id": "astropy/modeling/core.py:2663-2722",
+      "citation": {
+        "path": "astropy/modeling/core.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 2663,
+        "end_line": 2722
+      },
+      "content": "def _param_sets(self, raw=False, units=False):\n    \"\"\"\n    Implementation of the Model.param_sets property.\n\n    This internal implementation has a ``raw`` argument which controls\n    whether or not to return the raw parameter values (i.e. the values that\n    are actually stored in the ._parameters array, as opposed to the values\n    displayed to users.  In most cases these are one in the same but there\n    are currently a few exceptions.\n\n    Note: This is notably an overcomplicated device and may be removed\n    entirely in the near future.\n    \"\"\"\n\n    values = []\n    shapes = []\n    for name in self.param_names:\n        param = getattr(self, name)\n\n        if raw and param._setter:\n            value = param._internal_value\n        else:\n            value = param.value\n\n        broadcast_shape = self._param_metrics[name].get('broadcast_shape')\n        if broadcast_shape is not None:\n            value = value.reshape(broadcast_shape)\n\n        shapes.append(np.shape(value))\n\n        if len(self) == 1:\n            # Add a single param set axis to the parameter's value (thus\n            # converting scalars to shape (1,) array values) for\n            # consistency\n            value = np.array([value])\n\n        if units:\n            if raw and param.internal_unit is not None:\n                unit = param.internal_unit\n            else:\n                unit = param.unit\n            if unit is not None:\n                value = Quantity(value, unit)\n\n        values.append(value)\n\n    if len(set(shapes)) != 1 or units:\n        # If the parameters are not all the same shape, converting to an\n        # array is going to produce an object array\n        # However the way Numpy creates object arrays is tricky in that it\n        # will recurse into array objects in the list and break them up\n        # into separate objects.  Doing things this way ensures a 1-D\n        # object array the elements of which are the individual parameter\n        # arrays.  There's not much reason to do this over returning a list\n        # except for consistency\n        psets = np.empty(len(values), dtype=object)\n        psets[:] = values\n        return psets\n\n    return np.array(values)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.291721
+    },
+    {
+      "chunk_id": "astropy/modeling/tests/test_separable.py:138-150",
+      "citation": {
+        "path": "astropy/modeling/tests/test_separable.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 138,
+        "end_line": 150
+      },
+      "content": "def test_custom_model_separable():\n    @custom_model\n    def model_a(x):\n        return x\n\n    assert model_a().separable\n\n    @custom_model\n    def model_c(x, y):\n        return x + y\n\n    assert not model_c().separable\n    assert np.all(separability_matrix(model_c()) == [True, True])",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.287527
+    },
+    {
+      "chunk_id": "astropy/modeling/tests/test_models.py:1076-1081",
+      "citation": {
+        "path": "astropy/modeling/tests/test_models.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 1076,
+        "end_line": 1081
+      },
+      "content": "def test_custom_separability_matrix():\n    original = separability_matrix(ModelDefault(slope=1, intercept=2))\n    assert original.all()\n\n    custom = separability_matrix(ModelCustom(slope=1, intercept=2))\n    assert not custom.any()",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.280625
+    },
+    {
+      "chunk_id": "astropy/coordinates/matrix_utilities.py:41-101",
+      "citation": {
+        "path": "astropy/coordinates/matrix_utilities.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 41,
+        "end_line": 101
+      },
+      "content": "def rotation_matrix(angle, axis='z', unit=None):\n    \"\"\"\n    Generate matrices for rotation by some angle around some axis.\n\n    Parameters\n    ----------\n    angle : angle-like\n        The amount of rotation the matrices should represent.  Can be an array.\n    axis : str or array-like\n        Either ``'x'``, ``'y'``, ``'z'``, or a (x,y,z) specifying the axis to\n        rotate about. If ``'x'``, ``'y'``, or ``'z'``, the rotation sense is\n        counterclockwise looking down the + axis (e.g. positive rotations obey\n        left-hand-rule).  If given as an array, the last dimension should be 3;\n        it will be broadcast against ``angle``.\n    unit : unit-like, optional\n        If ``angle`` does not have associated units, they are in this\n        unit.  If neither are provided, it is assumed to be degrees.\n\n    Returns\n    -------\n    rmat : `numpy.matrix`\n        A unitary rotation matrix.\n    \"\"\"\n    if isinstance(angle, u.Quantity):\n        angle = angle.to_value(u.radian)\n    else:\n        if unit is None:\n            angle = np.deg2rad(angle)\n        else:\n            angle = u.Unit(unit).to(u.rad, angle)\n\n    s = np.sin(angle)\n    c = np.cos(angle)\n\n    # use optimized implementations for x/y/z\n    try:\n        i = 'xyz'.index(axis)\n    except TypeError:\n        axis = np.asarray(axis)\n        axis = axis / np.sqrt((axis * axis).sum(axis=-1, keepdims=True))\n        R = (axis[..., np.newaxis] * axis[..., np.newaxis, :] *\n             (1. - c)[..., np.newaxis, np.newaxis])\n\n        for i in range(0, 3):\n            R[..., i, i] += c\n            a1 = (i + 1) % 3\n            a2 = (i + 2) % 3\n            R[..., a1, a2] += axis[..., i] * s\n            R[..., a2, a1] -= axis[..., i] * s\n\n    else:\n        a1 = (i + 1) % 3\n        a2 = (i + 2) % 3\n        R = np.zeros(getattr(angle, 'shape', ()) + (3, 3))\n        R[..., i, i] = 1.\n        R[..., a1, a1] = c\n        R[..., a1, a2] = s\n        R[..., a2, a1] = -s\n        R[..., a2, a2] = c\n\n    return R",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.273373
+    },
+    {
+      "chunk_id": "astropy/modeling/tests/test_separable.py:132-135",
+      "citation": {
+        "path": "astropy/modeling/tests/test_separable.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 132,
+        "end_line": 135
+      },
+      "content": "@pytest.mark.parametrize(('compound_model', 'result'), compound_models.values())\ndef test_separable(compound_model, result):\n    assert_allclose(is_separable(compound_model), result[0])\n    assert_allclose(separability_matrix(compound_model), result[1])",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.267306
+    },
+    {
+      "chunk_id": "astropy/modeling/tests/test_core.py:198-228",
+      "citation": {
+        "path": "astropy/modeling/tests/test_core.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 198,
+        "end_line": 228
+      },
+      "content": "def test_custom_model_n_outputs():\n    \"\"\"\n    Test creating a custom_model which has more than one output, which\n    requires special handling.\n        Demonstrates issue #11791's ``n_outputs`` error has been solved\n    \"\"\"\n\n    @custom_model\n    def model(x, y, n_outputs=2):\n        return x+1, y+1\n\n    m = model()\n    assert not isinstance(m.n_outputs, Parameter)\n    assert isinstance(m.n_outputs, int)\n    assert m.n_outputs == 2\n    assert m.outputs == ('x0', 'x1')\n    assert (separability_matrix(m) == [[True, True],\n                                       [True, True]]).all()\n\n    @custom_model\n    def model(x, y, z, n_outputs=3):\n        return x+1, y+1, z+1\n\n    m = model()\n    assert not isinstance(m.n_outputs, Parameter)\n    assert isinstance(m.n_outputs, int)\n    assert m.n_outputs == 3\n    assert m.outputs == ('x0', 'x1', 'x2')\n    assert (separability_matrix(m) == [[True, True, True],\n                                       [True, True, True],\n                                       [True, True, True]]).all()",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.259444
+    },
+    {
+      "chunk_id": "astropy/modeling/math_functions.py:47-71",
+      "citation": {
+        "path": "astropy/modeling/math_functions.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 47,
+        "end_line": 71
+      },
+      "content": "def ufunc_model(name):\n    \"\"\" Define a Model from a Numpy ufunc name.\"\"\"\n    ufunc = getattr(np, name)\n    nin = ufunc.nin\n    nout = ufunc.nout\n    if nin == 1:\n        separable = True\n\n        def evaluate(self, x):\n            return self.func(x)\n    else:\n        separable = False\n\n        def evaluate(self, x, y):\n            return self.func(x, y)\n\n    klass_name = _make_class_name(name)\n\n    members = {'n_inputs': nin, 'n_outputs': nout, 'func': ufunc,\n               'linear': False, 'fittable': False, '_separable': separable,\n               '_is_dynamic': True, 'evaluate': evaluate}\n\n    klass = type(str(klass_name), (_NPUfuncModel,), members)\n    klass.__module__ = 'astropy.modeling.math_functions'\n    return klass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.259249
+    },
+    {
+      "chunk_id": "astropy/nddata/bitmask.py:466-699",
+      "citation": {
+        "path": "astropy/nddata/bitmask.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 466,
+        "end_line": 699
+      },
+      "content": "def bitfield_to_boolean_mask(bitfield, ignore_flags=0, flip_bits=None,\n                             good_mask_value=False, dtype=np.bool_,\n                             flag_name_map=None):\n    \"\"\"\n    bitfield_to_boolean_mask(bitfield, ignore_flags=None, flip_bits=None, \\\ngood_mask_value=False, dtype=numpy.bool_)\n    Converts an array of bit fields to a boolean (or integer) mask array\n    according to a bit mask constructed from the supplied bit flags (see\n    ``ignore_flags`` parameter).\n\n    This function is particularly useful to convert data quality arrays to\n    boolean masks with selective filtering of DQ flags.\n\n    Parameters\n    ----------\n    bitfield : ndarray\n        An array of bit flags. By default, values different from zero are\n        interpreted as \"bad\" values and values equal to zero are considered\n        as \"good\" values. However, see ``ignore_flags`` parameter on how to\n        selectively ignore some bits in the ``bitfield`` array data.\n\n    ignore_flags : int, str, list, None (default = 0)\n        An integer bit mask, `None`, a Python list of bit flags, a comma-,\n        or ``'|'``-separated, ``'+'``-separated string list of integer\n        bit flags or mnemonic flag names that indicate what bits in the input\n        ``bitfield`` should be *ignored* (i.e., zeroed), or `None`.\n\n        .. note::\n            When ``bit_flags`` is a list of flag names, the ``flag_name_map``\n            parameter must be provided.\n\n        | Setting ``ignore_flags`` to `None` effectively will make\n          `bitfield_to_boolean_mask` interpret all ``bitfield`` elements\n          as \"good\" regardless of their value.\n\n        | When ``ignore_flags`` argument is an integer bit mask, it will be\n          combined using bitwise-NOT and bitwise-AND with each element of the\n          input ``bitfield`` array (``~ignore_flags & bitfield``). If the\n          resultant bitfield element is non-zero, that element will be\n          interpreted as a \"bad\" in the output boolean mask and it will be\n          interpreted as \"good\" otherwise. ``flip_bits`` parameter may be used\n          to flip the bits (``bitwise-NOT``) of the bit mask thus effectively\n          changing the meaning of the ``ignore_flags`` parameter from \"ignore\"\n          to \"use only\" these flags.\n\n        .. note::\n\n            Setting ``ignore_flags`` to 0 effectively will assume that all\n            non-zero elements in the input ``bitfield`` array are to be\n            interpreted as \"bad\".\n\n        | When ``ignore_flags`` argument is a Python list of integer bit\n          flags, these flags are added together to create an integer bit mask.\n          Each item in the list must be a flag, i.e., an integer that is an\n          integer power of 2. In order to flip the bits of the resultant\n          bit mask, use ``flip_bits`` parameter.\n\n        | Alternatively, ``ignore_flags`` may be a string of comma- or\n          ``'+'``(or ``'|'``)-separated list of integer bit flags that should\n          be added (bitwise OR) together to create an integer bit mask.\n          For example, both ``'4,8'``, ``'4|8'``, and ``'4+8'`` are equivalent\n          and indicate that bit flags 4 and 8 in the input ``bitfield``\n          array should be ignored when generating boolean mask.\n\n        .. note::\n\n            ``'None'``, ``'INDEF'``, and empty (or all white space) strings\n            are special values of string ``ignore_flags`` that are\n            interpreted as `None`.\n\n        .. note::\n\n            Each item in the list must be a flag, i.e., an integer that is an\n            integer power of 2. In addition, for convenience, an arbitrary\n            **single** integer is allowed and it will be interpreted as an\n            integer bit mask. For example, instead of ``'4,8'`` one could\n            simply provide string ``'12'``.\n\n        .. note::\n            Only one flag separator is supported at a time. ``ignore_flags``\n            string should not mix ``','``, ``'+'``, and ``'|'`` separators.\n\n        .. note::\n\n            When ``ignore_flags`` is a `str` and when it is prepended with\n            '~', then the meaning of ``ignore_flags`` parameters will be\n            reversed: now it will be interpreted as a list of bit flags to be\n            *used* (or *not ignored*) when deciding which elements of the\n            input ``bitfield`` array are \"bad\". Following this convention,\n            an ``ignore_flags`` string value of ``'~0'`` would be equivalent\n            to setting ``ignore_flags=None``.\n\n        .. warning::\n\n            Because prepending '~' to a string ``ignore_flags`` is equivalent\n            to setting ``flip_bits`` to `True`, ``flip_bits`` cannot be used\n            with string ``ignore_flags`` and it must be set to `None`.\n\n    flip_bits : bool, None (default = None)\n        Specifies whether or not to invert the bits of the bit mask either\n        supplied directly through ``ignore_flags`` parameter or built from the\n        bit flags passed through ``ignore_flags`` (only when bit flags are\n        passed as Python lists of integer bit flags). Occasionally, it may be\n        useful to *consider only specific bit flags* in the ``bitfield``\n        array when creating a boolean mask as opposed to *ignoring* specific\n        bit flags as ``ignore_flags`` behaves by default. This can be achieved\n        by inverting/flipping the bits of the bit mask created from\n        ``ignore_flags`` flags which effectively changes the meaning of the\n        ``ignore_flags`` parameter from \"ignore\" to \"use only\" these flags.\n        Setting ``flip_bits`` to `None` means that no bit flipping will be\n        performed. Bit flipping for string lists of bit flags must be\n        specified by prepending '~' to string bit flag lists\n        (see documentation for ``ignore_flags`` for more details).\n\n        .. warning::\n            This parameter can be set to either `True` or `False` **ONLY** when\n            ``ignore_flags`` is either an integer bit mask or a Python\n            list of integer bit flags. When ``ignore_flags`` is either\n            `None` or a string list of flags, ``flip_bits`` **MUST** be set\n            to `None`.\n\n    good_mask_value : int, bool (default = False)\n        This parameter is used to derive the values that will be assigned to\n        the elements in the output boolean mask array that correspond to the\n        \"good\" bit fields (that are 0 after zeroing bits specified by\n        ``ignore_flags``) in the input ``bitfield`` array. When\n        ``good_mask_value`` is non-zero or ``numpy.True_`` then values in the\n        output boolean mask array corresponding to \"good\" bit fields in\n        ``bitfield`` will be ``numpy.True_`` (if ``dtype`` is ``numpy.bool_``)\n        or 1 (if ``dtype`` is of numerical type) and values of corresponding\n        to \"bad\" flags will be ``numpy.False_`` (or 0). When\n        ``good_mask_value`` is zero or ``numpy.False_`` then the values\n        in the output boolean mask array corresponding to \"good\" bit fields\n        in ``bitfield`` will be ``numpy.False_`` (if ``dtype`` is\n        ``numpy.bool_``) or 0 (if ``dtype`` is of numerical type) and values\n        of corresponding to \"bad\" flags will be ``numpy.True_`` (or 1).\n\n    dtype : data-type (default = ``numpy.bool_``)\n        The desired data-type for the output binary mask array.\n\n    flag_name_map : BitFlagNameMap\n         A `BitFlagNameMap` object that provides mapping from mnemonic\n         bit flag names to integer bit values in order to translate mnemonic\n         flags to numeric values when ``bit_flags`` that are comma- or\n         '+'-separated list of menmonic bit flag names.\n\n    Returns\n    -------\n    mask : ndarray\n        Returns an array of the same dimensionality as the input ``bitfield``\n        array whose elements can have two possible values,\n        e.g., ``numpy.True_`` or ``numpy.False_`` (or 1 or 0 for integer\n        ``dtype``) according to values of to the input ``bitfield`` elements,\n        ``ignore_flags`` parameter, and the ``good_mask_value`` parameter.\n\n    Examples\n    --------\n\n        >>> from astropy.nddata import bitmask\n        >>> import numpy as np\n        >>> dqarr = np.asarray([[0, 0, 1, 2, 0, 8, 12, 0],\n        ...                     [10, 4, 0, 0, 0, 16, 6, 0]])\n        >>> flag_map = bitmask.extend_bit_flag_map(\n        ...     'ST_DQ', CR=2, CLOUDY=4, RAINY=8, HOT=16, DEAD=32\n        ... )\n        >>> bitmask.bitfield_to_boolean_mask(dqarr, ignore_flags=0,\n        ...                                  dtype=int)\n        array([[0, 0, 1, 1, 0, 1, 1, 0],\n               [1, 1, 0, 0, 0, 1, 1, 0]])\n        >>> bitmask.bitfield_to_boolean_mask(dqarr, ignore_flags=0,\n        ...                                  dtype=bool)\n        array([[False, False,  True,  True, False,  True,  True, False],\n               [ True,  True, False, False, False,  True,  True, False]]...)\n        >>> bitmask.bitfield_to_boolean_mask(dqarr, ignore_flags=6,\n        ...                                  good_mask_value=0, dtype=int)\n        array([[0, 0, 1, 0, 0, 1, 1, 0],\n               [1, 0, 0, 0, 0, 1, 0, 0]])\n        >>> bitmask.bitfield_to_boolean_mask(dqarr, ignore_flags=~6,\n        ...                                  good_mask_value=0, dtype=int)\n        array([[0, 0, 0, 1, 0, 0, 1, 0],\n               [1, 1, 0, 0, 0, 0, 1, 0]])\n        >>> bitmask.bitfield_to_boolean_mask(dqarr, ignore_flags=6, dtype=int,\n        ...                                  flip_bits=True, good_mask_value=0)\n        array([[0, 0, 0, 1, 0, 0, 1, 0],\n               [1, 1, 0, 0, 0, 0, 1, 0]])\n        >>> bitmask.bitfield_to_boolean_mask(dqarr, ignore_flags='~(2+4)',\n        ...                                  good_mask_value=0, dtype=int)\n        array([[0, 0, 0, 1, 0, 0, 1, 0],\n               [1, 1, 0, 0, 0, 0, 1, 0]])\n        >>> bitmask.bitfield_to_boolean_mask(dqarr, ignore_flags=[2, 4],\n        ...                                  flip_bits=True, good_mask_value=0,\n        ...                                  dtype=int)\n        array([[0, 0, 0, 1, 0, 0, 1, 0],\n               [1, 1, 0, 0, 0, 0, 1, 0]])\n        >>> bitmask.bitfield_to_boolean_mask(dqarr, ignore_flags='~(CR,CLOUDY)',\n        ...                                  good_mask_value=0, dtype=int,\n        ...                                  flag_name_map=flag_map)\n        array([[0, 0, 0, 1, 0, 0, 1, 0],\n               [1, 1, 0, 0, 0, 0, 1, 0]])\n        >>> bitmask.bitfield_to_boolean_mask(dqarr, ignore_flags='~(CR+CLOUDY)',\n        ...                                  good_mask_value=0, dtype=int,\n        ...                                  flag_name_map=flag_map)\n        array([[0, 0, 0, 1, 0, 0, 1, 0],\n               [1, 1, 0, 0, 0, 0, 1, 0]])\n\n    \"\"\"\n    bitfield = np.asarray(bitfield)\n    if not np.issubdtype(bitfield.dtype, np.integer):\n        raise TypeError(\"Input bitfield array must be of integer type.\")\n\n    ignore_mask = interpret_bit_flags(ignore_flags, flip_bits=flip_bits,\n                                      flag_name_map=flag_name_map)\n\n    if ignore_mask is None:\n        if good_mask_value:\n            mask = np.ones_like(bitfield, dtype=dtype)\n        else:\n            mask = np.zeros_like(bitfield, dtype=dtype)\n        return mask\n\n    # filter out bits beyond the maximum supported by the data type:\n    ignore_mask = ignore_mask & _SUPPORTED_FLAGS\n\n    # invert the \"ignore\" mask:\n    ignore_mask = np.bitwise_not(ignore_mask, dtype=bitfield.dtype.type,\n                                 casting='unsafe')\n\n    mask = np.empty_like(bitfield, dtype=np.bool_)\n    np.bitwise_and(bitfield, ignore_mask, out=mask, casting='unsafe')\n\n    if good_mask_value:\n        np.logical_not(mask, out=mask)\n\n    return mask.astype(dtype=dtype, subok=False, copy=False)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.255409
+    },
+    {
+      "chunk_id": "astropy/wcs/utils.py:735-772",
+      "citation": {
+        "path": "astropy/wcs/utils.py",
+        "commit": "d16bfe05a744909de4b27f5875fe0d4ed41ce607",
+        "start_line": 735,
+        "end_line": 772
+      },
+      "content": "def _split_matrix(matrix):\n    \"\"\"\n    Given an axis correlation matrix from a WCS object, return information about\n    the individual WCS that can be split out.\n\n    The output is a list of tuples, where each tuple contains a list of\n    pixel dimensions and a list of world dimensions that can be extracted to\n    form a new WCS. For example, in the case of a spectral cube with the first\n    two world coordinates being the celestial coordinates and the third\n    coordinate being an uncorrelated spectral axis, the matrix would look like::\n\n        array([[ True,  True, False],\n               [ True,  True, False],\n               [False, False,  True]])\n\n    and this function will return ``[([0, 1], [0, 1]), ([2], [2])]``.\n    \"\"\"\n\n    pixel_used = []\n\n    split_info = []\n\n    for ipix in range(matrix.shape[1]):\n        if ipix in pixel_used:\n            continue\n        pixel_include = np.zeros(matrix.shape[1], dtype=bool)\n        pixel_include[ipix] = True\n        n_pix_prev, n_pix = 0, 1\n        while n_pix > n_pix_prev:\n            world_include = matrix[:, pixel_include].any(axis=1)\n            pixel_include = matrix[world_include, :].any(axis=0)\n            n_pix_prev, n_pix = n_pix, np.sum(pixel_include)\n        pixel_indices = list(np.nonzero(pixel_include)[0])\n        world_indices = list(np.nonzero(world_include)[0])\n        pixel_used.extend(pixel_indices)\n        split_info.append((pixel_indices, world_indices))\n\n    return split_info",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.253965
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 27.453827999997884
+}

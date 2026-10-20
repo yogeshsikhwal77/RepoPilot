@@ -1,0 +1,272 @@
+{
+  "task_id": "sympy__sympy-14774",
+  "config": "vector_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:1098-1102",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 1098,
+        "end_line": 1102
+      },
+      "content": "def test_latex_Lambda():\n    assert latex(Lambda(x, x + 1)) == \\\n        r\"\\left( x \\mapsto x + 1 \\right)\"\n    assert latex(Lambda((x, y), x + 1)) == \\\n        r\"\\left( \\left ( x, \\quad y\\right ) \\mapsto x + 1 \\right)\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36699581146240234
+    },
+    {
+      "chunk_id": "sympy/printing/latex.py:2212-2345",
+      "citation": {
+        "path": "sympy/printing/latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 2212,
+        "end_line": 2345
+      },
+      "content": "def latex(expr, **settings):\n    r\"\"\"\n    Convert the given expression to LaTeX representation.\n\n    >>> from sympy import latex, pi, sin, asin, Integral, Matrix, Rational, log\n    >>> from sympy.abc import x, y, mu, r, tau\n\n    >>> print(latex((2*tau)**Rational(7,2)))\n    8 \\sqrt{2} \\tau^{\\frac{7}{2}}\n\n    Not using a print statement for printing, results in double backslashes for\n    latex commands since that's the way Python escapes backslashes in strings.\n\n    >>> latex((2*tau)**Rational(7,2))\n    '8 \\\\sqrt{2} \\\\tau^{\\\\frac{7}{2}}'\n\n    order: Any of the supported monomial orderings (currently \"lex\", \"grlex\", or\n    \"grevlex\"), \"old\", and \"none\". This parameter does nothing for Mul objects.\n    Setting order to \"old\" uses the compatibility ordering for Add defined in\n    Printer. For very large expressions, set the 'order' keyword to 'none' if\n    speed is a concern.\n\n    mode: Specifies how the generated code will be delimited. 'mode' can be one\n    of 'plain', 'inline', 'equation' or 'equation*'.  If 'mode' is set to\n    'plain', then the resulting code will not be delimited at all (this is the\n    default). If 'mode' is set to 'inline' then inline LaTeX $ $ will be used.\n    If 'mode' is set to 'equation' or 'equation*', the resulting code will be\n    enclosed in the 'equation' or 'equation*' environment (remember to import\n    'amsmath' for 'equation*'), unless the 'itex' option is set. In the latter\n    case, the ``$$ $$`` syntax is used.\n\n    >>> print(latex((2*mu)**Rational(7,2), mode='plain'))\n    8 \\sqrt{2} \\mu^{\\frac{7}{2}}\n\n    >>> print(latex((2*tau)**Rational(7,2), mode='inline'))\n    $8 \\sqrt{2} \\tau^{7 / 2}$\n\n    >>> print(latex((2*mu)**Rational(7,2), mode='equation*'))\n    \\begin{equation*}8 \\sqrt{2} \\mu^{\\frac{7}{2}}\\end{equation*}\n\n    >>> print(latex((2*mu)**Rational(7,2), mode='equation'))\n    \\begin{equation}8 \\sqrt{2} \\mu^{\\frac{7}{2}}\\end{equation}\n\n    itex: Specifies if itex-specific syntax is used, including emitting ``$$ $$``.\n\n    >>> print(latex((2*mu)**Rational(7,2), mode='equation', itex=True))\n    $$8 \\sqrt{2} \\mu^{\\frac{7}{2}}$$\n\n    fold_frac_powers: Emit \"^{p/q}\" instead of \"^{\\frac{p}{q}}\" for fractional\n    powers.\n\n    >>> print(latex((2*tau)**Rational(7,2), fold_frac_powers=True))\n    8 \\sqrt{2} \\tau^{7/2}\n\n    fold_func_brackets: Fold function brackets where applicable.\n\n    >>> print(latex((2*tau)**sin(Rational(7,2))))\n    \\left(2 \\tau\\right)^{\\sin{\\left (\\frac{7}{2} \\right )}}\n    >>> print(latex((2*tau)**sin(Rational(7,2)), fold_func_brackets = True))\n    \\left(2 \\tau\\right)^{\\sin {\\frac{7}{2}}}\n\n    fold_short_frac: Emit \"p / q\" instead of \"\\frac{p}{q}\" when the\n    denominator is simple enough (at most two terms and no powers).\n    The default value is `True` for inline mode, False otherwise.\n\n    >>> print(latex(3*x**2/y))\n    \\frac{3 x^{2}}{y}\n    >>> print(latex(3*x**2/y, fold_short_frac=True))\n    3 x^{2} / y\n\n    long_frac_ratio: The allowed ratio of the width of the numerator to the\n    width of the denominator before we start breaking off long fractions.\n    If None (the default value), long fractions are not broken up.\n\n    >>> print(latex(Integral(r, r)/2/pi, long_frac_ratio=2))\n    \\frac{\\int r\\, dr}{2 \\pi}\n    >>> print(latex(Integral(r, r)/2/pi, long_frac_ratio=0))\n    \\frac{1}{2 \\pi} \\int r\\, dr\n\n    mul_symbol: The symbol to use for multiplication. Can be one of None,\n    \"ldot\", \"dot\", or \"times\".\n\n    >>> print(latex((2*tau)**sin(Rational(7,2)), mul_symbol=\"times\"))\n    \\left(2 \\times \\tau\\right)^{\\sin{\\left (\\frac{7}{2} \\right )}}\n\n    inv_trig_style: How inverse trig functions should be displayed. Can be one\n    of \"abbreviated\", \"full\", or \"power\". Defaults to \"abbreviated\".\n\n    >>> print(latex(asin(Rational(7,2))))\n    \\operatorname{asin}{\\left (\\frac{7}{2} \\right )}\n    >>> print(latex(asin(Rational(7,2)), inv_trig_style=\"full\"))\n    \\arcsin{\\left (\\frac{7}{2} \\right )}\n    >>> print(latex(asin(Rational(7,2)), inv_trig_style=\"power\"))\n    \\sin^{-1}{\\left (\\frac{7}{2} \\right )}\n\n    mat_str: Which matrix environment string to emit. \"smallmatrix\", \"matrix\",\n    \"array\", etc. Defaults to \"smallmatrix\" for inline mode, \"matrix\" for\n    matrices of no more than 10 columns, and \"array\" otherwise.\n\n    >>> print(latex(Matrix(2, 1, [x, y])))\n    \\left[\\begin{matrix}x\\\\y\\end{matrix}\\right]\n\n    >>> print(latex(Matrix(2, 1, [x, y]), mat_str = \"array\"))\n    \\left[\\begin{array}{c}x\\\\y\\end{array}\\right]\n\n    mat_delim: The delimiter to wrap around matrices. Can be one of \"[\", \"(\",\n    or the empty string. Defaults to \"[\".\n\n    >>> print(latex(Matrix(2, 1, [x, y]), mat_delim=\"(\"))\n    \\left(\\begin{matrix}x\\\\y\\end{matrix}\\right)\n\n    symbol_names: Dictionary of symbols and the custom strings they should be\n    emitted as.\n\n    >>> print(latex(x**2, symbol_names={x:'x_i'}))\n    x_i^{2}\n\n    ``latex`` also supports the builtin container types list, tuple, and\n    dictionary.\n\n    >>> print(latex([2/x, y], mode='inline'))\n    $\\left [ 2 / x, \\quad y\\right ]$\n\n    ln_notation: If set to ``True`` \"\\ln\" is used instead of default \"\\log\"\n\n    >>> print(latex(log(10)))\n    \\log{\\left (10 \\right )}\n\n    >>> print(latex(log(10), ln_notation=True))\n    \\ln{\\left (10 \\right )}\n\n    \"\"\"\n\n    return LatexPrinter(settings).doprint(expr)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.35961127281188965
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:772-778",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 772,
+        "end_line": 778
+      },
+      "content": "def test_latex_ImageSet():\n    x = Symbol('x')\n    assert latex(ImageSet(Lambda(x, x**2), S.Naturals)) == \\\n        r\"\\left\\{x^{2}\\; |\\; x \\in \\mathbb{N}\\right\\}\"\n    y = Symbol('y')\n    imgset = ImageSet(Lambda((x, y), x + y), {1, 2, 3}, {3, 4})\n    assert latex(imgset) == r\"\\left\\{x + y\\; |\\; x \\in \\left\\{1, 2, 3\\right\\}, y \\in \\left\\{3, 4\\right\\}\\right\\}\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3471639156341553
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:875-877",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 875,
+        "end_line": 877
+      },
+      "content": "def test_latex_list():\n    l = [Symbol('omega1'), Symbol('a'), Symbol('alpha')]\n    assert latex(l) == r'\\left [ \\omega_{1}, \\quad a, \\quad \\alpha\\right ]'",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34350812435150146
+    },
+    {
+      "chunk_id": "sympy/functions/elementary/tests/test_trigonometric.py:772-778",
+      "citation": {
+        "path": "sympy/functions/elementary/tests/test_trigonometric.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 772,
+        "end_line": 778
+      },
+      "content": "def test_asin_rewrite():\n    assert asin(x).rewrite(log) == -I*log(I*x + sqrt(1 - x**2))\n    assert asin(x).rewrite(atan) == 2*atan(x/(1 + sqrt(1 - x**2)))\n    assert asin(x).rewrite(acos) == S.Pi/2 - acos(x)\n    assert asin(x).rewrite(acot) == 2*acot((sqrt(-x**2 + 1) + 1)/x)\n    assert asin(x).rewrite(asec) == -asec(1/x) + pi/2\n    assert asin(x).rewrite(acsc) == acsc(1/x)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3121076226234436
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:938-952",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 938,
+        "end_line": 952
+      },
+      "content": "def test_latex_Piecewise():\n    p = Piecewise((x, x < 1), (x**2, True))\n    assert latex(p) == \"\\\\begin{cases} x & \\\\text{for}\\\\: x < 1 \\\\\\\\x^{2} &\" \\\n                       \" \\\\text{otherwise} \\\\end{cases}\"\n    assert latex(p, itex=True) == \"\\\\begin{cases} x & \\\\text{for}\\\\: x \\\\lt 1 \\\\\\\\x^{2} &\" \\\n                                  \" \\\\text{otherwise} \\\\end{cases}\"\n    p = Piecewise((x, x < 0), (0, x >= 0))\n    assert latex(p) == '\\\\begin{cases} x & \\\\text{for}\\\\: x < 0 \\\\\\\\0 &' \\\n                       ' \\\\text{otherwise} \\\\end{cases}'\n    A, B = symbols(\"A B\", commutative=False)\n    p = Piecewise((A**2, Eq(A, B)), (A*B, True))\n    s = r\"\\begin{cases} A^{2} & \\text{for}\\: A = B \\\\A B & \\text{otherwise} \\end{cases}\"\n    assert latex(p) == s\n    assert latex(A*p) == r\"A \\left(%s\\right)\" % s\n    assert latex(p*A) == r\"\\left(%s\\right) A\" % s",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.305911123752594
+    },
+    {
+      "chunk_id": "sympy/interactive/tests/test_ipython.py:21-47",
+      "citation": {
+        "path": "sympy/interactive/tests/test_ipython.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 21,
+        "end_line": 47
+      },
+      "content": "def test_automatic_symbols():\n    # NOTE: Because of the way the hook works, you have to use run_cell(code,\n    # True).  This means that the code must have no Out, or it will be printed\n    # during the tests.\n    app = init_ipython_session()\n    app.run_cell(\"from sympy import *\")\n\n    enable_automatic_symbols(app)\n\n    symbol = \"verylongsymbolname\"\n    assert symbol not in app.user_ns\n    app.run_cell(\"a = %s\" % symbol, True)\n    assert symbol not in app.user_ns\n    app.run_cell(\"a = type(%s)\" % symbol, True)\n    assert app.user_ns['a'] == Symbol\n    app.run_cell(\"%s = Symbol('%s')\" % (symbol, symbol), True)\n    assert symbol in app.user_ns\n\n    # Check that built-in names aren't overridden\n    app.run_cell(\"a = all == __builtin__.all\", True)\n    assert \"all\" not in app.user_ns\n    assert app.user_ns['a'] is True\n\n    # Check that sympy names aren't overridden\n    app.run_cell(\"import sympy\")\n    app.run_cell(\"a = factorial == sympy.factorial\", True)\n    assert app.user_ns['a'] is True",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.30553632974624634
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:1267-1287",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 1267,
+        "end_line": 1287
+      },
+      "content": "def test_integral_transforms():\n    x = Symbol(\"x\")\n    k = Symbol(\"k\")\n    f = Function(\"f\")\n    a = Symbol(\"a\")\n    b = Symbol(\"b\")\n\n    assert latex(MellinTransform(f(x), x, k)) == r\"\\mathcal{M}_{x}\\left[f{\\left (x \\right )}\\right]\\left(k\\right)\"\n    assert latex(InverseMellinTransform(f(k), k, x, a, b)) == r\"\\mathcal{M}^{-1}_{k}\\left[f{\\left (k \\right )}\\right]\\left(x\\right)\"\n\n    assert latex(LaplaceTransform(f(x), x, k)) == r\"\\mathcal{L}_{x}\\left[f{\\left (x \\right )}\\right]\\left(k\\right)\"\n    assert latex(InverseLaplaceTransform(f(k), k, x, (a, b))) == r\"\\mathcal{L}^{-1}_{k}\\left[f{\\left (k \\right )}\\right]\\left(x\\right)\"\n\n    assert latex(FourierTransform(f(x), x, k)) == r\"\\mathcal{F}_{x}\\left[f{\\left (x \\right )}\\right]\\left(k\\right)\"\n    assert latex(InverseFourierTransform(f(k), k, x)) == r\"\\mathcal{F}^{-1}_{k}\\left[f{\\left (k \\right )}\\right]\\left(x\\right)\"\n\n    assert latex(CosineTransform(f(x), x, k)) == r\"\\mathcal{COS}_{x}\\left[f{\\left (x \\right )}\\right]\\left(k\\right)\"\n    assert latex(InverseCosineTransform(f(k), k, x)) == r\"\\mathcal{COS}^{-1}_{k}\\left[f{\\left (k \\right )}\\right]\\left(x\\right)\"\n\n    assert latex(SineTransform(f(x), x, k)) == r\"\\mathcal{SIN}_{x}\\left[f{\\left (x \\right )}\\right]\\left(k\\right)\"\n    assert latex(InverseSineTransform(f(k), k, x)) == r\"\\mathcal{SIN}^{-1}_{k}\\left[f{\\left (k \\right )}\\right]\\left(x\\right)\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3042702078819275
+    },
+    {
+      "chunk_id": "sympy/assumptions/tests/test_query.py:2105-2125",
+      "citation": {
+        "path": "sympy/assumptions/tests/test_query.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 2105,
+        "end_line": 2125
+      },
+      "content": "def test_issue_7246():\n    assert ask(Q.positive(atan(p)), Q.positive(p)) is True\n    assert ask(Q.positive(atan(p)), Q.negative(p)) is False\n    assert ask(Q.positive(atan(p)), Q.zero(p)) is False\n    assert ask(Q.positive(atan(x))) is None\n\n    assert ask(Q.positive(asin(p)), Q.positive(p)) is None\n    assert ask(Q.positive(asin(p)), Q.zero(p)) is None\n    assert ask(Q.positive(asin(Rational(1, 7)))) is True\n    assert ask(Q.positive(asin(x)), Q.positive(x) & Q.nonpositive(x - 1)) is True\n    assert ask(Q.positive(asin(x)), Q.negative(x) & Q.nonnegative(x + 1)) is False\n\n    assert ask(Q.positive(acos(p)), Q.positive(p)) is None\n    assert ask(Q.positive(acos(Rational(1, 7)))) is True\n    assert ask(Q.positive(acos(x)), Q.nonnegative(x + 1) & Q.nonpositive(x - 1)) is True\n    assert ask(Q.positive(acos(x)), Q.nonnegative(x - 1)) is None\n\n    assert ask(Q.positive(acot(x)), Q.positive(x)) is True\n    assert ask(Q.positive(acot(x)), Q.real(x)) is True\n    assert ask(Q.positive(acot(x)), Q.imaginary(x)) is False\n    assert ask(Q.positive(acot(x))) is None",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.30426090955734253
+    },
+    {
+      "chunk_id": "sympy/integrals/transforms.py:315-351",
+      "citation": {
+        "path": "sympy/integrals/transforms.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 315,
+        "end_line": 351
+      },
+      "content": "def mellin_transform(f, x, s, **hints):\n    r\"\"\"\n    Compute the Mellin transform `F(s)` of `f(x)`,\n\n    .. math :: F(s) = \\int_0^\\infty x^{s-1} f(x) \\mathrm{d}x.\n\n    For all \"sensible\" functions, this converges absolutely in a strip\n      `a < \\operatorname{Re}(s) < b`.\n\n    The Mellin transform is related via change of variables to the Fourier\n    transform, and also to the (bilateral) Laplace transform.\n\n    This function returns ``(F, (a, b), cond)``\n    where ``F`` is the Mellin transform of ``f``, ``(a, b)`` is the fundamental strip\n    (as above), and ``cond`` are auxiliary convergence conditions.\n\n    If the integral cannot be computed in closed form, this function returns\n    an unevaluated :class:`MellinTransform` object.\n\n    For a description of possible hints, refer to the docstring of\n    :func:`sympy.integrals.transforms.IntegralTransform.doit`. If ``noconds=False``,\n    then only `F` will be returned (i.e. not ``cond``, and also not the strip\n    ``(a, b)``).\n\n    >>> from sympy.integrals.transforms import mellin_transform\n    >>> from sympy import exp\n    >>> from sympy.abc import x, s\n    >>> mellin_transform(exp(-x), x, s)\n    (gamma(s), (0, oo), True)\n\n    See Also\n    ========\n\n    inverse_mellin_transform, laplace_transform, fourier_transform\n    hankel_transform, inverse_hankel_transform\n    \"\"\"\n    return MellinTransform(f, x, s).doit(**hints)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.30251091718673706
+    },
+    {
+      "chunk_id": "sympy/core/symbol.py:89-128",
+      "citation": {
+        "path": "sympy/core/symbol.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 89,
+        "end_line": 128
+      },
+      "content": "def _uniquely_named_symbol(xname, exprs=(), compare=str, modify=None, **assumptions):\n    \"\"\"Return a symbol which, when printed, will have a name unique\n    from any other already in the expressions given. The name is made\n    unique by prepending underscores (default) but this can be\n    customized with the keyword 'modify'.\n\n    Parameters\n    ==========\n\n        xname : a string or a Symbol (when symbol xname <- str(xname))\n        compare : a single arg function that takes a symbol and returns\n            a string to be compared with xname (the default is the str\n            function which indicates how the name will look when it\n            is printed, e.g. this includes underscores that appear on\n            Dummy symbols)\n        modify : a single arg function that changes its string argument\n            in some way (the default is to preppend underscores)\n\n    Examples\n    ========\n\n    >>> from sympy.core.symbol import _uniquely_named_symbol as usym, Dummy\n    >>> from sympy.abc import x\n    >>> usym('x', x)\n    _x\n    \"\"\"\n    default = None\n    if is_sequence(xname):\n        xname, default = xname\n    x = str(xname)\n    if not exprs:\n        return _symbol(x, default, **assumptions)\n    if not is_sequence(exprs):\n        exprs = [exprs]\n    syms = set().union(*[e.free_symbols for e in exprs])\n    if modify is None:\n        modify = lambda s: '_' + s\n    while any(x == compare(s) for s in syms):\n        x = modify(x)\n    return _symbol(x, default, **assumptions)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3004303574562073
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:825-836",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 825,
+        "end_line": 836
+      },
+      "content": "def test_latex_limits():\n    assert latex(Limit(x, x, oo)) == r\"\\lim_{x \\to \\infty} x\"\n\n    # issue 8175\n    f = Function('f')\n    assert latex(Limit(f(x), x, 0)) == r\"\\lim_{x \\to 0^+} f{\\left (x \\right )}\"\n    assert latex(Limit(f(x), x, 0, \"-\")) == r\"\\lim_{x \\to 0^-} f{\\left (x \\right )}\"\n\n    # issue #10806\n    assert latex(Limit(f(x), x, 0)**2) == r\"\\left(\\lim_{x \\to 0^+} f{\\left (x \\right )}\\right)^{2}\"\n    # bi-directional limit\n    assert latex(Limit(f(x), x, 0, dir='+-')) == r\"\\lim_{x \\to 0} f{\\left (x \\right )}\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3003914952278137
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:868-872",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 868,
+        "end_line": 872
+      },
+      "content": "def test_latex_dict():\n    d = {Rational(1): 1, x**2: 2, x: 3, x**3: 4}\n    assert latex(d) == r'\\left \\{ 1 : 1, \\quad x : 3, \\quad x^{2} : 2, \\quad x^{3} : 4\\right \\}'\n    D = Dict(d)\n    assert latex(D) == r'\\left \\{ 1 : 1, \\quad x : 3, \\quad x^{2} : 2, \\quad x^{3} : 4\\right \\}'",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.2992265820503235
+    },
+    {
+      "chunk_id": "sympy/polys/galoistools.py:2321-2353",
+      "citation": {
+        "path": "sympy/polys/galoistools.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 2321,
+        "end_line": 2353
+      },
+      "content": "def gf_csolve(f, n):\n    \"\"\"\n    To solve f(x) congruent 0 mod(n).\n\n    n is divided into canonical factors and f(x) cong 0 mod(p**e) will be\n    solved for each factor. Applying the Chinese Remainder Theorem to the\n    results returns the final answers.\n\n    Examples\n    ========\n\n    Solve [1, 1, 7] congruent 0 mod(189):\n\n    >>> from sympy.polys.galoistools import gf_csolve\n    >>> gf_csolve([1, 1, 7], 189)\n    [13, 49, 76, 112, 139, 175]\n\n    References\n    ==========\n\n    [1] 'An introduction to the Theory of Numbers' 5th Edition by Ivan Niven,\n        Zuckerman and Montgomery.\n\n    \"\"\"\n    from sympy.polys.domains import ZZ\n    P = factorint(n)\n    X = [csolve_prime(f, p, e) for p, e in P.items()]\n    pools = list(map(tuple, X))\n    perms = [[]]\n    for pool in pools:\n        perms = [x + [y] for x in perms for y in pool]\n    dist_factors = [pow(p, e) for p, e in P.items()]\n    return sorted([gf_crt(per, dist_factors, ZZ) for per in perms])",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.29868707060813904
+    },
+    {
+      "chunk_id": "sympy/integrals/rubi/rules/miscellaneous_trig.py:761-763",
+      "citation": {
+        "path": "sympy/integrals/rubi/rules/miscellaneous_trig.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 761,
+        "end_line": 763
+      },
+      "content": "def With160(u, F, a, d, n, p, x, c):\n    v = ActivateTrig(F(c + d*x))\n    return a**IntPart(n)*(a*v**p)**FracPart(n)*(v/NonfreeFactors(v, x))**(p*IntPart(n))*Int(ActivateTrig(u)*NonfreeFactors(v, x)**(n*p), x)*NonfreeFactors(v, x)**(-p*FracPart(n))",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.2976517081260681
+    },
+    {
+      "chunk_id": "sympy/stats/rv.py:173-199",
+      "citation": {
+        "path": "sympy/stats/rv.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 173,
+        "end_line": 199
+      },
+      "content": "class SinglePSpace(PSpace):\n    \"\"\"\n    Represents the probabilities of a set of random events that can be\n    attributed to a single variable/symbol.\n    \"\"\"\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.29753565788269043
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:514-515",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 514,
+        "end_line": 515
+      },
+      "content": "def test_latex_brackets():\n    assert latex((-1)**x) == r\"\\left(-1\\right)^{x}\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.2972528338432312
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:907-909",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 907,
+        "end_line": 909
+      },
+      "content": "def test_latex_Heaviside():\n    assert latex(Heaviside(x)) == r\"\\theta\\left(x\\right)\"\n    assert latex(Heaviside(x)**2) == r\"\\left(\\theta\\left(x\\right)\\right)^{2}\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.2958225607872009
+    },
+    {
+      "chunk_id": "sympy/physics/mechanics/lagrange.py:347-375",
+      "citation": {
+        "path": "sympy/physics/mechanics/lagrange.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 347,
+        "end_line": 375
+      },
+      "content": "def linearize(self, q_ind=None, qd_ind=None, q_dep=None, qd_dep=None,\n        **kwargs):\n    \"\"\"Linearize the equations of motion about a symbolic operating point.\n\n    If kwarg A_and_B is False (default), returns M, A, B, r for the\n    linearized form, M*[q', u']^T = A*[q_ind, u_ind]^T + B*r.\n\n    If kwarg A_and_B is True, returns A, B, r for the linearized form\n    dx = A*x + B*r, where x = [q_ind, u_ind]^T. Note that this is\n    computationally intensive if there are many symbolic parameters. For\n    this reason, it may be more desirable to use the default A_and_B=False,\n    returning M, A, and B. Values may then be substituted in to these\n    matrices, and the state space form found as\n    A = P.T*M.inv()*A, B = P.T*M.inv()*B, where P = Linearizer.perm_mat.\n\n    In both cases, r is found as all dynamicsymbols in the equations of\n    motion that are not part of q, u, q', or u'. They are sorted in\n    canonical form.\n\n    The operating points may be also entered using the ``op_point`` kwarg.\n    This takes a dictionary of {symbol: value}, or a an iterable of such\n    dictionaries. The values may be numberic or symbolic. The more values\n    you can specify beforehand, the faster this computation will run.\n\n    For more documentation, please see the ``Linearizer`` class.\"\"\"\n\n    linearizer = self.to_linearizer(q_ind, qd_ind, q_dep, qd_dep)\n    result = linearizer.linearize(**kwargs)\n    return result + (linearizer.r,)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.2946399450302124
+    },
+    {
+      "chunk_id": "sympy/printing/tests/test_latex.py:1628-1630",
+      "citation": {
+        "path": "sympy/printing/tests/test_latex.py",
+        "commit": "8fc63c2d71752389a44367b8ef4aba8a91af6a45",
+        "start_line": 1628,
+        "end_line": 1630
+      },
+      "content": "def test_issue_6853():\n    p = Function('Pi')\n    assert latex(p(x)) == r\"\\Pi{\\left (x \\right )}\"",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.29357320070266724
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 24.610262499991222
+}

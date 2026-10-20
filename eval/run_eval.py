@@ -14,6 +14,8 @@ import random
 import re
 import subprocess
 import time
+import shutil
+import warnings
 from pathlib import Path
 from typing import Callable, Optional, Protocol
 
@@ -85,11 +87,30 @@ def _git(*args: str, cwd: Optional[Path] = None) -> None:
 
 
 def checkout_repo(task: EvalTask) -> Path:
-    """Clone once, then force-checkout the task's base commit. Runs tasks one at a time."""
+    """Fast shallow clone + fetch of the exact base_commit. Self-heals broken clones."""
     dest = REPOS_DIR / task.repo.replace("/", "__")
+    REPOS_DIR.mkdir(parents=True, exist_ok=True)
+
+    # If a previous clone crashed halfway, wipe the broken directory
+    if dest.exists() and not (dest / ".git" / "HEAD").exists():
+        shutil.rmtree(dest, ignore_errors=True)
+
     if not dest.exists():
-        REPOS_DIR.mkdir(parents=True, exist_ok=True)
-        _git("clone", f"https://github.com/{task.repo}.git", str(dest))
+        print(f"  -> cloning {task.repo} (shallow)...")
+        _git("init", str(dest))
+        _git("remote", "add", "origin", f"https://github.com/{task.repo}.git", cwd=dest)
+
+    # Check if we already have the commit locally; if not, fetch just that commit
+    has_commit = subprocess.run(
+        ["git", "cat-file", "-e", f"{task.base_commit}^{{commit}}"],
+        cwd=dest,
+        capture_output=True,
+    ).returncode == 0
+
+    if not has_commit:
+        print(f"  -> fetching {task.repo} @ {task.base_commit[:8]}...")
+        _git("fetch", "--depth", "1", "origin", task.base_commit, cwd=dest)
+
     _git("checkout", "--force", task.base_commit, cwd=dest)
     _git("clean", "-fdx", cwd=dest)
     return dest
@@ -183,6 +204,103 @@ def search_vector(repo_dir: Path, task: EvalTask, k: int) -> list[Evidence]:
     hits = index.search(task.problem_statement, k=k)
     return [to_evidence(chunk_map[cid], score, "vector") for cid, score in hits]
 
+# --- PASTE THIS BELOW search_vector() IN eval/run_eval.py ---
+
+def search_hybrid_rerank(repo_dir: Path, task: EvalTask, k: int) -> list[Evidence]:
+    """Week 3: Combines BM25 + Vector (Reciprocal Rank Fusion) + Yogesh's Reranker."""
+    from repopilot.indexing.parser import parse_repo
+    from repopilot.indexing.bm25 import BM25Index
+    from repopilot.indexing.embedder import VectorIndex, get_embedder
+    from repopilot.retrieval.reranker import Reranker
+
+    parsed_files = parse_repo(repo_dir, commit=task.base_commit)
+    chunks = [c for pf in parsed_files for c in pf.chunks]
+    if not chunks:
+        return []
+    chunk_map = {c.id: c for c in chunks}
+
+    # If Vibhav's hybrid.py is ready, use it; otherwise fuse BM25 + Vector via RRF directly
+    try:
+        from repopilot.retrieval.hybrid import hybrid_search  # type: ignore
+        initial_hits = hybrid_search(chunks, task.problem_statement, k=max(k * 3, 30))
+    except ImportError:
+        bm25_hits = BM25Index().build(chunks).search(task.problem_statement, k=max(k * 3, 30))
+        vec_hits = VectorIndex(get_embedder("hashing")).build(chunks).search(
+            task.problem_statement, k=max(k * 3, 30)
+        )
+        rrf_scores: dict[str, float] = {}
+        for rank, (cid, _) in enumerate(bm25_hits):
+            rrf_scores[cid] = rrf_scores.get(cid, 0.0) + 1.0 / (60 + rank + 1)
+        for rank, (cid, _) in enumerate(vec_hits):
+            rrf_scores[cid] = rrf_scores.get(cid, 0.0) + 1.0 / (60 + rank + 1)
+        initial_hits = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)[: max(k * 3, 30)]
+
+    reranker = Reranker()
+    reranked = reranker.rerank_chunks(
+        query=task.problem_statement,
+        chunk_scores=[(chunk_map[cid], score) for cid, score in initial_hits if cid in chunk_map],
+        top_k=k,
+    )
+    return [to_evidence(chunk, score, "vector") for chunk, score in reranked]
+
+
+def search_navigator(repo_dir: Path, task: EvalTask, k: int) -> list[Evidence]:
+    """Week 3 Full Pipeline: Hybrid + AST Call Graph + Coverage Map + Navigator + Reranker."""
+    from repopilot.indexing.parser import parse_repo
+    import repopilot.indexing.symbol_graph as sg_mod
+    import repopilot.indexing.coverage_map as cm_mod
+    from repopilot.agents.navigator import NavigatorAgent
+
+    # 1. Get initial hybrid + reranked seed evidence
+    seed_evidence = search_hybrid_rerank(repo_dir, task, k=k)
+
+    # 2. Parse repo
+    parsed_files = parse_repo(repo_dir, commit=task.base_commit)
+    chunks = [c for pf in parsed_files for c in pf.chunks]
+
+    # 3. Build SymbolGraph (supports SymbolGraph().build(...), SymbolGraph(parsed_files), or build_symbol_graph)
+    if hasattr(sg_mod, "build_symbol_graph"):
+        sym_graph = sg_mod.build_symbol_graph(parsed_files)
+    elif hasattr(sg_mod, "SymbolGraph"):
+        sg_cls = sg_mod.SymbolGraph
+        try:
+            sym_graph = sg_cls().build(parsed_files)
+        except TypeError:
+            sym_graph = sg_cls(parsed_files)
+    else:
+        sym_graph = None
+
+    # 4. Build CoverageMap (supports CoverageMap().build(...), CoverageMap(...), or build_coverage_map)
+    if hasattr(cm_mod, "build_coverage_map"):
+        try:
+            cov_map = cm_mod.build_coverage_map(parsed_files, sym_graph)
+        except TypeError:
+            cov_map = cm_mod.build_coverage_map(repo_dir)
+    elif hasattr(cm_mod, "CoverageMap"):
+        cm_cls = cm_mod.CoverageMap
+        try:
+            cov_map = cm_cls().build(parsed_files, sym_graph)
+        except TypeError:
+            try:
+                cov_map = cm_cls().build(parsed_files)
+            except Exception:
+                cov_map = {}
+    else:
+        cov_map = {}
+
+    # 5. Run Yogesh's Navigator agent to expand call graph, compute impact, and rerank
+    navigator = NavigatorAgent(
+        symbol_graph=sym_graph,
+        coverage_map=cov_map,
+        chunks=chunks,
+        commit=task.base_commit,
+    )
+    nav_result = navigator.navigate(
+        query=task.problem_statement,
+        seed_evidence=seed_evidence,
+        top_k=k,
+    )
+    return nav_result.evidence
 
 class SingleCallSystem:
     """B0 Gemini single-call baseline adapter for the evaluation harness."""
@@ -249,6 +367,8 @@ REGISTRY: dict[str, Callable[[], System]] = {
     "bm25_only": lambda: RetrievalOnly("bm25_only", search_bm25),
     "vector_only": lambda: RetrievalOnly("vector_only", search_vector),
     "single_call": SingleCallSystem,
+    "hybrid_rerank": lambda: RetrievalOnly("hybrid_rerank", search_hybrid_rerank),
+    "navigator_full": lambda: RetrievalOnly("navigator_full", search_navigator),
 }
 
 

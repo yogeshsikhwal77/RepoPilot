@@ -1,0 +1,272 @@
+{
+  "task_id": "psf__requests-2674",
+  "config": "vector_only",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:116-118",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 116,
+        "end_line": 118
+      },
+      "content": "class EmptyPoolError(PoolError):\n    \"Raised when a pool runs out of connections and no more are allowed.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.4422292709350586
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:41-43",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 41,
+        "end_line": 43
+      },
+      "content": "class ProxyError(HTTPError):\n    \"Raised when the connection to a proxy fails.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.4286254048347473
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:46-48",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 46,
+        "end_line": 48
+      },
+      "content": "class DecodeError(HTTPError):\n    \"Raised when automatic decoding based on Content-Type fails.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.40385371446609497
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/packages/six.py:291-292",
+      "citation": {
+        "path": "requests/packages/urllib3/packages/six.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 291,
+        "end_line": 292
+      },
+      "content": "def b(s):\n    return s",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3886559009552002
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/packages/six.py:279-280",
+      "citation": {
+        "path": "requests/packages/urllib3/packages/six.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 279,
+        "end_line": 280
+      },
+      "content": "def u(s):\n    return s",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3886559009552002
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/util/timeout.py:104-136",
+      "citation": {
+        "path": "requests/packages/urllib3/util/timeout.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 104,
+        "end_line": 136
+      },
+      "content": "@classmethod\ndef _validate_timeout(cls, value, name):\n    \"\"\" Check that a timeout attribute is valid.\n\n    :param value: The timeout value to validate\n    :param name: The name of the timeout attribute to validate. This is\n        used to specify in error messages.\n    :return: The validated and casted version of the given value.\n    :raises ValueError: If the type is not an integer or a float, or if it\n        is a numeric value less than zero.\n    \"\"\"\n    if value is _Default:\n        return cls.DEFAULT_TIMEOUT\n\n    if value is None or value is cls.DEFAULT_TIMEOUT:\n        return value\n\n    try:\n        float(value)\n    except (TypeError, ValueError):\n        raise ValueError(\"Timeout value %s was %s, but it must be an \"\n                         \"int or float.\" % (name, value))\n\n    try:\n        if value < 0:\n            raise ValueError(\"Attempted to set %s timeout to %s, but the \"\n                             \"timeout cannot be set to a value less \"\n                             \"than 0.\" % (name, value))\n    except TypeError:  # Python 3\n        raise ValueError(\"Timeout value %s was %s, but it must be an \"\n                         \"int or float.\" % (name, value))\n\n    return value",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.37751758098602295
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:90-92",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 90,
+        "end_line": 92
+      },
+      "content": "class TimeoutStateError(HTTPError):\n    \"\"\" Raised when passing an invalid state to a timeout \"\"\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.37242817878723145
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:126-128",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 126,
+        "end_line": 128
+      },
+      "content": "class LocationValueError(ValueError, HTTPError):\n    \"Raised when there is something wrong with a given URL input.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.36584165692329407
+    },
+    {
+      "chunk_id": "requests/utils.py:148-170",
+      "citation": {
+        "path": "requests/utils.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 148,
+        "end_line": 170
+      },
+      "content": "def to_key_val_list(value):\n    \"\"\"Take an object and test to see if it can be represented as a\n    dictionary. If it can be, return a list of tuples, e.g.,\n\n    ::\n\n        >>> to_key_val_list([('key', 'val')])\n        [('key', 'val')]\n        >>> to_key_val_list({'key': 'val'})\n        [('key', 'val')]\n        >>> to_key_val_list('string')\n        ValueError: cannot encode objects that are not 2-tuples.\n    \"\"\"\n    if value is None:\n        return None\n\n    if isinstance(value, (str, bytes, bool, int)):\n        raise ValueError('cannot encode objects that are not 2-tuples')\n\n    if isinstance(value, collections.Mapping):\n        value = value.items()\n\n    return list(value)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.35383063554763794
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:81-87",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 81,
+        "end_line": 87
+      },
+      "content": "class HostChangedError(RequestError):\n    \"Raised when an existing pool gets a request for a foreign host.\"\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3525349795818329
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:95-101",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 95,
+        "end_line": 101
+      },
+      "content": "class TimeoutError(HTTPError):\n    \"\"\" Raised when a socket timeout error occurs.\n\n    Catching this error will catch both :exc:`ReadTimeoutErrors\n    <ReadTimeoutError>` and :exc:`ConnectTimeoutErrors <ConnectTimeoutError>`.\n    \"\"\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3506637215614319
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/response.py:68-466",
+      "citation": {
+        "path": "requests/packages/urllib3/response.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 68,
+        "end_line": 466
+      },
+      "content": "class HTTPResponse(io.IOBase):\n    \"\"\"\n    HTTP Response container.\n\n    Backwards-compatible to httplib's HTTPResponse but the response ``body`` is\n    loaded and decoded on-demand when the ``data`` property is accessed.  This\n    class is also compatible with the Python standard library's :mod:`io`\n    module, and can hence be treated as a readable object in the context of that\n    framework.\n\n    Extra parameters for behaviour not present in httplib.HTTPResponse:\n\n    :param preload_content:\n        If True, the response's body will be preloaded during construction.\n\n    :param decode_content:\n        If True, attempts to decode specific content-encoding's based on headers\n        (like 'gzip' and 'deflate') will be skipped and raw data will be used\n        instead.\n\n    :param original_response:\n        When this HTTPResponse wrapper is generated from an httplib.HTTPResponse\n        object, it's convenient to include the original for debug purposes. It's\n        otherwise unused.\n    \"\"\"\n\n    CONTENT_DECODERS = ['gzip', 'deflate']\n    REDIRECT_STATUSES = [301, 302, 303, 307, 308]\n\n\n\n\n\n\n\n\n\n\n\n    # Backwards-compatibility methods for httplib.HTTPResponse\n\n\n    # Overrides from io.IOBase\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3504613935947418
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:25-33",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 25,
+        "end_line": 33
+      },
+      "content": "class RequestError(PoolError):\n    \"Base exception for PoolErrors that have associated URLs.\"\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34658145904541016
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:111-113",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 111,
+        "end_line": 113
+      },
+      "content": "class ConnectTimeoutError(TimeoutError):\n    \"Raised when a socket timeout occurs while connecting to a server\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34564363956451416
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:131-138",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 131,
+        "end_line": 138
+      },
+      "content": "class LocationParseError(LocationValueError):\n    \"Raised when get_host or similar fails to parse the URL input.\"\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3430359661579132
+    },
+    {
+      "chunk_id": "requests/models.py:782-805",
+      "citation": {
+        "path": "requests/models.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 782,
+        "end_line": 805
+      },
+      "content": "def json(self, **kwargs):\n    \"\"\"Returns the json-encoded content of a response, if any.\n\n    :param \\*\\*kwargs: Optional arguments that ``json.loads`` takes.\n    \"\"\"\n\n    if not self.encoding and len(self.content) > 3:\n        # No encoding set. JSON RFC 4627 section 3 states we should expect\n        # UTF-8, -16 or -32. Detect which one to use; If the detection or\n        # decoding fails, fall back to `self.text` (using chardet to make\n        # a best guess).\n        encoding = guess_json_utf(self.content)\n        if encoding is not None:\n            try:\n                return complexjson.loads(\n                    self.content.decode(encoding), **kwargs\n                )\n            except UnicodeDecodeError:\n                # Wrong UTF codec detected; usually because it's not UTF-8\n                # but some other 8-bit codec.  This is an RFC violation,\n                # and the server didn't bother to tell us what codec *was*\n                # used.\n                pass\n    return complexjson.loads(self.text, **kwargs)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3425437808036804
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/exceptions.py:36-38",
+      "citation": {
+        "path": "requests/packages/urllib3/exceptions.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 36,
+        "end_line": 38
+      },
+      "content": "class SSLError(HTTPError):\n    \"Raised when SSL certificate fails in an HTTPS connection.\"\n    pass",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3419150710105896
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/packages/six.py:293-294",
+      "citation": {
+        "path": "requests/packages/urllib3/packages/six.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 293,
+        "end_line": 294
+      },
+      "content": "def u(s):\n    return unicode(s, \"unicode_escape\")",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.34177231788635254
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/__init__.py:37-52",
+      "citation": {
+        "path": "requests/packages/urllib3/__init__.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 37,
+        "end_line": 52
+      },
+      "content": "def add_stderr_logger(level=logging.DEBUG):\n    \"\"\"\n    Helper for quickly adding a StreamHandler to the logger. Useful for\n    debugging.\n\n    Returns the handler after adding it.\n    \"\"\"\n    # This method needs to be in this __init__.py to get the __name__ correct\n    # even if urllib3 is vendored within another package.\n    logger = logging.getLogger(__name__)\n    handler = logging.StreamHandler()\n    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))\n    logger.addHandler(handler)\n    logger.setLevel(level)\n    logger.debug('Added a stderr logging handler to logger: %s' % __name__)\n    return handler",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3397831618785858
+    },
+    {
+      "chunk_id": "requests/packages/urllib3/request.py:12-141",
+      "citation": {
+        "path": "requests/packages/urllib3/request.py",
+        "commit": "0be38a0c37c59c4b66ce908731da15b401655113",
+        "start_line": 12,
+        "end_line": 141
+      },
+      "content": "class RequestMethods(object):\n    \"\"\"\n    Convenience mixin for classes who implement a :meth:`urlopen` method, such\n    as :class:`~urllib3.connectionpool.HTTPConnectionPool` and\n    :class:`~urllib3.poolmanager.PoolManager`.\n\n    Provides behavior for making common types of HTTP request methods and\n    decides which type of request field encoding to use.\n\n    Specifically,\n\n    :meth:`.request_encode_url` is for sending requests whose fields are\n    encoded in the URL (such as GET, HEAD, DELETE).\n\n    :meth:`.request_encode_body` is for sending requests whose fields are\n    encoded in the *body* of the request using multipart or www-form-urlencoded\n    (such as for POST, PUT, PATCH).\n\n    :meth:`.request` is for making any kind of request, it will look up the\n    appropriate encoding format and use one of the above two methods to make\n    the request.\n\n    Initializer parameters:\n\n    :param headers:\n        Headers to include with all requests, unless other headers are given\n        explicitly.\n    \"\"\"\n\n    _encode_url_methods = set(['DELETE', 'GET', 'HEAD', 'OPTIONS'])\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.33521366119384766
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 0.6900291999918409
+}

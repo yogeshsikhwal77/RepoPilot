@@ -1,0 +1,272 @@
+{
+  "task_id": "scikit-learn__scikit-learn-13439",
+  "config": "hybrid_rerank",
+  "run_idx": 0,
+  "evidence": [
+    {
+      "chunk_id": "sklearn/pipeline.py:29-562",
+      "citation": {
+        "path": "sklearn/pipeline.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 29,
+        "end_line": 562
+      },
+      "content": "class Pipeline(_BaseComposition):\n    \"\"\"Pipeline of transforms with a final estimator.\n\n    Sequentially apply a list of transforms and a final estimator.\n    Intermediate steps of the pipeline must be 'transforms', that is, they\n    must implement fit and transform methods.\n    The final estimator only needs to implement fit.\n    The transformers in the pipeline can be cached using ``memory`` argument.\n\n    The purpose of the pipeline is to assemble several steps that can be\n    cross-validated together while setting different parameters.\n    For this, it enables setting parameters of the various steps using their\n    names and the parameter name separated by a '__', as in the example below.\n    A step's estimator may be replaced entirely by setting the parameter\n    with its name to another estimator, or a transformer removed by setting\n    it to 'passthrough' or ``None``.\n\n    Read more in the :ref:`User Guide <pipeline>`.\n\n    Parameters\n    ----------\n    steps : list\n        List of (name, transform) tuples (implementing fit/transform) that are\n        chained, in the order in which they are chained, with the last object\n        an estimator.\n\n    memory : None, str or object with the joblib.Memory interface, optional\n        Used to cache the fitted transformers of the pipeline. By default,\n        no caching is performed. If a string is given, it is the path to\n        the caching directory. Enabling caching triggers a clone of\n        the transformers before fitting. Therefore, the transformer\n        instance given to the pipeline cannot be inspected\n        directly. Use the attribute ``named_steps`` or ``steps`` to\n        inspect estimators within the pipeline. Caching the\n        transformers is advantageous when fitting is time consuming.\n\n    Attributes\n    ----------\n    named_steps : bunch object, a dictionary with attribute access\n        Read-only attribute to access any step parameter by user given name.\n        Keys are step names and values are steps parameters.\n\n    See also\n    --------\n    sklearn.pipeline.make_pipeline : convenience function for simplified\n        pipeline construction.\n\n    Examples\n    --------\n    >>> from sklearn import svm\n    >>> from sklearn.datasets import samples_generator\n    >>> from sklearn.feature_selection import SelectKBest\n    >>> from sklearn.feature_selection import f_regression\n    >>> from sklearn.pipeline import Pipeline\n    >>> # generate some data to play with\n    >>> X, y = samples_generator.make_classification(\n    ...     n_informative=5, n_redundant=0, random_state=42)\n    >>> # ANOVA SVM-C\n    >>> anova_filter = SelectKBest(f_regression, k=5)\n    >>> clf = svm.SVC(kernel='linear')\n    >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])\n    >>> # You can set the parameters using the names issued\n    >>> # For instance, fit using a k of 10 in the SelectKBest\n    >>> # and a parameter 'C' of the svm\n    >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)\n    ...                      # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE\n    Pipeline(memory=None,\n             steps=[('anova', SelectKBest(...)),\n                    ('svc', SVC(...))])\n    >>> prediction = anova_svm.predict(X)\n    >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS\n    0.83\n    >>> # getting the selected features chosen by anova_filter\n    >>> anova_svm['anova'].get_support()\n    ... # doctest: +NORMALIZE_WHITESPACE\n    array([False, False,  True,  True, False, False,  True,  True, False,\n           True, False,  True,  True, False,  True, False,  True,  True,\n           False, False])\n    >>> # Another way to get selected features chosen by anova_filter\n    >>> anova_svm.named_steps.anova.get_support()\n    ... # doctest: +NORMALIZE_WHITESPACE\n    array([False, False,  True,  True, False, False,  True,  True, False,\n           True, False,  True,  True, False,  True, False,  True,  True,\n           False, False])\n    >>> # Indexing can also be used to extract a sub-pipeline.\n    >>> sub_pipeline = anova_svm[:1]\n    >>> sub_pipeline  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE\n    Pipeline(memory=None, steps=[('anova', ...)])\n    >>> coef = anova_svm[-1].coef_\n    >>> anova_svm['svc'] is anova_svm[-1]\n    True\n    >>> coef.shape\n    (1, 10)\n    >>> sub_pipeline.inverse_transform(coef).shape\n    (1, 20)\n    \"\"\"\n\n    # BaseEstimator interface\n    _required_parameters = ['steps']\n\n\n\n\n\n\n\n\n\n\n    # Estimator interface\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.657212
+    },
+    {
+      "chunk_id": "sklearn/datasets/samples_generator.py:36-254",
+      "citation": {
+        "path": "sklearn/datasets/samples_generator.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 36,
+        "end_line": 254
+      },
+      "content": "def make_classification(n_samples=100, n_features=20, n_informative=2,\n                        n_redundant=2, n_repeated=0, n_classes=2,\n                        n_clusters_per_class=2, weights=None, flip_y=0.01,\n                        class_sep=1.0, hypercube=True, shift=0.0, scale=1.0,\n                        shuffle=True, random_state=None):\n    \"\"\"Generate a random n-class classification problem.\n\n    This initially creates clusters of points normally distributed (std=1)\n    about vertices of an ``n_informative``-dimensional hypercube with sides of\n    length ``2*class_sep`` and assigns an equal number of clusters to each\n    class. It introduces interdependence between these features and adds\n    various types of further noise to the data.\n\n    Without shuffling, ``X`` horizontally stacks features in the following\n    order: the primary ``n_informative`` features, followed by ``n_redundant``\n    linear combinations of the informative features, followed by ``n_repeated``\n    duplicates, drawn randomly with replacement from the informative and\n    redundant features. The remaining features are filled with random noise.\n    Thus, without shuffling, all useful features are contained in the columns\n    ``X[:, :n_informative + n_redundant + n_repeated]``.\n\n    Read more in the :ref:`User Guide <sample_generators>`.\n\n    Parameters\n    ----------\n    n_samples : int, optional (default=100)\n        The number of samples.\n\n    n_features : int, optional (default=20)\n        The total number of features. These comprise ``n_informative``\n        informative features, ``n_redundant`` redundant features,\n        ``n_repeated`` duplicated features and\n        ``n_features-n_informative-n_redundant-n_repeated`` useless features\n        drawn at random.\n\n    n_informative : int, optional (default=2)\n        The number of informative features. Each class is composed of a number\n        of gaussian clusters each located around the vertices of a hypercube\n        in a subspace of dimension ``n_informative``. For each cluster,\n        informative features are drawn independently from  N(0, 1) and then\n        randomly linearly combined within each cluster in order to add\n        covariance. The clusters are then placed on the vertices of the\n        hypercube.\n\n    n_redundant : int, optional (default=2)\n        The number of redundant features. These features are generated as\n        random linear combinations of the informative features.\n\n    n_repeated : int, optional (default=0)\n        The number of duplicated features, drawn randomly from the informative\n        and the redundant features.\n\n    n_classes : int, optional (default=2)\n        The number of classes (or labels) of the classification problem.\n\n    n_clusters_per_class : int, optional (default=2)\n        The number of clusters per class.\n\n    weights : list of floats or None (default=None)\n        The proportions of samples assigned to each class. If None, then\n        classes are balanced. Note that if ``len(weights) == n_classes - 1``,\n        then the last class weight is automatically inferred.\n        More than ``n_samples`` samples may be returned if the sum of\n        ``weights`` exceeds 1.\n\n    flip_y : float, optional (default=0.01)\n        The fraction of samples whose class are randomly exchanged. Larger\n        values introduce noise in the labels and make the classification\n        task harder.\n\n    class_sep : float, optional (default=1.0)\n        The factor multiplying the hypercube size.  Larger values spread\n        out the clusters/classes and make the classification task easier.\n\n    hypercube : boolean, optional (default=True)\n        If True, the clusters are put on the vertices of a hypercube. If\n        False, the clusters are put on the vertices of a random polytope.\n\n    shift : float, array of shape [n_features] or None, optional (default=0.0)\n        Shift features by the specified value. If None, then features\n        are shifted by a random value drawn in [-class_sep, class_sep].\n\n    scale : float, array of shape [n_features] or None, optional (default=1.0)\n        Multiply features by the specified value. If None, then features\n        are scaled by a random value drawn in [1, 100]. Note that scaling\n        happens after shifting.\n\n    shuffle : boolean, optional (default=True)\n        Shuffle the samples and the features.\n\n    random_state : int, RandomState instance or None (default)\n        Determines random number generation for dataset creation. Pass an int\n        for reproducible output across multiple function calls.\n        See :term:`Glossary <random_state>`.\n\n    Returns\n    -------\n    X : array of shape [n_samples, n_features]\n        The generated samples.\n\n    y : array of shape [n_samples]\n        The integer labels for class membership of each sample.\n\n    Notes\n    -----\n    The algorithm is adapted from Guyon [1] and was designed to generate\n    the \"Madelon\" dataset.\n\n    References\n    ----------\n    .. [1] I. Guyon, \"Design of experiments for the NIPS 2003 variable\n           selection benchmark\", 2003.\n\n    See also\n    --------\n    make_blobs: simplified variant\n    make_multilabel_classification: unrelated generator for multilabel tasks\n    \"\"\"\n    generator = check_random_state(random_state)\n\n    # Count features, clusters and samples\n    if n_informative + n_redundant + n_repeated > n_features:\n        raise ValueError(\"Number of informative, redundant and repeated \"\n                         \"features must sum to less than the number of total\"\n                         \" features\")\n    # Use log2 to avoid overflow errors\n    if n_informative < np.log2(n_classes * n_clusters_per_class):\n        raise ValueError(\"n_classes * n_clusters_per_class must\"\n                         \" be smaller or equal 2 ** n_informative\")\n    if weights and len(weights) not in [n_classes, n_classes - 1]:\n        raise ValueError(\"Weights specified but incompatible with number \"\n                         \"of classes.\")\n\n    n_useless = n_features - n_informative - n_redundant - n_repeated\n    n_clusters = n_classes * n_clusters_per_class\n\n    if weights and len(weights) == (n_classes - 1):\n        weights = weights + [1.0 - sum(weights)]\n\n    if weights is None:\n        weights = [1.0 / n_classes] * n_classes\n        weights[-1] = 1.0 - sum(weights[:-1])\n\n    # Distribute samples among clusters by weight\n    n_samples_per_cluster = [\n        int(n_samples * weights[k % n_classes] / n_clusters_per_class)\n        for k in range(n_clusters)]\n\n    for i in range(n_samples - sum(n_samples_per_cluster)):\n        n_samples_per_cluster[i % n_clusters] += 1\n\n    # Initialize X and y\n    X = np.zeros((n_samples, n_features))\n    y = np.zeros(n_samples, dtype=np.int)\n\n    # Build the polytope whose vertices become cluster centroids\n    centroids = _generate_hypercube(n_clusters, n_informative,\n                                    generator).astype(float, copy=False)\n    centroids *= 2 * class_sep\n    centroids -= class_sep\n    if not hypercube:\n        centroids *= generator.rand(n_clusters, 1)\n        centroids *= generator.rand(1, n_informative)\n\n    # Initially draw informative features from the standard normal\n    X[:, :n_informative] = generator.randn(n_samples, n_informative)\n\n    # Create each cluster; a variant of make_blobs\n    stop = 0\n    for k, centroid in enumerate(centroids):\n        start, stop = stop, stop + n_samples_per_cluster[k]\n        y[start:stop] = k % n_classes  # assign labels\n        X_k = X[start:stop, :n_informative]  # slice a view of the cluster\n\n        A = 2 * generator.rand(n_informative, n_informative) - 1\n        X_k[...] = np.dot(X_k, A)  # introduce random covariance\n\n        X_k += centroid  # shift the cluster to a vertex\n\n    # Create redundant features\n    if n_redundant > 0:\n        B = 2 * generator.rand(n_informative, n_redundant) - 1\n        X[:, n_informative:n_informative + n_redundant] = \\\n            np.dot(X[:, :n_informative], B)\n\n    # Repeat some features\n    if n_repeated > 0:\n        n = n_informative + n_redundant\n        indices = ((n - 1) * generator.rand(n_repeated) + 0.5).astype(np.intp)\n        X[:, n:n + n_repeated] = X[:, indices]\n\n    # Fill useless features\n    if n_useless > 0:\n        X[:, -n_useless:] = generator.randn(n_samples, n_useless)\n\n    # Randomly replace labels\n    if flip_y >= 0.0:\n        flip_mask = generator.rand(n_samples) < flip_y\n        y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())\n\n    # Randomly shift and scale\n    if shift is None:\n        shift = (2 * generator.rand(n_features) - 1) * class_sep\n    X += shift\n\n    if scale is None:\n        scale = 1 + 100 * generator.rand(n_features)\n    X *= scale\n\n    if shuffle:\n        # Randomly permute samples\n        X, y = util_shuffle(X, y, random_state=generator)\n\n        # Randomly permute features\n        indices = np.arange(n_features)\n        generator.shuffle(indices)\n        X[:, :] = X[:, indices]\n\n    return X, y",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.63507
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:451-530",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 451,
+        "end_line": 530
+      },
+      "content": "class SelectKBest(_BaseFilter):\n    \"\"\"Select features according to the k highest scores.\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues) or a single array with scores.\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    k : int or \"all\", optional, default=10\n        Number of top features to select.\n        The \"all\" option bypasses selection, for use in a parameter search.\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores, None if `score_func` returned only scores.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_digits\n    >>> from sklearn.feature_selection import SelectKBest, chi2\n    >>> X, y = load_digits(return_X_y=True)\n    >>> X.shape\n    (1797, 64)\n    >>> X_new = SelectKBest(chi2, k=20).fit_transform(X, y)\n    >>> X_new.shape\n    (1797, 20)\n\n    Notes\n    -----\n    Ties between features with equal scores will be broken in an unspecified\n    way.\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    mutual_info_classif: Mutual information for a discrete target.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    f_regression: F-value between label/feature for regression tasks.\n    mutual_info_regression: Mutual information for a continuous target.\n    SelectPercentile: Select features based on percentile of the highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    SelectFwe: Select features based on family-wise error rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.570246
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:231-306",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 231,
+        "end_line": 306
+      },
+      "content": "def f_regression(X, y, center=True):\n    \"\"\"Univariate linear regression tests.\n\n    Linear model for testing the individual effect of each of many regressors.\n    This is a scoring function to be used in a feature selection procedure, not\n    a free standing feature selection procedure.\n\n    This is done in 2 steps:\n\n    1. The correlation between each regressor and the target is computed,\n       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *\n       std(y)).\n    2. It is converted to an F score then to a p-value.\n\n    For more on usage see the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    X : {array-like, sparse matrix}  shape = (n_samples, n_features)\n        The set of regressors that will be tested sequentially.\n\n    y : array of shape(n_samples).\n        The data matrix\n\n    center : True, bool,\n        If true, X and y will be centered.\n\n    Returns\n    -------\n    F : array, shape=(n_features,)\n        F values of features.\n\n    pval : array, shape=(n_features,)\n        p-values of F-scores.\n\n\n    See also\n    --------\n    mutual_info_regression: Mutual information for a continuous target.\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    SelectFwe: Select features based on family-wise error rate.\n    SelectPercentile: Select features based on percentile of the highest\n        scores.\n    \"\"\"\n    X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64)\n    n_samples = X.shape[0]\n\n    # compute centered values\n    # note that E[(x - mean(x))*(y - mean(y))] = E[x*(y - mean(y))], so we\n    # need not center X\n    if center:\n        y = y - np.mean(y)\n        if issparse(X):\n            X_means = X.mean(axis=0).getA1()\n        else:\n            X_means = X.mean(axis=0)\n        # compute the scaled standard deviations via moments\n        X_norms = np.sqrt(row_norms(X.T, squared=True) -\n                          n_samples * X_means ** 2)\n    else:\n        X_norms = row_norms(X.T)\n\n    # compute the correlation\n    corr = safe_sparse_dot(y, X)\n    corr /= X_norms\n    corr /= np.linalg.norm(y)\n\n    # convert to p-value\n    degrees_of_freedom = y.size - (2 if center else 1)\n    F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom\n    pv = stats.f.sf(F, 1, degrees_of_freedom)\n    return F, pv",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.538329
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:338-354",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 338,
+        "end_line": 354
+      },
+      "content": "def test_select_kbest_regression():\n    # Test whether the relative univariate feature selection\n    # gets the correct items in a simple regression problem\n    # with the k best heuristic\n    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,\n                           shuffle=False, random_state=0, noise=10)\n\n    univariate_filter = SelectKBest(f_regression, k=5)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    assert_best_scores_kept(univariate_filter)\n    X_r2 = GenericUnivariateSelect(\n        f_regression, mode='k_best', param=5).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.zeros(20)\n    gtruth[:5] = 1\n    assert_array_equal(support, gtruth)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.412539
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:368-448",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 368,
+        "end_line": 448
+      },
+      "content": "class SelectPercentile(_BaseFilter):\n    \"\"\"Select features according to a percentile of the highest scores.\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues) or a single array with scores.\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    percentile : int, optional, default=10\n        Percent of features to keep.\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores, None if `score_func` returned only scores.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_digits\n    >>> from sklearn.feature_selection import SelectPercentile, chi2\n    >>> X, y = load_digits(return_X_y=True)\n    >>> X.shape\n    (1797, 64)\n    >>> X_new = SelectPercentile(chi2, percentile=10).fit_transform(X, y)\n    >>> X_new.shape\n    (1797, 7)\n\n    Notes\n    -----\n    Ties between features with equal scores will be broken in an unspecified\n    way.\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    mutual_info_classif: Mutual information for a discrete target.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    f_regression: F-value between label/feature for regression tasks.\n    mutual_info_regression: Mutual information for a continuous target.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    SelectFwe: Select features based on family-wise error rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.39182
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:533-592",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 533,
+        "end_line": 592
+      },
+      "content": "class SelectFpr(_BaseFilter):\n    \"\"\"Filter: Select the pvalues below alpha based on a FPR test.\n\n    FPR test stands for False Positive Rate test. It controls the total\n    amount of false detections.\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues).\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    alpha : float, optional\n        The highest p-value for features to be kept.\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_breast_cancer\n    >>> from sklearn.feature_selection import SelectFpr, chi2\n    >>> X, y = load_breast_cancer(return_X_y=True)\n    >>> X.shape\n    (569, 30)\n    >>> X_new = SelectFpr(chi2, alpha=0.01).fit_transform(X, y)\n    >>> X_new.shape\n    (569, 16)\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    mutual_info_classif:\n    f_regression: F-value between label/feature for regression tasks.\n    mutual_info_regression: Mutual information between features and the target.\n    SelectPercentile: Select features based on percentile of the highest scores.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    SelectFwe: Select features based on family-wise error rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.389686
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:667-721",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 667,
+        "end_line": 721
+      },
+      "content": "class SelectFwe(_BaseFilter):\n    \"\"\"Filter: Select the p-values corresponding to Family-wise error rate\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues).\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    alpha : float, optional\n        The highest uncorrected p-value for features to keep.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_breast_cancer\n    >>> from sklearn.feature_selection import SelectFwe, chi2\n    >>> X, y = load_breast_cancer(return_X_y=True)\n    >>> X.shape\n    (569, 30)\n    >>> X_new = SelectFwe(chi2, alpha=0.01).fit_transform(X, y)\n    >>> X_new.shape\n    (569, 15)\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores.\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    f_regression: F-value between label/feature for regression tasks.\n    SelectPercentile: Select features based on percentile of the highest scores.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFdr: Select features based on an estimated false discovery rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.3873
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/univariate_selection.py:595-664",
+      "citation": {
+        "path": "sklearn/feature_selection/univariate_selection.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 595,
+        "end_line": 664
+      },
+      "content": "class SelectFdr(_BaseFilter):\n    \"\"\"Filter: Select the p-values for an estimated false discovery rate\n\n    This uses the Benjamini-Hochberg procedure. ``alpha`` is an upper bound\n    on the expected false discovery rate.\n\n    Read more in the :ref:`User Guide <univariate_feature_selection>`.\n\n    Parameters\n    ----------\n    score_func : callable\n        Function taking two arrays X and y, and returning a pair of arrays\n        (scores, pvalues).\n        Default is f_classif (see below \"See also\"). The default function only\n        works with classification tasks.\n\n    alpha : float, optional\n        The highest uncorrected p-value for features to keep.\n\n    Examples\n    --------\n    >>> from sklearn.datasets import load_breast_cancer\n    >>> from sklearn.feature_selection import SelectFdr, chi2\n    >>> X, y = load_breast_cancer(return_X_y=True)\n    >>> X.shape\n    (569, 30)\n    >>> X_new = SelectFdr(chi2, alpha=0.01).fit_transform(X, y)\n    >>> X_new.shape\n    (569, 16)\n\n    Attributes\n    ----------\n    scores_ : array-like, shape=(n_features,)\n        Scores of features.\n\n    pvalues_ : array-like, shape=(n_features,)\n        p-values of feature scores.\n\n    References\n    ----------\n    https://en.wikipedia.org/wiki/False_discovery_rate\n\n    See also\n    --------\n    f_classif: ANOVA F-value between label/feature for classification tasks.\n    mutual_info_classif: Mutual information for a discrete target.\n    chi2: Chi-squared stats of non-negative features for classification tasks.\n    f_regression: F-value between label/feature for regression tasks.\n    mutual_info_regression: Mutual information for a contnuous target.\n    SelectPercentile: Select features based on percentile of the highest scores.\n    SelectKBest: Select features based on the k highest scores.\n    SelectFpr: Select features based on a false positive rate test.\n    SelectFwe: Select features based on family-wise error rate.\n    GenericUnivariateSelect: Univariate feature selector with configurable mode.\n    \"\"\"\n\n",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.379557
+    },
+    {
+      "chunk_id": "sklearn/datasets/samples_generator.py:902-964",
+      "citation": {
+        "path": "sklearn/datasets/samples_generator.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 902,
+        "end_line": 964
+      },
+      "content": "def make_friedman2(n_samples=100, noise=0.0, random_state=None):\n    \"\"\"Generate the \"Friedman #2\" regression problem\n\n    This dataset is described in Friedman [1] and Breiman [2].\n\n    Inputs `X` are 4 independent features uniformly distributed on the\n    intervals::\n\n        0 <= X[:, 0] <= 100,\n        40 * pi <= X[:, 1] <= 560 * pi,\n        0 <= X[:, 2] <= 1,\n        1 <= X[:, 3] <= 11.\n\n    The output `y` is created according to the formula::\n\n        y(X) = (X[:, 0] ** 2 + (X[:, 1] * X[:, 2] \\\n - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 + noise * N(0, 1).\n\n    Read more in the :ref:`User Guide <sample_generators>`.\n\n    Parameters\n    ----------\n    n_samples : int, optional (default=100)\n        The number of samples.\n\n    noise : float, optional (default=0.0)\n        The standard deviation of the gaussian noise applied to the output.\n\n    random_state : int, RandomState instance or None (default)\n        Determines random number generation for dataset noise. Pass an int\n        for reproducible output across multiple function calls.\n        See :term:`Glossary <random_state>`.\n\n    Returns\n    -------\n    X : array of shape [n_samples, 4]\n        The input samples.\n\n    y : array of shape [n_samples]\n        The output values.\n\n    References\n    ----------\n    .. [1] J. Friedman, \"Multivariate adaptive regression splines\", The Annals\n           of Statistics 19 (1), pages 1-67, 1991.\n\n    .. [2] L. Breiman, \"Bagging predictors\", Machine Learning 24,\n           pages 123-140, 1996.\n    \"\"\"\n    generator = check_random_state(random_state)\n\n    X = generator.rand(n_samples, 4)\n    X[:, 0] *= 100\n    X[:, 1] *= 520 * np.pi\n    X[:, 1] += 40 * np.pi\n    X[:, 3] *= 10\n    X[:, 3] += 1\n\n    y = (X[:, 0] ** 2\n         + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \\\n        + noise * generator.randn(n_samples)\n\n    return X, y",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.375337
+    },
+    {
+      "chunk_id": "sklearn/datasets/samples_generator.py:840-899",
+      "citation": {
+        "path": "sklearn/datasets/samples_generator.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 840,
+        "end_line": 899
+      },
+      "content": "def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):\n    \"\"\"Generate the \"Friedman #1\" regression problem\n\n    This dataset is described in Friedman [1] and Breiman [2].\n\n    Inputs `X` are independent features uniformly distributed on the interval\n    [0, 1]. The output `y` is created according to the formula::\n\n        y(X) = 10 * sin(pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \\\n+ 10 * X[:, 3] + 5 * X[:, 4] + noise * N(0, 1).\n\n    Out of the `n_features` features, only 5 are actually used to compute\n    `y`. The remaining features are independent of `y`.\n\n    The number of features has to be >= 5.\n\n    Read more in the :ref:`User Guide <sample_generators>`.\n\n    Parameters\n    ----------\n    n_samples : int, optional (default=100)\n        The number of samples.\n\n    n_features : int, optional (default=10)\n        The number of features. Should be at least 5.\n\n    noise : float, optional (default=0.0)\n        The standard deviation of the gaussian noise applied to the output.\n\n    random_state : int, RandomState instance or None (default)\n        Determines random number generation for dataset noise. Pass an int\n        for reproducible output across multiple function calls.\n        See :term:`Glossary <random_state>`.\n\n    Returns\n    -------\n    X : array of shape [n_samples, n_features]\n        The input samples.\n\n    y : array of shape [n_samples]\n        The output values.\n\n    References\n    ----------\n    .. [1] J. Friedman, \"Multivariate adaptive regression splines\", The Annals\n           of Statistics 19 (1), pages 1-67, 1991.\n\n    .. [2] L. Breiman, \"Bagging predictors\", Machine Learning 24,\n           pages 123-140, 1996.\n    \"\"\"\n    if n_features < 5:\n        raise ValueError(\"n_features must be at least five.\")\n\n    generator = check_random_state(random_state)\n\n    X = generator.rand(n_samples, n_features)\n    y = 10 * np.sin(np.pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \\\n        + 10 * X[:, 3] + 5 * X[:, 4] + noise * generator.randn(n_samples)\n\n    return X, y",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.375287
+    },
+    {
+      "chunk_id": "sklearn/datasets/samples_generator.py:967-1028",
+      "citation": {
+        "path": "sklearn/datasets/samples_generator.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 967,
+        "end_line": 1028
+      },
+      "content": "def make_friedman3(n_samples=100, noise=0.0, random_state=None):\n    \"\"\"Generate the \"Friedman #3\" regression problem\n\n    This dataset is described in Friedman [1] and Breiman [2].\n\n    Inputs `X` are 4 independent features uniformly distributed on the\n    intervals::\n\n        0 <= X[:, 0] <= 100,\n        40 * pi <= X[:, 1] <= 560 * pi,\n        0 <= X[:, 2] <= 1,\n        1 <= X[:, 3] <= 11.\n\n    The output `y` is created according to the formula::\n\n        y(X) = arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) \\\n/ X[:, 0]) + noise * N(0, 1).\n\n    Read more in the :ref:`User Guide <sample_generators>`.\n\n    Parameters\n    ----------\n    n_samples : int, optional (default=100)\n        The number of samples.\n\n    noise : float, optional (default=0.0)\n        The standard deviation of the gaussian noise applied to the output.\n\n    random_state : int, RandomState instance or None (default)\n        Determines random number generation for dataset noise. Pass an int\n        for reproducible output across multiple function calls.\n        See :term:`Glossary <random_state>`.\n\n    Returns\n    -------\n    X : array of shape [n_samples, 4]\n        The input samples.\n\n    y : array of shape [n_samples]\n        The output values.\n\n    References\n    ----------\n    .. [1] J. Friedman, \"Multivariate adaptive regression splines\", The Annals\n           of Statistics 19 (1), pages 1-67, 1991.\n\n    .. [2] L. Breiman, \"Bagging predictors\", Machine Learning 24,\n           pages 123-140, 1996.\n    \"\"\"\n    generator = check_random_state(random_state)\n\n    X = generator.rand(n_samples, 4)\n    X[:, 0] *= 100\n    X[:, 1] *= 520 * np.pi\n    X[:, 1] += 40 * np.pi\n    X[:, 3] *= 10\n    X[:, 3] += 1\n\n    y = np.arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) / X[:, 0]) \\\n        + noise * generator.randn(n_samples)\n\n    return X, y",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.373543
+    },
+    {
+      "chunk_id": "sklearn/datasets/samples_generator.py:643-695",
+      "citation": {
+        "path": "sklearn/datasets/samples_generator.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 643,
+        "end_line": 695
+      },
+      "content": "def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):\n    \"\"\"Make two interleaving half circles\n\n    A simple toy dataset to visualize clustering and classification\n    algorithms. Read more in the :ref:`User Guide <sample_generators>`.\n\n    Parameters\n    ----------\n    n_samples : int, optional (default=100)\n        The total number of points generated.\n\n    shuffle : bool, optional (default=True)\n        Whether to shuffle the samples.\n\n    noise : double or None (default=None)\n        Standard deviation of Gaussian noise added to the data.\n\n    random_state : int, RandomState instance or None (default)\n        Determines random number generation for dataset shuffling and noise.\n        Pass an int for reproducible output across multiple function calls.\n        See :term:`Glossary <random_state>`.\n\n    Returns\n    -------\n    X : array of shape [n_samples, 2]\n        The generated samples.\n\n    y : array of shape [n_samples]\n        The integer labels (0 or 1) for class membership of each sample.\n    \"\"\"\n\n    n_samples_out = n_samples // 2\n    n_samples_in = n_samples - n_samples_out\n\n    generator = check_random_state(random_state)\n\n    outer_circ_x = np.cos(np.linspace(0, np.pi, n_samples_out))\n    outer_circ_y = np.sin(np.linspace(0, np.pi, n_samples_out))\n    inner_circ_x = 1 - np.cos(np.linspace(0, np.pi, n_samples_in))\n    inner_circ_y = 1 - np.sin(np.linspace(0, np.pi, n_samples_in)) - .5\n\n    X = np.vstack([np.append(outer_circ_x, inner_circ_x),\n                   np.append(outer_circ_y, inner_circ_y)]).T\n    y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),\n                   np.ones(n_samples_in, dtype=np.intp)])\n\n    if shuffle:\n        X, y = util_shuffle(X, y, random_state=generator)\n\n    if noise is not None:\n        X += generator.normal(scale=noise, size=X.shape)\n\n    return X, y",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.365838
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:205-223",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 205,
+        "end_line": 223
+      },
+      "content": "def test_select_kbest_classif():\n    # Test whether the relative univariate feature selection\n    # gets the correct items in a simple classification problem\n    # with the k best heuristic\n    X, y = make_classification(n_samples=200, n_features=20,\n                               n_informative=3, n_redundant=2,\n                               n_repeated=0, n_classes=8,\n                               n_clusters_per_class=1, flip_y=0.0,\n                               class_sep=10, shuffle=False, random_state=0)\n\n    univariate_filter = SelectKBest(f_classif, k=5)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    X_r2 = GenericUnivariateSelect(\n        f_classif, mode='k_best', param=5).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.zeros(20)\n    gtruth[:5] = 1\n    assert_array_equal(support, gtruth)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.349695
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:453-469",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 453,
+        "end_line": 469
+      },
+      "content": "def test_select_fwe_regression():\n    # Test whether the relative univariate feature selection\n    # gets the correct items in a simple regression problem\n    # with the fwe heuristic\n    X, y = make_regression(n_samples=200, n_features=20,\n                           n_informative=5, shuffle=False, random_state=0)\n\n    univariate_filter = SelectFwe(f_regression, alpha=0.01)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    X_r2 = GenericUnivariateSelect(\n        f_regression, mode='fwe', param=0.01).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.zeros(20)\n    gtruth[:5] = 1\n    assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))\n    assert_less(np.sum(support[5:] == 1), 2)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.341984
+    },
+    {
+      "chunk_id": "sklearn/datasets/samples_generator.py:1320-1369",
+      "citation": {
+        "path": "sklearn/datasets/samples_generator.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 1320,
+        "end_line": 1369
+      },
+      "content": "def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):\n    \"\"\"Generate a swiss roll dataset.\n\n    Read more in the :ref:`User Guide <sample_generators>`.\n\n    Parameters\n    ----------\n    n_samples : int, optional (default=100)\n        The number of sample points on the S curve.\n\n    noise : float, optional (default=0.0)\n        The standard deviation of the gaussian noise.\n\n    random_state : int, RandomState instance or None (default)\n        Determines random number generation for dataset creation. Pass an int\n        for reproducible output across multiple function calls.\n        See :term:`Glossary <random_state>`.\n\n    Returns\n    -------\n    X : array of shape [n_samples, 3]\n        The points.\n\n    t : array of shape [n_samples]\n        The univariate position of the sample according to the main dimension\n        of the points in the manifold.\n\n    Notes\n    -----\n    The algorithm is from Marsland [1].\n\n    References\n    ----------\n    .. [1] S. Marsland, \"Machine Learning: An Algorithmic Perspective\",\n           Chapter 10, 2009.\n           http://seat.massey.ac.nz/personal/s.r.marsland/Code/10/lle.py\n    \"\"\"\n    generator = check_random_state(random_state)\n\n    t = 1.5 * np.pi * (1 + 2 * generator.rand(1, n_samples))\n    x = t * np.cos(t)\n    y = 21 * generator.rand(1, n_samples)\n    z = t * np.sin(t)\n\n    X = np.concatenate((x, y, z))\n    X += noise * generator.randn(3, n_samples)\n    X = X.T\n    t = np.squeeze(t)\n\n    return X, t",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.341305
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:357-374",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 357,
+        "end_line": 374
+      },
+      "content": "def test_select_heuristics_regression():\n    # Test whether the relative univariate feature selection\n    # gets the correct items in a simple regression problem\n    # with the fpr, fdr or fwe heuristics\n    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,\n                           shuffle=False, random_state=0, noise=10)\n\n    univariate_filter = SelectFpr(f_regression, alpha=0.01)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    gtruth = np.zeros(20)\n    gtruth[:5] = 1\n    for mode in ['fdr', 'fpr', 'fwe']:\n        X_r2 = GenericUnivariateSelect(\n            f_regression, mode=mode, param=0.01).fit(X, y).transform(X)\n        assert_array_equal(X_r, X_r2)\n        support = univariate_filter.get_support()\n        assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))\n        assert_less(np.sum(support[5:] == 1), 3)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.339706
+    },
+    {
+      "chunk_id": "sklearn/datasets/samples_generator.py:407-452",
+      "citation": {
+        "path": "sklearn/datasets/samples_generator.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 407,
+        "end_line": 452
+      },
+      "content": "def make_hastie_10_2(n_samples=12000, random_state=None):\n    \"\"\"Generates data for binary classification used in\n    Hastie et al. 2009, Example 10.2.\n\n    The ten features are standard independent Gaussian and\n    the target ``y`` is defined by::\n\n      y[i] = 1 if np.sum(X[i] ** 2) > 9.34 else -1\n\n    Read more in the :ref:`User Guide <sample_generators>`.\n\n    Parameters\n    ----------\n    n_samples : int, optional (default=12000)\n        The number of samples.\n\n    random_state : int, RandomState instance or None (default)\n        Determines random number generation for dataset creation. Pass an int\n        for reproducible output across multiple function calls.\n        See :term:`Glossary <random_state>`.\n\n    Returns\n    -------\n    X : array of shape [n_samples, 10]\n        The input samples.\n\n    y : array of shape [n_samples]\n        The output values.\n\n    References\n    ----------\n    .. [1] T. Hastie, R. Tibshirani and J. Friedman, \"Elements of Statistical\n           Learning Ed. 2\", Springer, 2009.\n\n    See also\n    --------\n    make_gaussian_quantiles: a generalization of this dataset approach\n    \"\"\"\n    rs = check_random_state(random_state)\n\n    shape = (n_samples, 10)\n    X = rs.normal(size=shape).reshape(shape)\n    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)\n    y[y == 0.0] = -1.0\n\n    return X, y",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.332334
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:284-306",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 284,
+        "end_line": 306
+      },
+      "content": "def test_select_percentile_regression():\n    # Test whether the relative univariate feature selection\n    # gets the correct items in a simple regression problem\n    # with the percentile heuristic\n    X, y = make_regression(n_samples=200, n_features=20,\n                           n_informative=5, shuffle=False, random_state=0)\n\n    univariate_filter = SelectPercentile(f_regression, percentile=25)\n    X_r = univariate_filter.fit(X, y).transform(X)\n    assert_best_scores_kept(univariate_filter)\n    X_r2 = GenericUnivariateSelect(\n        f_regression, mode='percentile', param=25).fit(X, y).transform(X)\n    assert_array_equal(X_r, X_r2)\n    support = univariate_filter.get_support()\n    gtruth = np.zeros(20)\n    gtruth[:5] = 1\n    assert_array_equal(support, gtruth)\n    X_2 = X.copy()\n    X_2[:, np.logical_not(support)] = 0\n    assert_array_equal(X_2, univariate_filter.inverse_transform(X_r))\n    # Check inverse_transform respects dtype\n    assert_array_equal(X_2.astype(bool),\n                       univariate_filter.inverse_transform(X_r.astype(bool)))",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.325717
+    },
+    {
+      "chunk_id": "sklearn/feature_selection/tests/test_feature_select.py:411-450",
+      "citation": {
+        "path": "sklearn/feature_selection/tests/test_feature_select.py",
+        "commit": "a62775e99f2a5ea3d51db7160fad783f6cd8a4c5",
+        "start_line": 411,
+        "end_line": 450
+      },
+      "content": "def test_select_fdr_regression():\n    # Test that fdr heuristic actually has low FDR.\n    def single_fdr(alpha, n_informative, random_state):\n        X, y = make_regression(n_samples=150, n_features=20,\n                               n_informative=n_informative, shuffle=False,\n                               random_state=random_state, noise=10)\n\n        with warnings.catch_warnings(record=True):\n            # Warnings can be raised when no features are selected\n            # (low alpha or very noisy data)\n            univariate_filter = SelectFdr(f_regression, alpha=alpha)\n            X_r = univariate_filter.fit(X, y).transform(X)\n            X_r2 = GenericUnivariateSelect(\n                f_regression, mode='fdr', param=alpha).fit(X, y).transform(X)\n\n        assert_array_equal(X_r, X_r2)\n        support = univariate_filter.get_support()\n        num_false_positives = np.sum(support[n_informative:] == 1)\n        num_true_positives = np.sum(support[:n_informative] == 1)\n\n        if num_false_positives == 0:\n            return 0.\n        false_discovery_rate = (num_false_positives /\n                                (num_true_positives + num_false_positives))\n        return false_discovery_rate\n\n    for alpha in [0.001, 0.01, 0.1]:\n        for n_informative in [1, 5, 10]:\n            # As per Benjamini-Hochberg, the expected false discovery rate\n            # should be lower than alpha:\n            # FDR = E(FP / (TP + FP)) <= alpha\n            false_discovery_rate = np.mean([single_fdr(alpha, n_informative,\n                                                       random_state) for\n                                            random_state in range(100)])\n            assert_greater_equal(alpha, false_discovery_rate)\n\n            # Make sure that the empirical false discovery rate increases\n            # with alpha:\n            if false_discovery_rate != 0:\n                assert_greater(false_discovery_rate, alpha / 10)",
+      "source_type": "code",
+      "retrieval": "vector",
+      "score": 0.324124
+    }
+  ],
+  "answer": null,
+  "resolved": null,
+  "regressed": null,
+  "error": null,
+  "latency_s": 6.151658900009352
+}
