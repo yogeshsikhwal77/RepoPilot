@@ -3,19 +3,19 @@ from textwrap import dedent
 
 import pytest
 
-from repopilot.indexing.parser import ImportRef, _module_name, parse_file, parse_repo
+from repopilot.indexing.parser import ImportRef, Symbol, _module_name, parse_file, parse_repo
 from repopilot.orchestrator.state import Chunk
 
 
-def _parse(tmp_path, source, name="mod.py"):
+def _parse(tmp_path, source, name="mod.py", max_chunk_lines=80):
     path = tmp_path / name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(dedent(source).lstrip("\n"), encoding="utf-8")
-    return parse_file(path, tmp_path, "abc123")
+    return parse_file(path, tmp_path, "abc123", max_chunk_lines=max_chunk_lines)
 
 
 def _by_local(parsed):
-    return {s.chunk.symbol: s for s in parsed.symbols}
+    return {s.local_name: s for s in parsed.symbols}
 
 
 # ---------- contract with state.py ----------
@@ -38,9 +38,8 @@ def test_chunk_contract_local_symbol_and_id(tmp_path):
     assert isinstance(chunk, Chunk)
     assert chunk.id == "mod.py:2-3" == f"{chunk.path}:{chunk.start_line}-{chunk.end_line}"
     assert chunk.commit == "abc123"
-    assert syms["Cart"].chunk.id == "mod.py:1-3"
+    assert syms["Cart"].chunk.id == "mod.py:1-1"                  # class header chunk
     assert syms["helper"].chunk.id == "mod.py:4-5"
-    assert pf.chunks == [s.chunk for s in pf.symbols]
 
 
 def test_commit_is_required(tmp_path):
@@ -89,7 +88,7 @@ def test_class_chunk_excludes_method_bodies(tmp_path):
     assert "Doc." in cls.text and "x = 1" in cls.text
     assert "return 42" not in cls.text and "return 99" not in cls.text
     assert "@property" not in cls.text
-    assert cls.end_line == 10                                     # id still spans the whole class
+    assert cls.end_line == 3                                      # class header ends before first method
     assert "return 99" in _by_local(pf)["A.v"].chunk.text         # methods keep their own text
 
 
@@ -175,7 +174,51 @@ def test_sha256_tracks_content(tmp_path):
 def test_utf8_bom_file_is_parsed(tmp_path):
     (tmp_path / "bom.py").write_bytes(b"\xef\xbb\xbfdef f(): pass\n")
     pf = parse_file(tmp_path / "bom.py", tmp_path, "abc123")
-    assert [s.chunk.symbol for s in pf.symbols] == ["f"]
+    assert [s.local_name for s in pf.symbols] == ["f"]
+
+
+# ---------- chunk invariants ----------
+def test_chunk_invariants_no_overlap_and_residuals(tmp_path):
+    source = """
+        import os
+
+        GLOBAL_VAR = 42
+
+        class MyClass:
+            def method(self):
+                def nested():
+                    pass
+                return 1
+
+        def standalone():
+            return 2
+    """
+    pf = _parse(tmp_path, source)
+    
+    # 1. Residuals present with symbol=None (for imports / GLOBAL_VAR)
+    residuals = [c for c in pf.chunks if c.symbol is None]
+    assert len(residuals) >= 1
+    assert "import os" in residuals[0].text or "GLOBAL_VAR" in residuals[0].text
+
+    # 2. No overlapping line spans among chunks
+    sorted_chunks = sorted(pf.chunks, key=lambda c: c.start_line)
+    for i in range(len(sorted_chunks) - 1):
+        assert sorted_chunks[i].end_line < sorted_chunks[i + 1].start_line
+
+    # 3. Text matches exact source lines
+    source_lines = dedent(source).lstrip("\n").split("\n")
+    for chunk in pf.chunks:
+        expected_slice = "\n".join(source_lines[chunk.start_line - 1 : chunk.end_line])
+        assert dedent(chunk.text) == dedent(expected_slice)
+
+
+def test_chunk_windows_split_spans_longer_than_max(tmp_path):
+    long_func = "def big_fn():\n" + "\n".join([f"    x_{i} = {i}" for i in range(100)])
+    pf = _parse(tmp_path, long_func, max_chunk_lines=40)
+    fn_chunks = [c for c in pf.chunks if c.symbol == "big_fn"]
+    assert len(fn_chunks) >= 3
+    for c in fn_chunks:
+        assert (c.end_line - c.start_line + 1) <= 40
 
 
 # ---------- parse_repo ----------

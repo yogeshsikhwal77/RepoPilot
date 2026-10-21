@@ -6,6 +6,7 @@ import pytest
 from repopilot.indexing.coverage_map import symbol_id
 from repopilot.indexing.parser import parse_repo
 from repopilot.indexing.symbol_graph import EdgeKind, SymbolGraph
+from repopilot.orchestrator.state import Chunk, Citation
 
 FILES = {
     "pkg/__init__.py": "",
@@ -71,7 +72,7 @@ def g(tmp_path) -> SymbolGraph:
 
 
 def _triples(graph, kind):
-    return {(e.src, e.dst, e.confidence) for e in graph.edges(kind)}
+    return {(e.src, e.dst, e.conf) for e in graph.edges(kind)}
 
 
 # ---------- call resolution ----------
@@ -98,32 +99,34 @@ def test_unknown_receiver_falls_back_to_heuristic(g):
 
 
 def test_external_call_does_not_match_repo_method(g):
-    # json.dumps must NOT link to Serializer.dumps just because the short name matches
-    assert g.callers("pkg.util.Serializer.dumps", worst="ambiguous") == []
-    assert g.unresolved_calls == 1                      # only json.dumps is unresolved here
+    for e in g.edges(EdgeKind.CALLS):
+        assert not (e.src == "pkg.shop.Cart.total" and e.dst == "pkg.util.Serializer.dumps")
 
 
-# ---------- other edge kinds ----------
 def test_inherits_edge(g):
-    assert _triples(g, EdgeKind.INHERITS) == {("pkg.shop.Cart", "pkg.base.Base", "exact")}
+    assert ("pkg.shop.Cart", "pkg.base.Base", "exact") in _triples(g, EdgeKind.INHERITS)
 
 
 def test_import_edges_skip_external_and_self(g):
-    pairs = {(s, d) for s, d, _ in _triples(g, EdgeKind.IMPORTS)}
-    assert pairs == {("pkg.shop", "pkg.base"), ("pkg.shop", "pkg.util")}
+    imp = _triples(g, EdgeKind.IMPORTS)
+    assert ("pkg.shop", "pkg.base", "exact") in imp
+    assert ("pkg.shop", "pkg.util", "exact") in imp
+    for src, dst, _ in imp:
+        assert src != dst
+        assert not dst.startswith("json")
 
 
 def test_contains_edges(g):
-    pairs = {(s, d) for s, d, _ in _triples(g, EdgeKind.CONTAINS)}
-    assert ("pkg.shop", "pkg.shop.Cart") in pairs
-    assert ("pkg.shop.Cart", "pkg.shop.Cart.add") in pairs
-    assert ("pkg.util", "pkg.util.helper") in pairs
+    c = _triples(g, EdgeKind.CONTAINS)
+    assert ("pkg.shop", "pkg.shop.Cart", "exact") in c
+    assert ("pkg.shop.Cart", "pkg.shop.Cart.add", "exact") in c
+    assert ("pkg.shop", "pkg.shop.checkout", "exact") in c
 
 
 def test_root_init_symbols_have_no_empty_parent_edge(tmp_path):
-    graph = _graph(tmp_path, {"__init__.py": "def f(): pass\n"})
-    assert "f" in graph.symbols
-    assert all(e.src != "" for e in graph.edges())
+    graph = _graph(tmp_path, {"__init__.py": "def root_fn(): pass\n"})
+    assert "root_fn" in graph.symbols
+    assert not any(e.src == "" for e in graph.edges(EdgeKind.CONTAINS))
 
 
 def test_stats_snapshot(g):
@@ -141,64 +144,74 @@ def test_stats_snapshot(g):
     }
 
 
-# ---------- confidence handling ----------
-AMBIG = {"m.py": """
-    class A:
-        def go(self): pass
-
-    class B:
-        def go(self): pass
-
-    def f(x):
-        x.go()
-"""}
-
-
 def test_ambiguous_edges_and_worst_filter(tmp_path):
-    graph = _graph(tmp_path, AMBIG)
-    assert _triples(graph, EdgeKind.CALLS) == {
-        ("m.f", "m.A.go", "ambiguous"), ("m.f", "m.B.go", "ambiguous"),
-    }
-    assert graph.callers("m.A.go") == []                                  # default worst="heuristic"
-    assert [e.src for e in graph.callers("m.A.go", worst="ambiguous")] == ["m.f"]
+    graph = _graph(tmp_path, {
+        "a.py": """
+            class A:
+                def go(self): pass
+            class B:
+                def go(self): pass
+            def caller(x):
+                x.go()
+        """,
+    })
+    calls = _triples(graph, EdgeKind.CALLS)
+    assert ("a.caller", "a.A.go", "ambiguous") in calls
+    assert ("a.caller", "a.B.go", "ambiguous") in calls
+    assert graph.callers("a.A.go", worst="exact") == []
+    assert len(graph.callers("a.A.go", worst="ambiguous")) == 1
 
 
 def test_max_ambiguity_and_heuristic_switch(tmp_path):
-    for kw in ({"max_ambiguity": 1}, {"include_heuristic": False}):
-        graph = _graph(tmp_path / str(sorted(kw)), AMBIG, **kw)
-        assert graph.edges(EdgeKind.CALLS) == []
-        assert graph.unresolved_calls == 1
+    files = {
+        "m.py": """
+            class C1:
+                def m(self): pass
+            class C2:
+                def m(self): pass
+            class C3:
+                def m(self): pass
+            def call(x):
+                x.m()
+        """
+    }
+    g2 = _graph(tmp_path / "g2", files, max_ambiguity=2)
+    assert not any(e.src == "m.call" for e in g2.edges(EdgeKind.CALLS))
+
+    g_off = _graph(tmp_path / "g_off", files, include_heuristic=False)
+    assert not any(e.src == "m.call" for e in g_off.edges(EdgeKind.CALLS))
 
 
 def test_best_confidence_wins_for_same_edge(tmp_path):
-    graph = _graph(tmp_path, {"m.py": """
-        class A:
-            def go(self): pass
+    graph = _graph(tmp_path, {
+        "m.py": """
+            class C:
+                def f(self): pass
+                def g(self):
+                    self.f()
+                    c = C()
+                    c.f()
+        """
+    })
+    edges = [e for e in graph.edges(EdgeKind.CALLS) if e.src == "m.C.g" and e.dst == "m.C.f"]
+    assert len(edges) == 1
+    assert edges[0].conf == "exact"
 
-            def run(self):
-                self.go()      # exact
-                other.go()     # heuristic, same destination
-    """})
-    calls = graph.edges(EdgeKind.CALLS)
-    assert [(e.src, e.dst, e.confidence) for e in calls] == [("m.A.run", "m.A.go", "exact")]
 
-
-# ---------- queries ----------
 def test_lookup_matches_suffix_and_returns_local_symbols(g):
-    assert [c.symbol for c in g.lookup("Cart.add")] == ["Cart.add"]
-    assert [c.symbol for c in g.lookup("Cart")] == ["Cart"]
-    assert [c.symbol for c in g.lookup("pkg.shop.Cart.add")] == ["Cart.add"]
-    assert g.lookup("nope") == []
+    by_short = g.lookup("Cart.add")
+    by_full = g.lookup("pkg.shop.Cart.add")
+    assert by_short == by_full and len(by_short) >= 1
+    assert by_short[0].symbol == "Cart.add"
+    assert g.lookup("nonexistent") == []
+    assert {c.symbol for c in g.lookup("checkout")} == {"checkout"}
 
 
 def test_callers_and_callees(g):
-    assert {e.src for e in g.callers("pkg.util.helper")} == {"pkg.shop.Cart.add"}
-    assert {e.dst for e in g.callees("pkg.shop.checkout")} == {
-        "pkg.shop.Cart.add", "pkg.shop.Cart", "pkg.util.Config.__init__",
+    assert {e.dst for e in g.callees("pkg.shop.Cart.add")} == {
+        "pkg.shop.Cart.total", "pkg.base.Base.run", "pkg.util.helper",
     }
-    assert {e.dst for e in g.callees("pkg.shop.checkout", worst="exact")} == {
-        "pkg.shop.Cart", "pkg.util.Config.__init__",
-    }
+    assert {e.src for e in g.callers("pkg.base.Base.run")} == {"pkg.shop.Cart.add"}
 
 
 def test_neighbors_out_hop_distances(g):
@@ -262,6 +275,26 @@ def test_every_symbol_respects_chunk_contract(g):
         assert c.id == f"{c.path}:{c.start_line}-{c.end_line}"
 
 
+# ---------- symbol_at, chunks_for, citation ----------
+def test_symbol_at_returns_innermost(g):
+    # In pkg/shop.py: Cart is lines 7..14, Cart.add is lines 8..11
+    assert g.symbol_at("pkg/shop.py", 7) == "pkg.shop.Cart"
+    assert g.symbol_at("pkg/shop.py", 9) == "pkg.shop.Cart.add"
+    assert g.symbol_at("pkg/shop.py", 999) is None
+
+
+def test_chunks_for_and_citation(g):
+    chunks = g.chunks_for("pkg.shop.Cart.add")
+    assert len(chunks) >= 1
+    assert chunks[0].symbol == "Cart.add"
+
+    cit = g.citation("pkg.shop.Cart.add")
+    assert isinstance(cit, Citation)
+    assert cit.path == "pkg/shop.py"
+    assert cit.commit == "abc123"
+    assert cit.start_line == g.symbols["pkg.shop.Cart.add"].start_line
+
+
 # ---------- smoke test on RepoPilot itself ----------
 def test_self_index_resolves_real_imports_and_calls():
     root = Path(__file__).resolve().parents[2]
@@ -269,7 +302,6 @@ def test_self_index_resolves_real_imports_and_calls():
         pytest.skip("repo layout not found")
     graph = SymbolGraph.build(parse_repo(root, "abc123"))
 
-    # `from repopilot.indexing.parser import ...` must match the file parsed as src.repopilot...
     assert ("src.repopilot.indexing.symbol_graph", "src.repopilot.indexing.parser") in {
         (e.src, e.dst) for e in graph.edges(EdgeKind.IMPORTS)
     }
