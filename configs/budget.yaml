@@ -1,0 +1,7 @@
+# RepoPilot budget caps for token, dollar, tool-call and loop limits
+
+budget:
+  max_tokens: 100000
+  max_cost_usd: 1.00
+  max_tool_calls: 30
+  max_loops: 3
