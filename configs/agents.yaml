@@ -1,0 +1,25 @@
+# Agent configuration and step limits
+retriever:
+  model: "gpt-4o-mini"
+  max_steps: 10
+  temperature: 0.0
+
+navigator:
+  model: "gpt-4o-mini"
+  max_steps: 10
+  temperature: 0.0
+
+coder:
+  model: "gpt-4o"
+  max_steps: 15
+  temperature: 0.0
+
+tester:
+  model: "gpt-4o-mini"
+  max_steps: 10
+  temperature: 0.0
+
+verifier:
+  model: "gpt-4o"
+  max_steps: 10
+  temperature: 0.0
