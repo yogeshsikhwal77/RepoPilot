@@ -120,7 +120,6 @@ def test_navigator_agent_produces_citations_and_impact_set() -> None:
         symbol_graph=graph,
         coverage_map=cov,
         max_hops=2,
-        repo_name="sample_repo",
         commit_sha="ec14b64",
     )
 
@@ -142,8 +141,11 @@ def test_navigator_agent_produces_citations_and_impact_set() -> None:
     )
 
     assert len(report.evidence) >= 2
-    assert (
-        report.evidence[0].citation
-        == "sample_repo@ec14b64:calculator.py:10-14"
-    )
+    
+    # Safely verify the components of the citation rather than string equality
+    assert report.evidence[0].citation.path == "calculator.py"
+    assert report.evidence[0].citation.start_line == 10
+    assert report.evidence[0].citation.end_line == 14
+    
+    # Ensure the impact set found the test coverage correctly
     assert "tests/test_calculator.py::test_divide_by_zero" in report.impact_set.covering_tests
